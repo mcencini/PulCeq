@@ -1,55 +1,86 @@
 #ifndef PULCEQ_H
 #define PULCEQ_H
 
+/****************************************************************/ 
+/*            Structs defining normalized shapes                */
+/****************************************************************/ 
 typedef struct {
-    int nSamples;           /* number of waveform samples */
-    float raster;           /* sample duration (sec) */
-    float* magnitude;       /* magnitude waveform (normalized) */
-    float* phase;           /* phase waveform (rad) */
-} PulseqShapeArbitrary;
+    int nSamples; /* Number of waveform samples */
+    float *samples;
+} PulseqShapeArbitrary; /* mirrors Pulseq CompressedShape */
     
 typedef struct {
-    float riseTime;         /* sec */
-    float flatTime;         /* sec */
-    float fallTime;         /* sec */
-} PulseqShapeTrap;
+    int riseTime;         /* Ramp up time of trapezoid (us)  */
+    int flatTime;         /* Flat-top time of trapezoid (us)  */
+    int fallTime;         /* Ramp down time of trapezoid (us) */
+} PulseqShapeTrap; /* no Pulseq equivalent */
+
+/****************************************************************/ 
+/*                  Pulseq event structs                        */
+/****************************************************************/ 
+typedef struct {
+    /* Header section */
+    short type;                         /* NULL or ARBITRARY */
+    
+    /* Waveforms */
+    PulseqShapeArbitrary magShape;   /* arbitrary waveform, normalized amplitude */
+    PulseqShapeArbitrary phaseShape; /* arbitrary waveform */
+    PulseqShapeArbitrary timeShape;  /* arbitrary waveform */
+    int delay;                       /* Delay prior to the pulse (us) */
+    
+    /* User parameters arrays available for use as needed by the client program */
+    /* Must be defined to be allocated dynamically by the client program */
+    int nUserInt;     /* default: 0 */
+    int* userInt;
+    float nUserFloat; /* default: 0 */
+    float* userFloat;
+
+} PulseqRF; /* mirrors Pulseq RFEvent */
 
 typedef struct {
-    int type;                   /* NULL or ARBITRARY */
-    float delay;                /* sec */
-    float deadTime;             /* sec */
-    float ringdownTime;         /* sec */
-    PulseqShapeArbitrary wav;   /* arbitrary waveform, normalized amplitude */
-} PulseqRF;
+    /* Header section */
+    short type;    /* NULL, TRAP, or ARBITRARY */
+    
+    int delay; /* Delay prior to the gradient (us) */
+    
+    /* Waveforms */
+    PulseqShapeTrap trap;           /* trapezoid, normalized amplitude */
+    PulseqShapeArbitrary waveShape; /* arbitrary waveform, normalized amplitude */
+    PulseqShapeArbitrary timeShape; /* arbitrary waveform */
+    
+} PulseqGrad; /* mirrors Pulseq GradEvent */
 
 typedef struct {
-    int type;                   /* NULL, TRAP, or ARBITRARY */
-    float delay;                /* sec */
-    union {
-        PulseqShapeArbitrary wav;
-        PulseqShapeTrap trap;
-    } shape;
-} PulseqGrad;
+    /* Header section */
+    short   type; /* NULL or ADC */
+    
+    int numSamples;  /* Number of ADC samples */
+    int dwellTime; /* Dwell time of ADC readout (ns) */
+    int delay;     /* Delay before first sample (us) */
+    
+} PulseqADC; /* mirrors Pulseq ADCEvent */
 
 typedef struct {
-    int   type;           /* NULL or ADC */
-    int numSamples;       /* number of ADC samples */
-    float dwell;          /* sec */
-    float delay;          /* sec */
-    float deadTime;       /* sec */
-} PulseqADC;
+    /* Header section */
+    short   type; /* Trigger off (type == 0) or on (type == 1) */
+    
+    int duration;        /* Duration of trigger event (us) */
+    int delay;           /* Delay prior to the trigger event (us) */
+    int triggerType;     /* Type of trigger (system dependent). 0: undefined / unused */
+    int triggerChannel;  /* Channel of trigger (system dependent). 0: undefined / unused */
+    
+} PulseqTrig; /* mirrors Pulseq TriggerEvent */
 
+/*********************************************************************************************************/ 
+/*                                   Block, segment, and sequence structs                                */
+/*********************************************************************************************************/ 
+/* Block struct - a (typically short) array of these is used to contain a list of the base/parent blocks */
 typedef struct {
-    int   type;           /* NULL or OUTPUT or ? */
-    int   channel;        /* EXT1 or ? */
-    float delay;          /* sec */
-    float duration;       /* sec */
-} PulseqTrig;
+    /* Header section */
+    int ID; /* Unique block ID */
 
-typedef struct {
-    int ID;                 /* unique block ID */
-
-    float      duration;    /* sec */
+    /* Block definition */
+    float      duration; /* sec */
     PulseqRF   rf;
     PulseqGrad gx;
     PulseqGrad gy;
@@ -57,39 +88,101 @@ typedef struct {
     PulseqADC  adc;
     PulseqTrig trig;
 
-    /* arrays available for use as needed by the client program */
-    int nVal1;            /* number of int values. Must be defined. */
-    int* val1;            /* to be allocated dynamically by the client program */
-    int nVal2;            /* number of float values. Must be defined. */
-    float* nVal2;         /* to be allocated dynamically by the client program */
-} PulseqBlock; 
+    /* User parameters arrays available for use as needed by the client program */
+    /* Must be defined to be allocated dynamically by the client program */
+    int nUserInt;     /* default: 0 */
+    int* userInt;
+    float nUserFloat; /* default: 0 */
+    float* userFloat;
+    
+} PulseqBlock; /* mirrors Pulseq SeqBlock */
 
-/* Struct containing block IDs for all segments */
+/* Struct containing block IDs that make up a segment */
 typedef struct {
-    int  segmentID;
-    int  nBlocks;        /* number of blocks in segment */
-    int* blockIDs;       /* block id's in this segment */
-} Segment;
+    /* Header section */
+    short  segmentID; /* Unique segment ID */
+    
+    /* Segment definition */
+    short  nBlocksInSegment;
+    short* blockIDs;         /* Block ID's in this segment */
+    
+    /* User parameters arrays available for use as needed by the client program */
+    /* Must be defined to be allocated dynamically by the client program */
+    int nUserInt;     /* default: 0 */
+    int* userInt;
+    float nUserFloat; /* default: 0 */
+    float* userFloat;
+    
+} Segment; /* no Pulseq equivalence */
 
-/* struct containing entire sequence definition */
+/* Struct containing entire sequence definition */
 typedef struct {
-    int nParentBlocks; 
+    /* Header section */
+    short version_major;          
+	short version_minor;
+	short version_revision;
+	short version_combined;
+	
+	/* Base Pulseq blocks */
+    short nParentBlocks;          
     PulseqBlock* parentBlocks;
 
-    int nSegments;    
-    Segment* segments;      /* optional */
+    /* Sequence segments; optional */ 
+    short nSegments;             
+    Segment* segments;
 
-    float** loop    /* Dynamic scan settings: waveform amplitudes, phase offsets, etc.
-                       loop[n] = [segmentID blockID rfamp gxamp gyamp gzamp rfFreqOffset rfPhaseOffset ...]
-                       units:    [int       int     T     mT/m  mT/m  mT/m  Hz           rad           ...]
-                    */
+    /* Dynamic scan settings */
+    int nRowsInLoopArray;       /* Number of rows (length of BLOCKS section in .seq file) */
+    short nColumnsInLoopArray;  /* Number of columns */
+    float** loop                
 
-    int nMax;         /* number of blocks (rows in BLOCKS section) in .seq file */
-} Ceq;
+    /*********************************************************/
+    /*                     Loop definition                   */
+    /*********************************************************/
+    /* # Column | Name          | Units           | Notes    */
+    /* ------------------------------------------------------*/
+    /*        0 | segmentID     | int             |          */
+    /*        1 | blockID       | int             |          */
+    /*        2 | rfamp         | Hz              |          */
+    /*        3 | rfphs         | rad             |          */
+    /*        4 | rffreq        | Hz              |          */
+    /*        5 | gxamp         | Hz/m            |          */
+    /*        6 | gxenergy      | (Hz/m)**2 * sec |          */
+    /*        7 | gyamp         | Hz/m            |          */
+    /*        8 | gyenergy      | (Hz/m)**2 * sec |          */
+    /*        9 | gzamp         | Hz/m            |          */
+    /*       10 | gzenergy      | (Hz/m)**2 * sec |          */
+    /*       11 | recphs        | rad             |          */
+    /*       12 | blockDuration | sec             |          */
+    /*       13 | physioTrigger | short           |          */
+    /*       14 | rotmat[0][0]  | float           | optional */
+    /*       15 | rotmat[0][1]  | float           | optional */
+    /*       16 | rotmat[0][2]  | float           | optional */
+    /*       17 | rotmat[1][0]  | float           | optional */
+    /*       18 | rotmat[1][1]  | float           | optional */
+    /*       19 | rotmat[1][2]  | float           | optional */
+    /*       20 | rotmat[2][0]  | float           | optional */
+    /*       21 | rotmat[2][1]  | float           | optional */
+    /*       22 | rotmat[2][2]  | float           | optional */
+    /*********************************************************/
+    
+    /* Raster times (sec) */
+	float adc_raster_us;               /* Siemens default: 0.1us; GE default: 2us */
+	float grad_raster_us;              /* Siemens default: 10us; GE default: 4us */
+	float rf_raster_us;                /* Siemens default: 1us; GE default: 2us (?) */
+	/* float block_duration_raster_us; */ /* Siemens default: 10uss; GE default: 2us */
+        
+    /* User parameters arrays available for use as needed by the client program */
+    /* Must be defined to be allocated dynamically by the client program */
+    int nUserInt;     /* default: 0 */
+    int* userInt;
+    float nUserFloat; /* default: 0 */
+    float* userFloat;
+   
+} SegmentedSequence; /* mirrors Pulseq ExternalSequence */
 
 /* function prototypes that this specification implements */
-void read_ceq(FILE* fid, Ceq* ceq);              /* load entire sequence from file, including waveforms */
-void read_ceq_nowaveforms(FILE* fid, Ceq* ceq);  /* load sequence specification, excluding waveforms */
-void write_ceq(FILE* fid, Ceq* ceq);             /* write sequence to file */
+void read_seq_frombuffer(SegmentedSequence* seq, FILE* fid, int byteswap);
+void read_seq_fromfile(SegmentedSequence* seq, const char* filename, int byteswap);
 
 #endif
