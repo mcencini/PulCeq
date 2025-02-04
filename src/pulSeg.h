@@ -1,5 +1,5 @@
-#ifndef PULCEQ_H
-#define PULCEQ_H
+#ifndef PULSEG_H
+#define PULSEG_H
 
 /****************************************************************/ 
 /*            Structs defining normalized shapes                */
@@ -10,9 +10,9 @@ typedef struct {
 } PulseqShapeArbitrary; /* mirrors Pulseq CompressedShape */
     
 typedef struct {
-    int riseTime;         /* Ramp up time of trapezoid (us)  */
-    int flatTime;         /* Flat-top time of trapezoid (us)  */
-    int fallTime;         /* Ramp down time of trapezoid (us) */
+    int riseTime; /* Ramp up time of trapezoid (us)  */
+    int flatTime; /* Flat-top time of trapezoid (us)  */
+    int fallTime; /* Ramp down time of trapezoid (us) */
 } PulseqShapeTrap; /* no Pulseq equivalent */
 
 /****************************************************************/ 
@@ -20,33 +20,33 @@ typedef struct {
 /****************************************************************/ 
 typedef struct {
     /* Header section */
-    short type;                         /* NULL or ARBITRARY */
+    short type; /* NULL or ARBITRARY */
     
     /* Waveforms */
-    PulseqShapeArbitrary magShape;   /* arbitrary waveform, normalized amplitude */
-    PulseqShapeArbitrary phaseShape; /* arbitrary waveform */
-    PulseqShapeArbitrary timeShape;  /* arbitrary waveform */
+    PulseqShapeArbitrary magShape;   /* Arbitrary waveform, normalized amplitude */
+    PulseqShapeArbitrary phaseShape; /* Abitrary waveform */
+    PulseqShapeArbitrary timeShape;  /* Arbitrary waveform */
     int delay;                       /* Delay prior to the pulse (us) */
     
     /* User parameters arrays available for use as needed by the client program */
     /* Must be defined to be allocated dynamically by the client program */
-    int nUserInt;     /* default: 0 */
+    int nUserInt;     /* Default: 0 */
     int* userInt;
-    float nUserFloat; /* default: 0 */
+    int nUserFloat; /* Default: 0 */
     float* userFloat;
 
 } PulseqRF; /* mirrors Pulseq RFEvent */
 
 typedef struct {
     /* Header section */
-    short type;    /* NULL, TRAP, or ARBITRARY */
+    short type; /* NULL, TRAP, or ARBITRARY */
     
-    int delay; /* Delay prior to the gradient (us) */
+    int delay;  /* Delay prior to the gradient (us) */
     
     /* Waveforms */
-    PulseqShapeTrap trap;           /* trapezoid, normalized amplitude */
-    PulseqShapeArbitrary waveShape; /* arbitrary waveform, normalized amplitude */
-    PulseqShapeArbitrary timeShape; /* arbitrary waveform */
+    PulseqShapeTrap trap;           /* Trapezoid, normalized amplitude */
+    PulseqShapeArbitrary waveShape; /* Arbitrary waveform, normalized amplitude */
+    PulseqShapeArbitrary timeShape; /* Arbitrary waveform */
     
 } PulseqGrad; /* mirrors Pulseq GradEvent */
 
@@ -54,15 +54,15 @@ typedef struct {
     /* Header section */
     short   type; /* NULL or ADC */
     
-    int numSamples;  /* Number of ADC samples */
-    int dwellTime; /* Dwell time of ADC readout (ns) */
-    int delay;     /* Delay before first sample (us) */
+    int numSamples; /* Number of ADC samples */
+    int dwellTime;  /* Dwell time of ADC readout (ns) */
+    int delay;      /* Delay before first sample (us) */
     
 } PulseqADC; /* mirrors Pulseq ADCEvent */
 
 typedef struct {
     /* Header section */
-    short   type; /* Trigger off (type == 0) or on (type == 1) */
+    short  type; /* OFF or ON */
     
     int duration;        /* Duration of trigger event (us) */
     int delay;           /* Delay prior to the trigger event (us) */
@@ -80,7 +80,7 @@ typedef struct {
     int ID; /* Unique block ID */
 
     /* Block definition */
-    float      duration; /* sec */
+    int duration_ru; /* Duration of the block in raster units */
     PulseqRF   rf;
     PulseqGrad gx;
     PulseqGrad gy;
@@ -90,9 +90,9 @@ typedef struct {
 
     /* User parameters arrays available for use as needed by the client program */
     /* Must be defined to be allocated dynamically by the client program */
-    int nUserInt;     /* default: 0 */
+    int nUserInt;     /* Default: 0 */
     int* userInt;
-    float nUserFloat; /* default: 0 */
+    int nUserFloat; /* Default: 0 */
     float* userFloat;
     
 } PulseqBlock; /* mirrors Pulseq SeqBlock */
@@ -103,14 +103,14 @@ typedef struct {
     short  segmentID; /* Unique segment ID */
     
     /* Segment definition */
-    short  nBlocksInSegment;
+    short nBlocksInSegment;
     short* blockIDs;         /* Block ID's in this segment */
     
     /* User parameters arrays available for use as needed by the client program */
     /* Must be defined to be allocated dynamically by the client program */
-    int nUserInt;     /* default: 0 */
+    int nUserInt;     /* Default: 0 */
     int* userInt;
-    float nUserFloat; /* default: 0 */
+    int nUserFloat; /* Default: 0 */
     float* userFloat;
     
 } Segment; /* no Pulseq equivalence */
@@ -118,10 +118,7 @@ typedef struct {
 /* Struct containing entire sequence definition */
 typedef struct {
     /* Header section */
-    short version_major;          
-	short version_minor;
-	short version_revision;
-	short version_combined;
+	int version_combined; /* 1000000 * version_major + 1000 * version_minor + version_revision */
 	
 	/* Base Pulseq blocks */
     short nParentBlocks;          
@@ -134,49 +131,51 @@ typedef struct {
     /* Dynamic scan settings */
     int nRowsInLoopArray;       /* Number of rows (length of BLOCKS section in .seq file) */
     short nColumnsInLoopArray;  /* Number of columns */
-    float** loop                
+    short *columnIdx            /* Sparse column index */
+    float** loop                /* Dynamic scan settings */
 
-    /*********************************************************/
-    /*                     Loop definition                   */
-    /*********************************************************/
-    /* # Column | Name          | Units           | Notes    */
-    /* ------------------------------------------------------*/
-    /*        0 | segmentID     | int             |          */
-    /*        1 | blockID       | int             |          */
-    /*        2 | rfamp         | Hz              |          */
-    /*        3 | rfphs         | rad             |          */
-    /*        4 | rffreq        | Hz              |          */
-    /*        5 | gxamp         | Hz/m            |          */
-    /*        6 | gxenergy      | (Hz/m)**2 * sec |          */
-    /*        7 | gyamp         | Hz/m            |          */
-    /*        8 | gyenergy      | (Hz/m)**2 * sec |          */
-    /*        9 | gzamp         | Hz/m            |          */
-    /*       10 | gzenergy      | (Hz/m)**2 * sec |          */
-    /*       11 | recphs        | rad             |          */
-    /*       12 | blockDuration | sec             |          */
-    /*       13 | physioTrigger | short           |          */
-    /*       14 | rotmat[0][0]  | float           | optional */
-    /*       15 | rotmat[0][1]  | float           | optional */
-    /*       16 | rotmat[0][2]  | float           | optional */
-    /*       17 | rotmat[1][0]  | float           | optional */
-    /*       18 | rotmat[1][1]  | float           | optional */
-    /*       19 | rotmat[1][2]  | float           | optional */
-    /*       20 | rotmat[2][0]  | float           | optional */
-    /*       21 | rotmat[2][1]  | float           | optional */
-    /*       22 | rotmat[2][2]  | float           | optional */
-    /*********************************************************/
+    /**********************************************/
+    /*              Loop definition               */
+    /**********************************************/
+    /* # Column | Name          | Units           */
+    /* -------------------------------------------*/
+    /*        0 | segmentID     | int             */
+    /*        1 | blockID       | int             */
+    /*        2 | rfamp         | Hz              */
+    /*        3 | rfphs         | rad             */
+    /*        4 | rffreq        | Hz              */
+    /*        5 | gxamp         | Hz/m            */
+    /*        6 | gyamp         | Hz/m            */
+    /*        7 | gzamp         | Hz/m            */
+    /*        8 | recphs        | rad             */
+    /*        9 | blockDuration | sec             */
+    /*       10 | physioTrigger | short           */
+    /*       11 | rotangle      | rad             */
+    /*       12 | rotmat[0][0]  | n.a.            */
+    /*       13 | rotmat[0][1]  | n.a.            */
+    /*       14 | rotmat[0][2]  | n.a.            */
+    /*       15 | rotmat[1][0]  | n.a.            */
+    /*       16 | rotmat[1][1]  | n.a.            */
+    /*       17 | rotmat[1][2]  | n.a.            */
+    /*       18 | rotmat[2][0]  | n.a.            */
+    /*       19 | rotmat[2][1]  | n.a.            */
+    /*       20 | rotmat[2][2]  | n.a.            */
+    /*       21 | gxenergy      | (Hz/m)**2 * sec */
+    /*       22 | gyenergy      | (Hz/m)**2 * sec */
+    /*       23 | gzenergy      | (Hz/m)**2 * sec */
+    /**********************************************/
     
     /* Raster times (sec) */
-	float adc_raster_us;               /* Siemens default: 0.1us; GE default: 2us */
-	float grad_raster_us;              /* Siemens default: 10us; GE default: 4us */
-	float rf_raster_us;                /* Siemens default: 1us; GE default: 2us (?) */
-	/* float block_duration_raster_us; */ /* Siemens default: 10uss; GE default: 2us */
+	float adc_raster_us;            /* Siemens default: 0.1us; GE default: 2us */
+	float grad_raster_us;           /* Siemens default: 10us; GE default: 4us */
+	float rf_raster_us;             /* Siemens default: 1us; GE default: 2us */
+	float block_duration_raster_us; /* Siemens default: 10us; GE default: 4us */
         
     /* User parameters arrays available for use as needed by the client program */
     /* Must be defined to be allocated dynamically by the client program */
-    int nUserInt;     /* default: 0 */
+    int nUserInt;     /* Default: 0 */
     int* userInt;
-    float nUserFloat; /* default: 0 */
+    int nUserFloat; /* Default: 0 */
     float* userFloat;
    
 } SegmentedSequence; /* mirrors Pulseq ExternalSequence */
