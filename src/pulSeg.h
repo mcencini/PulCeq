@@ -72,7 +72,7 @@ typedef struct {
 } PulseqTrig; /* mirrors Pulseq TriggerEvent */
 
 /*********************************************************************************************************/ 
-/*                                   Block, segment, and sequence structs                                */
+/*                             Block, Segment(s), Loop, and Sequence structs                             */
 /*********************************************************************************************************/ 
 /* Block struct - a (typically short) array of these is used to contain a list of the base/parent blocks */
 typedef struct {
@@ -115,24 +115,14 @@ typedef struct {
     
 } Segment; /* no Pulseq equivalence */
 
-/* Struct containing entire sequence definition */
+/* Struct containing dynamic scan settings */
 typedef struct {
     /* Header section */
-	int version_combined; /* 1000000 * version_major + 1000 * version_minor + version_revision */
-	
-	/* Base Pulseq blocks */
-    short nParentBlocks;          
-    PulseqBlock* parentBlocks;
-
-    /* Sequence segments; optional */ 
-    short nSegments;             
-    Segment* segments;
-
-    /* Dynamic scan settings */
     int nRowsInLoopArray;       /* Number of rows (length of BLOCKS section in .seq file) */
     short nColumnsInLoopArray;  /* Number of columns */
+
     short *columnIdx            /* Sparse column index */
-    float** loop                /* Dynamic scan settings */
+    float** values              /* Dynamic scan settings */
 
     /**********************************************/
     /*              Loop definition               */
@@ -164,6 +154,24 @@ typedef struct {
     /*       22 | gyenergy      | (Hz/m)**2 * sec */
     /*       23 | gzenergy      | (Hz/m)**2 * sec */
     /**********************************************/
+
+} Loop; /* no Pulseq equivalence */
+
+/* Struct containing entire sequence definition */
+typedef struct {
+    /* Header section */
+	int version_combined; /* 1000000 * version_major + 1000 * version_minor + version_revision */
+	
+	/* Base Pulseq blocks */
+    short nParentBlocks;          
+    PulseqBlock* parentBlocks;
+
+    /* Sequence segments; optional */ 
+    int nSegments;             
+    Segment* segments;
+
+    /* Dynamic scan settings */
+    Loop** loop                /* Dynamic scan settings */
     
     /* Raster times (sec) */
 	float adc_raster_us;            /* Siemens default: 0.1us; GE default: 2us */
@@ -182,6 +190,6 @@ typedef struct {
 
 /* function prototypes that this specification implements */
 void read_seq_frombuffer(SegmentedSequence* seq, FILE* fid, int byteswap);
-void read_seq_fromfile(SegmentedSequence* seq, const char* filename, int byteswap);
+void read_seq_fromfile(SegmentedSequence* seq, const char* filename);
 
 #endif
