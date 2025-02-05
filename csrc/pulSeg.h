@@ -4,6 +4,26 @@
 #ifndef PULSEG_H
 #define PULSEG_H
 
+/** 
+   * Default ALLOC to malloc if it's not already defined
+   *
+   * Users are encouraged to replace with vendor-specific implementations if needed:
+   * 
+   * // pulSeg_vendor.h (vendor-specific header)
+   * 
+   * #include "my_vendor_library.h"  // This contains the definition of MyVendorAlloc
+   * 
+   * // Override ALLOC to use MyVendorAlloc in the vendor environment
+   * #define ALLOC(size) MyVendorAlloc(size)  // Replaces malloc with MyVendorAlloc
+   * 
+   * #include "pulSeg.h"  // Now include the vendor-agnostic pulSeg.h with the overridden ALLOC
+   * 
+   * // Other vendor-specific declarations can go here
+   */
+#ifndef ALLOC
+    #define ALLOC(size) malloc(size)
+#endif
+
 /****************************************************************/ 
 /*            Structs defining normalized shapes                */
 /****************************************************************/ 
@@ -259,8 +279,8 @@ typedef struct {
     int nRowsInLoopArray;       /* Number of rows (length of BLOCKS section in .seq file) */
     short nColumnsInLoopArray;  /* Number of columns */
 
-    short *columnIdx            /* Sparse column index */
-    float** values              /* Dynamic scan settings */
+    short *columnIdx;           /* Sparse column index */
+    float** values;             /* Dynamic scan settings */
 
     /**********************************************/
     /*              Loop definition               */
@@ -340,7 +360,7 @@ typedef struct {
     Segment* segments;
 
     /* Dynamic scan settings */
-    Loop** loop;
+    Loop loop;
     
     /* Raster times (sec) */
 	float adc_raster_us;            /* Siemens default: 0.1us; GE default: 2us */
@@ -358,7 +378,7 @@ typedef struct {
 } SegmentedSequence; /* mirrors Pulseq ExternalSequence */
 
 /* function prototypes that this specification implements */
-void read_seq_frombuffer(SegmentedSequence* seq, FILE* fid, int byteswap);
+void read_seq_frombuffer(SegmentedSequence* seq, FILE* fid);
 void read_seq_fromfile(SegmentedSequence* seq, const char* filename);
 
 #endif

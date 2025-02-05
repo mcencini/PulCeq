@@ -1,10 +1,12 @@
 /**
  * @file pulSeg.c
  */
-#include <string.h>
-#include <stdint.h>
 #include <math.h>
- 
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "pulSeg.h"
 
 /****************************************************************/ 
@@ -116,7 +118,7 @@ void read_arbitrary(PulseqShapeArbitrary* shape, FILE* fid, const short byteswap
     read_int(&(shape->nSamples), fid, byteswap, 1);
 
     /* Read waveform */
-    shape->samples = (float*)AllocNode(sizeof(float) * shape->nSamples);
+    shape->samples = (float*)ALLOC(sizeof(float) * shape->nSamples);
     read_float(shape->samples, fid, byteswap, shape->nSamples);
 }
 
@@ -166,12 +168,12 @@ void read_rf(PulseqRF* rf, FILE* fid, const short byteswap) {
 
 			/* Read RF event integer User parameters */
 			read_int(&(rf->nUserInt), fid, byteswap, 1);
-			rf->userInt = (int*)AllocNode(sizeof(int) * rf->nUserInt);
-			read_int(rf->userInt, fid, byteswap, (int)rf>nUserInt);	
+			rf->userInt = (int*)ALLOC(sizeof(int) * rf->nUserInt);
+			read_int(rf->userInt, fid, byteswap, (int)rf->nUserInt);	
 
 			/* Read RF event floating point User parameters */
 			read_int(&(rf->nUserFloat), fid, byteswap, 1);
-			rf->userFloat = (float*)AllocNode(sizeof(float) * rf->nUserFloat);	
+			rf->userFloat = (float*)ALLOC(sizeof(float) * rf->nUserFloat);	
 			read_float(rf->userFloat, fid, byteswap, (int)rf->nUserFloat);
 
 			break;
@@ -194,32 +196,32 @@ void read_grad(PulseqGrad* grad, FILE* fid, const short byteswap) {
 			break;
 		case 1:
 			/* Read delay */
-			read_int(&(rf->delay), fid, byteswap, 1);
+			read_int(&(grad->delay), fid, byteswap, 1);
 
 			/* Read trapezoid */
-			read_trap(&(rf->trap), fid, byteswap)
+			read_trap(&(grad->trap), fid, byteswap);
 			
 			break;
 		case 2:
 			/* Read delay */
-			read_int(&(rf->delay), fid, byteswap, 1);
+			read_int(&(grad->delay), fid, byteswap, 1);
 
 			/* Read waveform part */
-			read_arbitrary(&(rf->waveShape), fid, byteswap);
+			read_arbitrary(&(grad->waveShape), fid, byteswap);
 
 			/* Read time part */
-			read_arbitrary(&(rf->timeShape), fid, byteswap);
+			read_arbitrary(&(grad->timeShape), fid, byteswap);
 
 			break;
 		case 3:
 			/* Read delay */
-			read_int(&(rf->delay), fid, byteswap, 1);
+			read_int(&(grad->delay), fid, byteswap, 1);
 
 			/* Read waveform part */
-			read_arbitrary(&(rf->waveShape), fid, byteswap);
+			read_arbitrary(&(grad->waveShape), fid, byteswap);
 
 			/* Read time part */
-			read_arbitrary(&(rf->timeShape), fid, byteswap);
+			read_arbitrary(&(grad->timeShape), fid, byteswap);
 		
 			break;
 	}
@@ -241,7 +243,7 @@ void read_adc(PulseqADC* adc, FILE* fid, int byteswap) {
 			break;
 		case 1:
 			read_int(&(adc->numSamples), fid, byteswap, 1);
-			read_int(&(adc->dwell), fid, byteswap, 1);
+			read_int(&(adc->dwellTime), fid, byteswap, 1);
 			read_int(&(adc->delay), fid, byteswap, 1);
 
 			break;
@@ -251,15 +253,15 @@ void read_adc(PulseqADC* adc, FILE* fid, int byteswap) {
 /** 
  * @brief Reads Trigger event from buffer. 
  *
- * @param[in,out] trig The PulseqTrigger event to be filled from file
+ * @param[in,out] trig The PulseqTrig event to be filled from file
  * @param[in] fid Buffer containing serialized SegmentedSequence
  * @param[in] byteswap Flag to byteswap Trigger elements.
  */
-void read_trig(PulseqTrigger* trig, FILE* fid, int byteswap) {
+void read_trig(PulseqTrig* trig, FILE* fid, int byteswap) {
 	/* read type. 0: OFF; 1: ON */
 	read_short(&(trig->type), fid, byteswap, 1);
 
-	switch (adc->type) {
+	switch (trig->type) {
 		case 0:
 			break;
 		case 1:
@@ -288,36 +290,36 @@ void read_blocks(PulseqBlock* parentBlocks, FILE* fid, const short byteswap, con
 	/* Loop over Parent Blocks */
 	for (blockIdx = 0; blockIdx < nParentBlocks; blockIdx++) {
 		/* Read block ID */
-		read_int(&(parentBlocks[blockIdx]->ID), fid, byteswap, 1);
+		read_int(&(parentBlocks[blockIdx].ID), fid, byteswap, 1);
 
 		/* Read block Duration in Block raster units */
-		read_int(&(parentBlocks[blockIdx]->duration_ru), fid, byteswap, 1);
+		read_int(&(parentBlocks[blockIdx].duration_ru), fid, byteswap, 1);
 
 		/* Read block RF event */
-		read_rf(&(parentBlocks[blockIdx]->rf), fid, byteswap);
+		read_rf(&(parentBlocks[blockIdx].rf), fid, byteswap);
 
 		/* Read block Gx event */
-		read_grad(&(parentBlocks[blockIdx]->gx), fid, byteswap);
+		read_grad(&(parentBlocks[blockIdx].gx), fid, byteswap);
 		/* Read block Gy event */
-		read_grad(&(parentBlocks[blockIdx]->gy), fid, byteswap);
+		read_grad(&(parentBlocks[blockIdx].gy), fid, byteswap);
 		/* Read block Gz event */
-		read_grad(&(parentBlocks[blockIdx]->gz), fid, byteswap);
+		read_grad(&(parentBlocks[blockIdx].gz), fid, byteswap);
 
 		/* Read block ADC event */
-		read_adc(&(parentBlocks[blockIdx]->adc), fid, byteswap);
+		read_adc(&(parentBlocks[blockIdx].adc), fid, byteswap);
 
 		/* Read block Trigger event */
-		read_trig(&(parentBlocks[blockIdx]->trig), fid, byteswap);
+		read_trig(&(parentBlocks[blockIdx].trig), fid, byteswap);
 
 		/* Read block integer User parameters */
-		read_int(&(parentBlocks[blockIdx]->nUserInt), fid, byteswap, 1);
-		parentBlocks[blockIdx]->userInt = (int*)AllocNode(sizeof(int) * parentBlocks[blockIdx]->nUserInt);
-		read_int(parentBlocks[blockIdx]->userInt, fid, byteswap, (int)parentBlocks[blockIdx]->nUserInt);	
+		read_int(&(parentBlocks[blockIdx].nUserInt), fid, byteswap, 1);
+		parentBlocks[blockIdx].userInt = (int*)ALLOC(sizeof(int) * parentBlocks[blockIdx].nUserInt);
+		read_int(parentBlocks[blockIdx].userInt, fid, byteswap, (int)parentBlocks[blockIdx].nUserInt);	
 
 		/* Read sequence floating point User parameters */
-		read_int(&(parentBlocks[blockIdx]->nUserFloat), fid, byteswap, 1);
-		parentBlocks[blockIdx]->userFloat = (float*)AllocNode(sizeof(float) * parentBlocks[blockIdx]->nUserFloat);	
-		read_float(parentBlocks[blockIdx]->userFloat, fid, byteswap, (int)parentBlocks[blockIdx]->nUserFloat);
+		read_int(&(parentBlocks[blockIdx].nUserFloat), fid, byteswap, 1);
+		parentBlocks[blockIdx].userFloat = (float*)ALLOC(sizeof(float) * parentBlocks[blockIdx].nUserFloat);	
+		read_float(parentBlocks[blockIdx].userFloat, fid, byteswap, (int)parentBlocks[blockIdx].nUserFloat);
 	}
 }
  
@@ -333,22 +335,22 @@ void read_segments(Segment* segment, FILE* fid, const short byteswap, const shor
 
 	/* Loop over Segments */
 	for (segIdx = 0; segIdx < nSegments; segIdx++) {
-		read_short(&(segment[segIdx]->segmentID), fid, byteswap, 1);
+		read_short(&(segment[segIdx].segmentID), fid, byteswap, 1);
 
 		/* Read Segment definition */
-		read_short(&(segment[segIdx]->nBlocksInSegment), fid, byteswap, 1);
-		segment[segIdx]->blockIDs = (short*)AllocNode(sizeof(short) * segment[segIdx]->nBlocksInSegment);
-		read_short(segment[segIdx]->blockIDs, fid, byteswap, (int)segment[segIdx]->nBlocksInSegment);
+		read_short(&(segment[segIdx].nBlocksInSegment), fid, byteswap, 1);
+		segment[segIdx].blockIDs = (short*)ALLOC(sizeof(short) * segment[segIdx].nBlocksInSegment);
+		read_short(segment[segIdx].blockIDs, fid, byteswap, (int)segment[segIdx].nBlocksInSegment);
 		
 		/* Read Segment event integer User parameters */
-		read_int(&(segment[segIdx]->nUserInt), fid, byteswap, 1);
-		segment[segIdx]->userInt = (int*)AllocNode(sizeof(int) * segment[segIdx]->nUserInt);
-		read_int(segment[segIdx]->userInt, fid, byteswap, (int)rf>nUserInt);	
+		read_int(&(segment[segIdx].nUserInt), fid, byteswap, 1);
+		segment[segIdx].userInt = (int*)ALLOC(sizeof(int) * segment[segIdx].nUserInt);
+		read_int(segment[segIdx].userInt, fid, byteswap, (int)segment[segIdx].nUserInt);	
 
 		/* Read RF event floating point User parameters */
-		read_int(&(segment[segIdx]->nUserFloat), fid, byteswap, 1);
-		segment[segIdx]->useFloat = (int*)AllocNode(sizeof(int) * segment[segIdx]->nUserFloat);
-		read_float(segment[segIdx]->useFloat, fid, byteswap, (int)segment[segIdx]->nUserFloat);
+		read_int(&(segment[segIdx].nUserFloat), fid, byteswap, 1);
+		segment[segIdx].userFloat = (float*)ALLOC(sizeof(float) * segment[segIdx].nUserFloat);
+		read_float(segment[segIdx].userFloat, fid, byteswap, (int)segment[segIdx].nUserFloat);
 	}
 }
 
@@ -359,7 +361,7 @@ void read_segments(Segment* segment, FILE* fid, const short byteswap, const shor
  * @param[in] fid Buffer containing serialized SegmentedSequence
  * @param[in] byteswap Flag to byteswap loop array elements.
  */
-void read_loop(seq* seq, FILE* fid, const short byteswap) {
+void read_loop(SegmentedSequence* seq, FILE* fid, const short byteswap) {
     int rowIdx;
 
 	/* Read loop matrix size (nRows, nCols) */
@@ -367,13 +369,13 @@ void read_loop(seq* seq, FILE* fid, const short byteswap) {
 	read_short(&((seq->loop).nColumnsInLoopArray), fid, byteswap, 1);	
 
 	/* Read non-empty column indexes */
-    (seq->loop).columnIdx = (short*)AllocNode(sizeof(short) * (seq->loop).nColumnsInLoopArray);	
-    read_short((seq->loop).columnIdx, fid, byteswap, (int)(seq->loop).nColumnsInLoopArrayy);
+    (seq->loop).columnIdx = (short*)ALLOC(sizeof(short) * (seq->loop).nColumnsInLoopArray);	
+    read_short((seq->loop).columnIdx, fid, byteswap, (int)(seq->loop).nColumnsInLoopArray);
 
 	/* Read loop values*/
-    (seq->loop).values = (float**)AllocNode(sizeof(float*) * (seq->loop).nColumnsInLoopArray);
+    (seq->loop).values = (float**)ALLOC(sizeof(float*) * (seq->loop).nColumnsInLoopArray);
     for (rowIdx = 0; rowIdx < (seq->loop).nRowsInLoopArray; rowIdx++) {
-        (seq->loop).values[rowIdx] = (float*)AllocNode(sizeof(float) * (seq->loop).nColumnsInLoopArray);
+        (seq->loop).values[rowIdx] = (float*)ALLOC(sizeof(float) * (seq->loop).nColumnsInLoopArray);
         read_float((seq->loop).values[rowIdx], fid, byteswap, (int)(seq->loop).nColumnsInLoopArray);
     }
 }
@@ -395,12 +397,12 @@ void read_seq_frombuffer(SegmentedSequence* seq, FILE* fid) {
     
 	/* Read parent blocks*/
 	read_short(&(seq->nParentBlocks), fid, byteswap, 1);
-	seq->parentBlocks = (PulseqBlock*)AllocNode(sizeof(PulseqBlock) * seq->nParentBlocks);
+	seq->parentBlocks = (PulseqBlock*)ALLOC(sizeof(PulseqBlock) * seq->nParentBlocks);
 	read_blocks(seq->parentBlocks, fid, byteswap, seq->nParentBlocks);
 		
 	/* Read Segments */
 	read_int(&(seq->nSegments), fid, byteswap, 1);
-	seq->segments = (Segment*)AllocNode(sizeof(Segment) * seq->nSegments);
+	seq->segments = (Segment*)ALLOC(sizeof(Segment) * seq->nSegments);
 	read_segments(seq->segments, fid, byteswap, seq->nSegments);
 
 	/* Read Scan Loop */
@@ -414,12 +416,12 @@ void read_seq_frombuffer(SegmentedSequence* seq, FILE* fid) {
     
     /* Read sequence integer User parameters */
     read_int(&(seq->nUserInt), fid, byteswap, 1);
-    seq->userInt = (int*)AllocNode(sizeof(int) * seq->nUserInt);
+    seq->userInt = (int*)ALLOC(sizeof(int) * seq->nUserInt);
 	read_int(seq->userInt, fid, byteswap, seq->nUserInt);	
 
     /* Read sequence floating point User parameters */
     read_int(&(seq->nUserFloat), fid, byteswap, 1);
-    seq->userFloat = (float*)AllocNode(sizeof(float) * seq->nUserFloat);	
+    seq->userFloat = (float*)ALLOC(sizeof(float) * seq->nUserFloat);	
 	read_float(seq->userFloat, fid, byteswap, seq->nUserFloat);	
 }
 

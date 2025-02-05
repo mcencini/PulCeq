@@ -1,0 +1,31 @@
+name: Test Suite
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-csrc:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Install dependencies (if any are required, like build-essential)
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y build-essential cmake
+
+    # Ensure run_ctests.sh has executable permissions
+    - name: Give execute permissions to run_ctests.sh
+      run: chmod +x run_ctests.sh
+
+    # Run the test suite with run_ctests.sh
+    - name: Run tests
+      run: ./run_ctests.sh
+
+
