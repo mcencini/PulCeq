@@ -3,10 +3,10 @@ name: Test Suite
 on:
   push:
     branches:
-      - main
+      - tv7
   pull_request:
     branches:
-      - main
+      - tv7
 
 jobs:
   test-csrc:
