@@ -16,15 +16,15 @@ RF/gradient amplitudes, RF/DAQ frequency/phase offsets, etc:
 The goal of this repository is to provide an **open standard** specification
 for encapsulating this sequence description in C code.
 
-This specification is contained in the ./src/ folder, which contains the following:
-* **pulCeq.h**: defines `Ceq`, a nested struct containing the entire sequence, and
+This specification is contained in the ./csrc/ folder, which contains the following:
+* **pulSeg.h**: defines `SegmentedSequence`, a nested struct containing the entire sequence, and
 function declarations (interfaces) for various tasks including
    * serializing to file
    * allocating and freeing up memory
    * <...>
-* **pulCeq.c**: implementation
+* **pulSeg.c**: implementation
 
 ## Example usage
 
-* Planned: PulCeq.h will be used in the upcoming version of the Pulseq sequence interpreter for GE scanners (TOPPE v6)
+* Planned: PulSeq.h will be used in the upcoming version of the Pulseq sequence interpreter for GE scanners (PGE2)
 
