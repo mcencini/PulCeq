@@ -1,3 +1,6 @@
+/**
+ * @file pulSeg.c
+ */
 #include <string.h>
 #include <stdint.h>
 #include <math.h>

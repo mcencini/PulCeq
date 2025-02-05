@@ -1,14 +1,35 @@
+/**
+ * @file pulSeg.h
+ */
 #ifndef PULSEG_H
 #define PULSEG_H
 
 /****************************************************************/ 
 /*            Structs defining normalized shapes                */
 /****************************************************************/ 
+/** @struct PulseqShapeArbitrary
+   * @brief  Arbitrary shape struct
+   *
+   *  @var PulseqShapeArbitrary::nSamples
+   *    Number of waveform samples.
+   *  @var PulseqShapeArbitrary::samples
+   *    Array of waveform samples.
+   */
 typedef struct {
     int nSamples; /* Number of waveform samples */
     float *samples;
 } PulseqShapeArbitrary; /* mirrors Pulseq CompressedShape */
-    
+
+/** @struct PulseqShapeTrap
+   * @brief  Trapzoid shape struct
+   *
+   *  @var PulseqShapeTrap::riseTime
+   *    Ramp up time of trapezoid (us).
+   *  @var PulseqShapeTrap::flatTime
+   *    Flat-top time of trapezoid (us).
+   *  @var PulseqShapeTrap::fallTime
+   *    Ramp down time of trapezoid (us).
+   */
 typedef struct {
     int riseTime; /* Ramp up time of trapezoid (us)  */
     int flatTime; /* Flat-top time of trapezoid (us)  */
@@ -17,7 +38,29 @@ typedef struct {
 
 /****************************************************************/ 
 /*                  Pulseq event structs                        */
-/****************************************************************/ 
+/****************************************************************/
+/** @struct PulseqRF
+   * @brief  RF event
+   *
+   *  @var PulseqRF::type
+   *    Whether RF is NULL (0) or defined (1).
+   *  @var PulseqRF::magShape
+   *    Magnitude waveform shape.
+   *  @var PulseqRF::phaseShape
+   *    Phase waveform shape (for complex-valued RF pulses).
+   *  @var PulseqRF::timeShape
+   *    Timepoints for RF waveform shape (for irregular raster).
+   *  @var PulseqRF::delay
+   *    Delay prior to the pulse (us).
+   *  @var PulseqRF::nUserInt
+   *    Number of integer user parameters.
+   *  @var PulseqRF::nUserInt
+   *    Array of integer user parameters.
+   *  @var PulseqRF::nUserFloat
+   *    Number of floating point user parameters.
+   *  @var PulseqRF::userFloat
+   *    Array of floating point user parameters.
+   */
 typedef struct {
     /* Header section */
     short type; /* NULL or ARBITRARY */
@@ -37,6 +80,20 @@ typedef struct {
 
 } PulseqRF; /* mirrors Pulseq RFEvent */
 
+/** @struct PulseqGrad
+   * @brief  Gradient event. 
+   *
+   *  @var PulseqGrad::type
+   *    Whether gradient is NULL (0), TRAP (1) or ARBITRARY (2).
+   *  @var PulseqGrad::delay
+   *    Delay prior to the gradient (us).
+   *  @var PulseqGrad::trap
+   *    Trapezoid shape (for type == 1).
+   *  @var PulseqGrad::waveShape
+   *    Gradient waveform shape (for type == 2).
+   *  @var PulseqGrad::timeShape
+   *    Timepoints for Gradient waveform shape (for type == 2).
+   */
 typedef struct {
     /* Header section */
     short type; /* NULL, TRAP, or ARBITRARY */
@@ -50,6 +107,18 @@ typedef struct {
     
 } PulseqGrad; /* mirrors Pulseq GradEvent */
 
+/** @struct PulseqADC
+   * @brief  ADC event. 
+   *
+   *  @var PulseqADC::type
+   *    Whether ADC is NULL (0) or defined (1).
+   *  @var PulseqADC::numSamples
+   *    Number of ADC samples.
+   *  @var PulseqADC::dwellTime
+   *    Dwell time of ADC readout (ns).
+   *  @var PulseqADC::delay
+   *    Delay before first sample (us).
+   */
 typedef struct {
     /* Header section */
     short   type; /* NULL or ADC */
@@ -60,6 +129,20 @@ typedef struct {
     
 } PulseqADC; /* mirrors Pulseq ADCEvent */
 
+/** @struct PulseqTrig
+   * @brief  Trigger event. 
+   *
+   *  @var PulseqTrig::type
+   *    Whether trigger is OFF (0) or ON (1).
+   *  @var PulseqTrig::duration
+   *    Duration of trigger event (us).
+   *  @var PulseqTrig::delay
+   *    Delay prior to the trigger event (us).
+   *  @var PulseqTrig::triggerType
+   *    Type of trigger (system dependent). 0: undefined / unused.
+   *  @var PulseqTrig::triggerChannel
+   *    Channel of trigger (system dependent). 0: undefined / unused.
+   */
 typedef struct {
     /* Header section */
     short  type; /* OFF or ON */
@@ -74,7 +157,34 @@ typedef struct {
 /*********************************************************************************************************/ 
 /*                             Block, Segment(s), Loop, and Sequence structs                             */
 /*********************************************************************************************************/ 
-/* Block struct - a (typically short) array of these is used to contain a list of the base/parent blocks */
+/** @struct PulseqBlock
+   * @brief  Block struct - a (typically short) array of these is used to contain a list of the base/parent blocks
+   *
+   *  @var PulseqBlock::ID
+   *    Unique block ID.
+   *  @var PulseqBlock::duration_ru
+   *    Block duration in block raster units.
+   *  @var PulseqBlock::rf
+   *    RF event in the block.
+   *  @var PulseqBlock::gx
+   *    X-axis Grad event in the block.
+   *  @var PulseqBlock::gy
+   *    Y-axis Grad event in the block.
+   *  @var PulseqBlock::gz
+   *    Z-axis Grad event in the block.
+   *  @var PulseqBlock::adc
+   *    ADC event in the block.
+   *  @var PulseqBlock::trig
+   *    Trigger event in the block.
+   *  @var PulseqBlock::nUserInt
+   *    Number of integer user parameters.
+   *  @var PulseqBlock::nUserInt
+   *    Array of integer user parameters.
+   *  @var PulseqBlock::nUserFloat
+   *    Number of floating point user parameters.
+   *  @var PulseqBlock::userFloat
+   *    Array of floating point user parameters.
+   */
 typedef struct {
     /* Header section */
     int ID; /* Unique block ID */
@@ -97,7 +207,24 @@ typedef struct {
     
 } PulseqBlock; /* mirrors Pulseq SeqBlock */
 
-/* Struct containing block IDs that make up a segment */
+/** @struct Segment
+   * @brief  Struct containing block IDs that make up a segment 
+   *
+   *  @var Segment::segmentID
+   *    Unique segment ID.
+   *  @var Segment::nBlocksInSegment
+   *    Number of Blocks in this segment.
+   *  @var Segment::blockIDs
+   *    Block ID's in this segment.
+   *  @var Segment::nUserInt
+   *    Number of integer user parameters.
+   *  @var Segment::nUserInt
+   *    Array of integer user parameters.
+   *  @var Segment::nUserFloat
+   *    Number of floating point user parameters.
+   *  @var Segment::userFloat
+   *    Array of floating point user parameters.
+   */
 typedef struct {
     /* Header section */
     short  segmentID; /* Unique segment ID */
@@ -115,7 +242,18 @@ typedef struct {
     
 } Segment; /* no Pulseq equivalence */
 
-/* Struct containing dynamic scan settings */
+/** @struct Loop
+   * @brief  Struct containing dynamic scan settings 
+   *
+   *  @var Loop::nRowsInLoopArray
+   *    Number of rows (blocks) in the loop structure.
+   *  @var Loop::nColumnsInLoopArray
+   *    Number of columns (parameters) in the loop structure.
+   *  @var Loop::columnIdx
+   *    Sparse loop column indexes.
+   *  @var Loop::values
+   *    Sparse loop values.
+   */
 typedef struct {
     /* Header section */
     int nRowsInLoopArray;       /* Number of rows (length of BLOCKS section in .seq file) */
@@ -157,7 +295,38 @@ typedef struct {
 
 } Loop; /* no Pulseq equivalence */
 
-/* Struct containing entire sequence definition */
+/** @struct SegmentedSequence
+   * @brief  Struct containing entire sequence definition 
+   *
+   *  @var SegmentedSequence::version_combined
+   *    Pulseq version used to design the sequence.
+   *  @var SegmentedSequence::nParentBlocks
+   *    Number of Parent Blocks.
+   *  @var SegmentedSequence::parentBlocks
+   *    Array of Parent Blocks.
+   *  @var SegmentedSequence::nSegments
+   *    Number of Segments.
+   *  @var SegmentedSequence::segments
+   *    Array of Segments.
+   *  @var SegmentedSequence::loop
+   *    Dynamic scan settings.
+   *  @var SegmentedSequence::adc_raster_us
+   *    ADC raster times (us).
+   *  @var SegmentedSequence::grad_raster_us
+   *    Gradient raster times (us).
+   *  @var SegmentedSequence::rf_raster_us
+   *    Radiofrequency raster times (us).
+   *  @var SegmentedSequence::block_duration_raster_us
+   *    Block raster times (us).
+   *  @var SegmentedSequence::nUserInt
+   *    Number of integer user parameters.
+   *  @var SegmentedSequence::nUserInt
+   *    Array of integer user parameters.
+   *  @var SegmentedSequence::nUserFloat
+   *    Number of floating point user parameters.
+   *  @var SegmentedSequence::userFloat
+   *    Array of floating point user parameters.
+   */
 typedef struct {
     /* Header section */
 	int version_combined; /* 1000000 * version_major + 1000 * version_minor + version_revision */
@@ -171,7 +340,7 @@ typedef struct {
     Segment* segments;
 
     /* Dynamic scan settings */
-    Loop** loop                /* Dynamic scan settings */
+    Loop** loop;
     
     /* Raster times (sec) */
 	float adc_raster_us;            /* Siemens default: 0.1us; GE default: 2us */
