@@ -1,7 +1,9 @@
+/* Toy unit test (remove when we have tests for the actual public reading routines) */
+#include <stdint.h>
+#include <stdio.h>
+
 #include "minunit.h"
 #include "pulSeg.h"
-
-#include <stdio.h>
 
 void test_setup(void) {
 }
@@ -11,33 +13,47 @@ void test_teardown(void) {
 
 /* Test byteswap_short */
 MU_TEST(test_byteswap_short) {
-    short desired = 1;
-    short byteswapped = byteswap_short(desired);
-    short actual = byteswap_short(byteswapped); /* roundtrip */
+    short expected = 1;
+    short byteswapped = byteswap_short(expected);
+    short result = byteswap_short(byteswapped); /* roundtrip */
 
-    printf("Initial: %d\n", desired);
+    printf("Testing short byteswap...\n");
+    printf("Initial: %d\n", expected);
     printf("Swapped: %d\n", byteswapped);
-    printf("Roundtrip: %d\n", actual);
+    printf("Roundtrip: %d\n", result);
+    printf("...done!\n");
 
-    mu_check(actual == desired);
+    mu_assert_int_eq(expected, result);
 }
 
 /* Test byteswap_int */
 MU_TEST(test_byteswap_int) {
-    int desired = 1;
-    int byteswapped = byteswap_int(desired);
-    int actual = byteswap_int(byteswapped); /* roundtrip */
+    int expected = 1;
+    int byteswapped = byteswap_int(expected);
+    int result = byteswap_int(byteswapped); /* roundtrip */
 
-    printf("Initial: %d\n", desired);
+    printf("Testing int byteswap...\n");
+    printf("Initial: %d\n", expected);
     printf("Swapped: %d\n", byteswapped);
-    printf("Roundtrip: %d\n", actual);
+    printf("Roundtrip: %d\n", result);
+    printf("...done!\n");
 
-    mu_check(actual == desired);
+    mu_assert_int_eq(expected, result);
 }
 
 /* Test byteswap_float */
 MU_TEST(test_byteswap_float) {
-    mu_assert_double_eq(1.0f, byteswap_float(byteswap_float(1.0)));
+    float expected = 1.0;
+    float byteswapped = byteswap_float(expected);
+    float result = byteswap_float(byteswapped); /* roundtrip */
+
+    printf("Testing float byteswap...\n");
+    printf("Initial: %.6f\n", expected);
+    printf("Swapped: %.6f\n", byteswapped);
+    printf("Roundtrip: %.6f\n", result);
+    printf("...done!\n");
+
+    mu_assert_double_eq(expected, result);
 }
 
 

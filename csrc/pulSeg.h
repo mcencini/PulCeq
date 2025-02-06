@@ -377,6 +377,11 @@ typedef struct {
    
 } SegmentedSequence; /* mirrors Pulseq ExternalSequence */
 
+/* TODO: remove when we have tests for reading */
+short byteswap_short(short value);
+int  byteswap_int(int value);
+float byteswap_float(float value);
+
 /* function prototypes that this specification implements */
 void read_seq_frombuffer(SegmentedSequence* seq, FILE* fid);
 void read_seq_fromfile(SegmentedSequence* seq, const char* filename);
