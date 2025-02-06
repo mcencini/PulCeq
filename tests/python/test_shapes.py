@@ -1,14 +1,11 @@
 """Test Shapes."""
 
-import struct
-
-import pytest
 import numpy as np
 
 from pypulseg._core._shapes import (
     PulseqShapeArbitrary,
     PulseqShapeTrap,
-)  # Replace with your actual import
+)
 
 
 def test_pulseq_shape_arbitrary_serialization():

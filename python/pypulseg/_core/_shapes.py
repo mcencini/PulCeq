@@ -61,7 +61,9 @@ class PulseqShapeArbitrary:
         """
         endian = ">" if byteswap else "<"
         n_samples = struct.unpack(endian + "i", data[:4])[0]
-        samples = np.frombuffer(data[4:], dtype=np.float32, count=n_samples)
+        samples = np.frombuffer(
+            data[4 : 4 + (n_samples * 4)], dtype=np.float32, count=n_samples
+        )
         if byteswap:
             samples = samples.byteswap()
 
