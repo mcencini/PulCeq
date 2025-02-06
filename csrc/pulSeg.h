@@ -64,12 +64,18 @@ typedef struct {
    *
    *  @var PulseqRF::type
    *    Whether RF is NULL (0) or defined (1).
+   *  @var PulseqRF::amplitude
+   *    Peak magnitude of magShape (Hz).
    *  @var PulseqRF::magShape
    *    Magnitude waveform shape.
    *  @var PulseqRF::phaseShape
    *    Phase waveform shape (for complex-valued RF pulses).
    *  @var PulseqRF::timeShape
    *    Timepoints for RF waveform shape (for irregular raster).
+   *  @var PulseqRF::freqOffset
+   *    Frequency offset of transmitter (Hz).
+   *  @var PulseqRF::phaseOffset
+   *    Phase offset of transmitter (rad).
    *  @var PulseqRF::delay
    *    Delay prior to the pulse (us).
    *  @var PulseqRF::nUserInt
@@ -86,9 +92,12 @@ typedef struct {
     short type; /* NULL or ARBITRARY */
     
     /* Waveforms */
-    PulseqShapeArbitrary magShape;   /* Arbitrary waveform, normalized amplitude */
+    float amplitude;                 /* Peak magnitude of magShape (Hz) */
+    PulseqShapeArbitrary magShape;   /* Arbitrary waveform, unitary peak amplitude */
     PulseqShapeArbitrary phaseShape; /* Abitrary waveform */
     PulseqShapeArbitrary timeShape;  /* Arbitrary waveform */
+    float freqOffset;                /* Frequency offset of transmitter (Hz) */
+	float phaseOffset;               /* Phase offset of transmitter (rad) */
     int delay;                       /* Delay prior to the pulse (us) */
     
     /* User parameters arrays available for use as needed by the client program */
@@ -105,6 +114,8 @@ typedef struct {
    *
    *  @var PulseqGrad::type
    *    Whether gradient is NULL (0), TRAP (1) or ARBITRARY (2).
+   *  @var ::amplitude
+   *    Peak amplitude of the gradient (Hz/m).
    *  @var PulseqGrad::delay
    *    Delay prior to the gradient (us).
    *  @var PulseqGrad::trap
@@ -118,11 +129,12 @@ typedef struct {
     /* Header section */
     short type; /* NULL, TRAP, or ARBITRARY */
     
-    int delay;  /* Delay prior to the gradient (us) */
+    float amplitude; /* Peak amplitude of the gradient (Hz/m) */
+    int delay;       /* Delay prior to the gradient (us) */
     
     /* Waveforms */
-    PulseqShapeTrap trap;           /* Trapezoid, normalized amplitude */
-    PulseqShapeArbitrary waveShape; /* Arbitrary waveform, normalized amplitude */
+    PulseqShapeTrap trap;           /* Trapezoid, unitary plateau amplitude */
+    PulseqShapeArbitrary waveShape; /* Arbitrary waveform, unitary peak amplitude */
     PulseqShapeArbitrary timeShape; /* Arbitrary waveform */
     
 } PulseqGrad; /* mirrors Pulseq GradEvent */
@@ -262,56 +274,196 @@ typedef struct {
     
 } Segment; /* no Pulseq equivalence */
 
-/** @struct Loop
-   * @brief  Struct containing dynamic scan settings 
-   *
-   *  @var Loop::nRowsInLoopArray
-   *    Number of rows (blocks) in the loop structure.
-   *  @var Loop::nColumnsInLoopArray
-   *    Number of columns (parameters) in the loop structure.
-   *  @var Loop::columnIdx
-   *    Sparse loop column indexes.
-   *  @var Loop::values
-   *    Sparse loop values.
-   */
+/**
+ * @struct Loop
+ * @brief Structure representing a set of parameters and flags for loop-based operations, typically used in MRI sequence definitions.
+ * 
+ * This struct contains various parameters and flags related to the settings for each block in a loop, such as RF amplitude, frequency, phase, gradient amplitudes, and others. These parameters control the behavior of MRI sequence blocks, with flags indicating whether each parameter is constant or variable over time. Additionally, the struct provides support for user-defined fields and various flags that control specific sequence behaviors.
+ * 
+ * The struct also includes definitions for loop columns and their units, detailing how data is organized and interpreted in the loop.
+ * 
+ * @note The struct's memory management and usage involve dynamic arrays for parameters that change over time, such as RF and gradient amplitudes. The user is responsible for allocating and freeing memory as needed for the dynamic fields.
+ * 
+ * @var Loop::nBlocks
+ *   Number of rows (length of BLOCKS section in .seq file).
+ * 
+ * @var Loop::segmentID
+ *   Array of segment IDs, one per block.
+ * 
+ * @var Loop::blockID
+ *   Array of block IDs, one per block.
+ * 
+ * @var Loop::rfAmpFlag
+ *   Flag indicating whether the RF amplitude is constant (0) or variable (1) across blocks.
+ * 
+ * @var Loop::rfAmp
+ *   Array of RF amplitude values (in Hz) for each block, if variable.
+ * 
+ * @var Loop::rfPhsFlag
+ *   Flag indicating whether the RF phase is constant (0) or variable (1) across blocks.
+ * 
+ * @var Loop::rfPhs
+ *   Array of RF phase values (in radians) for each block, if variable.
+ * 
+ * @var Loop::rfFreqFlag
+ *   Flag indicating whether the RF frequency is constant (0) or variable (1) across blocks.
+ * 
+ * @var Loop::rfFreq
+ *   Array of RF frequency values (in Hz) for each block, if variable.
+ * 
+ * @var Loop::gxAmpFlag
+ *   Flag indicating whether the x-gradient amplitude is constant (0) or variable (1) across blocks.
+ * 
+ * @var Loop::gxAmp
+ *   Array of x-gradient amplitudes (in Hz/m) for each block, if variable.
+ * 
+ * @var Loop::gyAmpFlag
+ *   Flag indicating whether the y-gradient amplitude is constant (0) or variable (1) across blocks.
+ * 
+ * @var Loop::gyAmp
+ *   Array of y-gradient amplitudes (in Hz/m) for each block, if variable.
+ * 
+ * @var Loop::gzAmpFlag
+ *   Flag indicating whether the z-gradient amplitude is constant (0) or variable (1) across blocks.
+ * 
+ * @var Loop::gzAmp
+ *   Array of z-gradient amplitudes (in Hz/m) for each block, if variable.
+ * 
+ * @var Loop::recPhsFlag
+ *   Flag indicating whether the receiver phase is constant (0) or variable (1) across blocks.
+ * 
+ * @var Loop::recPhs
+ *   Array of receiver phase values (in radians) for each block, if variable.
+ * 
+ * @var Loop::blockDuration
+ *   Array of block durations (in seconds) for each block.
+ * 
+ * @var Loop::physioTrigFlag
+ *   Flag indicating whether the physiological trigger is constant (0) or variable (1) across blocks.
+ * 
+ * @var Loop::physioTrig
+ *   Array of physiological trigger flags (0: OFF, 1: ON) for each block, if variable.
+ * 
+ * @var Loop::rotangleFlag
+ *   Flag indicating whether the in-plane rotation angle is constant (0) or variable (1) across blocks.
+ *   User can specify either this or 3D rotation matrix.
+ * 
+ * @var Loop::rotangle
+ *   Array of in-plane rotation angles (in radians) for each block, if variable.
+ * 
+ * @var Loop::rotmatFlag
+ *   Flag indicating whether the rotation matrix is NULL (0) or defined (1) across blocks.
+ * 
+ * @var Loop::rotmat
+ *   Array of rotation matrices (3x3) for each block, if variable. Each matrix contains 9 values representing a 3D rotation.
+ *   User can specify either this or in-plane rotation angle.
+ * 
+ * @var Loop::pmcFlag
+ *   Flag indicating whether the PMC (Prospective Motion Corrention) is used (1) or not (0).
+ * 
+ * @var Loop::pmc
+ *   Array of PMC flags for each block.
+ * 
+ * @var Loop::noRotFlag
+ *   Flag indicating whether FOV rotation is disabled (1) or enabled (0) for each block.
+ * 
+ * @var Loop::noRot
+ *   Instruct the interpreter to ignore FOV rotation for a given block.
+ * 
+ * @var Loop::noPosFlag
+ *   Flag indicating whether FOV translation is disabled (1) or enabled (0) for each block.
+ * 
+ * @var Loop::noPos
+ *   Instruct the interpreter to ignore FOV translation for a given block.
+ * 
+ * @var Loop::noSlcFlag
+ *   Flag indicating whether FOV scaling is disabled (1) or enabled (0) for each block.
+ * 
+ * @var Loop::noSlc
+ *   Instruct the interpreter to ignore FOV scaling for a given block.
+ * 
+ * @var Loop::user1Flag to user9Flag
+ *   Flags indicating whether user-defined parameters (user1 to user9) are NULL (0) or defined (1).
+ * 
+ * @var Loop::user1Flag to user9Flag
+ *   Arrays of user-defined parameters for each block, if variable.
+ * 
+ * @note: The user parameters can be used to store vendor-specific parameters for different tasks.
+ * 
+ *  For example, GE interpreter reserve user1-3 to Gx,y,z energies in (Hz / m)**2 * sec to 
+ *  inform proprietary gradient safety checks.
+ */
 typedef struct {
     /* Header section */
-    int nRowsInLoopArray;       /* Number of rows (length of BLOCKS section in .seq file) */
-    short nColumnsInLoopArray;  /* Number of columns */
+    int nBlocks;         /* Number of rows (length of BLOCKS section in .seq file) */
 
-    short *columnIdx;           /* Sparse column index */
-    float** values;             /* Dynamic scan settings */
+    short* segmentID;
+    short* blockID;
 
-    /**********************************************/
-    /*              Loop definition               */
-    /**********************************************/
-    /* # Column | Name          | Units           */
-    /* -------------------------------------------*/
-    /*        0 | segmentID     | int             */
-    /*        1 | blockID       | int             */
-    /*        2 | rfamp         | Hz              */
-    /*        3 | rfphs         | rad             */
-    /*        4 | rffreq        | Hz              */
-    /*        5 | gxamp         | Hz/m            */
-    /*        6 | gyamp         | Hz/m            */
-    /*        7 | gzamp         | Hz/m            */
-    /*        8 | recphs        | rad             */
-    /*        9 | blockDuration | sec             */
-    /*       10 | physioTrigger | short           */
-    /*       11 | rotangle      | rad             */
-    /*       12 | rotmat[0][0]  | n.a.            */
-    /*       13 | rotmat[0][1]  | n.a.            */
-    /*       14 | rotmat[0][2]  | n.a.            */
-    /*       15 | rotmat[1][0]  | n.a.            */
-    /*       16 | rotmat[1][1]  | n.a.            */
-    /*       17 | rotmat[1][2]  | n.a.            */
-    /*       18 | rotmat[2][0]  | n.a.            */
-    /*       19 | rotmat[2][1]  | n.a.            */
-    /*       20 | rotmat[2][2]  | n.a.            */
-    /*       21 | gxenergy      | (Hz/m)**2 * sec */
-    /*       22 | gyenergy      | (Hz/m)**2 * sec */
-    /*       23 | gzenergy      | (Hz/m)**2 * sec */
-    /**********************************************/
+    short rfAmpFlag;     /* 0: constant; 1: variable */
+    float* rfAmp;        /* Hz */
+
+    short rfPhsFlag;     /* 0: constant; 1: variable */
+    float* rfPhs;        /* rad */
+
+    short rfFreqFlag;     /* 0: constant; 1: variable */
+    float* rfFreq;        /* Hz */
+
+    short gxAmpFlag;      /* 0: constant; 1: variable */
+    float* gxAmp;         /* Hz / m */
+
+    short gyAmpFlag;      /* 0: constant; 1: variable */
+    float* gyAmp;         /* Hz / m */
+
+    short gzAmpFlag;      /* 0: constant; 1: variable */
+    float* gzAmp;         /* Hz / m */
+
+    short recPhsFlag;     /* 0: constant; 1: variable */
+    float* recPhs;        /* rad */
+
+    float* blockDuration; /* sec */
+
+    short physioTrigFlag; /* 0: constant; 1: variable */
+    short* physioTrig;    /* 0: OFF; 1: ON */
+
+    short rotangleFlag;   /* 0: constant; 1: variable */
+    float* rotangle;      /* rad */
+
+    short rotmatFlag;     /* 0: constant; 1: variable */
+    float (*rotmat)[9];
+
+    /* Flags to inform the interpreter */
+    short pmcFlag;
+    short* pmc;
+
+    short noRotFlag;
+    short* noRot;
+
+    short noPosFlag;
+    short* noPos;
+
+    short noSlcFlag;
+    short* noSlc;
+
+    /* USER */
+    short user1Flag;
+    float* user1;
+    short user2Flag;
+    float* user2;
+    short user3Flag;
+    float* user3;
+    short user4Flag;
+    float* user4;
+    short user5Flag;
+    float* user5;
+    short user6Flag;
+    float* user6;
+    short user7Flag;
+    float* user7;
+    short user8Flag;
+    float* user8;
+    short user9Flag;
+    float* user9;
 
 } Loop; /* no Pulseq equivalence */
 

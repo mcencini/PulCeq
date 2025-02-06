@@ -154,6 +154,9 @@ void read_rf(PulseqRF* rf, FILE* fid, const short byteswap) {
 		case 0:
 			break;
 		case 1:
+			/* Read amplitude */
+			read_float(&(rf->amplitude), fid, byteswap, 1);
+
 			/* Read magnitude part */
 			read_arbitrary(&(rf->magShape), fid, byteswap);
 
@@ -162,6 +165,12 @@ void read_rf(PulseqRF* rf, FILE* fid, const short byteswap) {
 
 			/* Read time part */
 			read_arbitrary(&(rf->timeShape), fid, byteswap);
+
+			/* Read frequency offset */
+			read_float(&(rf->freqOffset), fid, byteswap, 1);
+
+			/* Read phase offset */
+			read_float(&(rf->phaseOffset), fid, byteswap, 1);
 
 			/* Read delay */
 			read_int(&(rf->delay), fid, byteswap, 1);
@@ -195,6 +204,9 @@ void read_grad(PulseqGrad* grad, FILE* fid, const short byteswap) {
 		case 0:
 			break;
 		case 1:
+			/* Read amplitude */
+			read_float(&(grad->amplitude), fid, byteswap, 1);
+
 			/* Read delay */
 			read_int(&(grad->delay), fid, byteswap, 1);
 
@@ -203,6 +215,9 @@ void read_grad(PulseqGrad* grad, FILE* fid, const short byteswap) {
 			
 			break;
 		case 2:
+			/* Read amplitude */
+			read_float(&(grad->amplitude), fid, byteswap, 1);
+
 			/* Read delay */
 			read_int(&(grad->delay), fid, byteswap, 1);
 
@@ -362,23 +377,161 @@ void read_segments(Segment* segment, FILE* fid, const short byteswap, const shor
  * @param[in] byteswap Flag to byteswap loop array elements.
  */
 void read_loop(SegmentedSequence* seq, FILE* fid, const short byteswap) {
-    int rowIdx;
+    /* Read loop matrix size (nBlocks) */
+    read_int(&((seq->loop).nBlocks), fid, byteswap, 1);
 
-	/* Read loop matrix size (nRows, nCols) */
-	read_int(&((seq->loop).nRowsInLoopArray), fid, byteswap, 1);
-	read_short(&((seq->loop).nColumnsInLoopArray), fid, byteswap, 1);	
+    /* Read loop values */
+    (seq->loop).segmentID = (short*)ALLOC(sizeof(short) * (seq->loop).nBlocks);
+    read_short((seq->loop).segmentID, fid, byteswap, (seq->loop).nBlocks);
 
-	/* Read non-empty column indexes */
-    (seq->loop).columnIdx = (short*)ALLOC(sizeof(short) * (seq->loop).nColumnsInLoopArray);	
-    read_short((seq->loop).columnIdx, fid, byteswap, (int)(seq->loop).nColumnsInLoopArray);
+    (seq->loop).blockID = (short*)ALLOC(sizeof(short) * (seq->loop).nBlocks);
+    read_short((seq->loop).blockID, fid, byteswap, (seq->loop).nBlocks);
 
-	/* Read loop values*/
-    (seq->loop).values = (float**)ALLOC(sizeof(float*) * (seq->loop).nColumnsInLoopArray);
-    for (rowIdx = 0; rowIdx < (seq->loop).nRowsInLoopArray; rowIdx++) {
-        (seq->loop).values[rowIdx] = (float*)ALLOC(sizeof(float) * (seq->loop).nColumnsInLoopArray);
-        read_float((seq->loop).values[rowIdx], fid, byteswap, (int)(seq->loop).nColumnsInLoopArray);
+    read_short(&((seq->loop).rfAmpFlag), fid, byteswap, 1);
+    if ((seq->loop).rfAmpFlag == 1) {
+        (seq->loop).rfAmp = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).rfAmp, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).rfPhsFlag), fid, byteswap, 1);
+    if ((seq->loop).rfPhsFlag == 1) {
+        (seq->loop).rfPhs = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).rfPhs, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).rfFreqFlag), fid, byteswap, 1);
+    if ((seq->loop).rfFreqFlag == 1) {
+        (seq->loop).rfFreq = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).rfFreq, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).gxAmpFlag), fid, byteswap, 1);
+    if ((seq->loop).gxAmpFlag == 1) {
+        (seq->loop).gxAmp = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).gxAmp, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).gyAmpFlag), fid, byteswap, 1);
+    if ((seq->loop).gyAmpFlag == 1) {
+        (seq->loop).gyAmp = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).gyAmp, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).gzAmpFlag), fid, byteswap, 1);
+    if ((seq->loop).gzAmpFlag == 1) {
+        (seq->loop).gzAmp = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).gzAmp, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).recPhsFlag), fid, byteswap, 1);
+    if ((seq->loop).recPhsFlag == 1) {
+        (seq->loop).recPhs = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).recPhs, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    (seq->loop).blockDuration = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+    read_float((seq->loop).blockDuration, fid, byteswap, (seq->loop).nBlocks);
+
+    read_short(&((seq->loop).physioTrigFlag), fid, byteswap, 1);
+    if ((seq->loop).physioTrigFlag == 1) {
+        (seq->loop).physioTrig = (short*)ALLOC(sizeof(short) * (seq->loop).nBlocks);
+        read_short((seq->loop).physioTrig, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).rotangleFlag), fid, byteswap, 1);
+    if ((seq->loop).rotangleFlag == 1) {
+        (seq->loop).rotangle = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).rotangle, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).rotmatFlag), fid, byteswap, 1);
+    if ((seq->loop).rotmatFlag == 1) {
+        (seq->loop).rotmat = (float(*)[9])ALLOC(sizeof(float[9]) * (seq->loop).nBlocks);
+        for (int i = 0; i < (seq->loop).nBlocks; ++i) {
+            read_float((seq->loop).rotmat[i], fid, byteswap, 9);
+        }
+    }
+
+    read_short(&((seq->loop).pmcFlag), fid, byteswap, 1);
+    if ((seq->loop).pmcFlag == 1) {
+        (seq->loop).pmc = (short*)ALLOC(sizeof(short) * (seq->loop).nBlocks);
+        read_short((seq->loop).pmc, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).noRotFlag), fid, byteswap, 1);
+    if ((seq->loop).noRotFlag == 1) {
+        (seq->loop).noRot = (short*)ALLOC(sizeof(short) * (seq->loop).nBlocks);
+        read_short((seq->loop).noRot, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).noPosFlag), fid, byteswap, 1);
+    if ((seq->loop).noPosFlag == 1) {
+        (seq->loop).noPos = (short*)ALLOC(sizeof(short) * (seq->loop).nBlocks);
+        read_short((seq->loop).noPos, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).noSlcFlag), fid, byteswap, 1);
+    if ((seq->loop).noSlcFlag == 1) {
+        (seq->loop).noSlc = (short*)ALLOC(sizeof(short) * (seq->loop).nBlocks);
+        read_short((seq->loop).noSlc, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    /* Read user-defined flags and values (user1 to user9) */
+    read_short(&((seq->loop).user1Flag), fid, byteswap, 1);
+    if ((seq->loop).user1Flag == 1) {
+        (seq->loop).user1 = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).user1, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).user2Flag), fid, byteswap, 1);
+    if ((seq->loop).user2Flag == 1) {
+        (seq->loop).user2 = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).user2, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).user3Flag), fid, byteswap, 1);
+    if ((seq->loop).user3Flag == 1) {
+        (seq->loop).user3 = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).user3, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).user4Flag), fid, byteswap, 1);
+    if ((seq->loop).user4Flag == 1) {
+        (seq->loop).user4 = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).user4, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).user5Flag), fid, byteswap, 1);
+    if ((seq->loop).user5Flag == 1) {
+        (seq->loop).user5 = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).user5, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+	read_short(&((seq->loop).user6Flag), fid, byteswap, 1);
+    if ((seq->loop).user6Flag == 1) {
+        (seq->loop).user6 = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).user6, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).user7Flag), fid, byteswap, 1);
+    if ((seq->loop).user7Flag == 1) {
+        (seq->loop).user7 = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).user7, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).user8Flag), fid, byteswap, 1);
+    if ((seq->loop).user8Flag == 1) {
+        (seq->loop).user8 = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).user8, fid, byteswap, (seq->loop).nBlocks);
+    }
+
+    read_short(&((seq->loop).user9Flag), fid, byteswap, 1);
+    if ((seq->loop).user9Flag == 1) {
+        (seq->loop).user9 = (float*)ALLOC(sizeof(float) * (seq->loop).nBlocks);
+        read_float((seq->loop).user9, fid, byteswap, (seq->loop).nBlocks);
     }
 }
+
 
 /** 
  * @brief Reads a SegmentedSequence struct from buffer. 
