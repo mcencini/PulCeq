@@ -11,17 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y build-essential cmake
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake
 
-    - name: Prepare test script
-      run: chmod +x run_ctests.sh
+      - name: Prepare test script
+        run: chmod +x run_ctests.sh
 
-    - name: Run tests
-      run: ./run_ctests.sh
+      - name: Run tests
+        run: ./run_ctests.sh
 
   test-python:
     runs-on: ubuntu-latest
@@ -44,24 +44,24 @@ jobs:
           pip install .[dev]
 
       - name: Run tests
-        run: pytest --cov --cov-report=xml tests	
-      
+        run: pytest --cov --cov-report=xml tests
+
       # - name: Upload coverage reports to Codecov
-        # uses: codecov/codecov-action@v4.0.1
-        # with:
-          # token:  ${{ secrets.CODECOV_TOKEN }}
-          # slug: HarmonizedMRI/PulCeq
-	  
+      #   uses: codecov/codecov-action@v4.0.1
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     slug: HarmonizedMRI/PulCeq
+
   test-matlab:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v4
-	
+
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
-	
+
       - name: Run tests
         uses: matlab-actions/run-command@v2
         with:
