@@ -67,8 +67,8 @@ class PulseqShapeTrap:
             + struct.pack(endian + "f", self.flat_time)
             + struct.pack(endian + "f", self.fall_time)
         )
-    
-    
+
+
 @dataclass
 class PulseqShapeExtTrap:
     n_corner_points: int
