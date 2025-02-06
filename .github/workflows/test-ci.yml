@@ -22,7 +22,7 @@ jobs:
 
     - name: Run tests
       run: ./run_ctests.sh
-	
+
   test-python:
     runs-on: ubuntu-latest
     
