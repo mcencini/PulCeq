@@ -358,28 +358,28 @@ typedef struct {
  *   Array of rotation matrices (3x3) for each block, if variable. Each matrix contains 9 values representing a 3D rotation.
  *   User can specify either this or in-plane rotation angle.
  * 
- * @var Loop::pmcFlag
+ * @var Loop::PMCFlag
  *   Flag indicating whether the PMC (Prospective Motion Corrention) is used (1) or not (0).
  * 
- * @var Loop::pmc
+ * @var Loop::PMC
  *   Array of PMC flags for each block.
  * 
- * @var Loop::noRotFlag
+ * @var Loop::NOROTFlag
  *   Flag indicating whether FOV rotation is disabled (1) or enabled (0) for each block.
  * 
- * @var Loop::noRot
+ * @var Loop::NOROT
  *   Instruct the interpreter to ignore FOV rotation for a given block.
  * 
- * @var Loop::noPosFlag
+ * @var Loop::NOPOSFlag
  *   Flag indicating whether FOV translation is disabled (1) or enabled (0) for each block.
  * 
- * @var Loop::noPos
+ * @var Loop::NPOS
  *   Instruct the interpreter to ignore FOV translation for a given block.
  * 
- * @var Loop::noSlcFlag
+ * @var Loop::NOSLCFlag
  *   Flag indicating whether FOV scaling is disabled (1) or enabled (0) for each block.
  * 
- * @var Loop::noSlc
+ * @var Loop::NOSLC
  *   Instruct the interpreter to ignore FOV scaling for a given block.
  * 
  * @var Loop::user1Flag to user9Flag
@@ -432,18 +432,73 @@ typedef struct {
     short rotmatFlag;     /* 0: constant; 1: variable */
     float (*rotmat)[9];
 
+    /* Counters to inform reconstruction */
+    short SLCFlag;
+    int* SLC; /* slice counter (or slab counter for 3D multi-slab sequences) */
+
+    short SEGlag;
+    int* SEG; /* segment counter e.g. for segmented FLASH or EPI */
+
+    short REPFlag;
+    int* REP; /* repetition counter */
+
+    short AVGFlag;
+    int* AVG; /*averaging counter */
+
+    short SETFlag;
+    int* SET; /* flexible counter without firm assignment */
+
+    short ECOFlag;
+    int* ECO; /* echo counter in multi-echo sequences */
+
+    short PHSFlag;
+    int* PHS; /* cardiac phase counter */
+
+    short LINFlag;
+    int* LIN; /* line counter in 2D and 3D acquisitions */
+
+    short PARFlag;
+    int* PAR; /* partition counter; it counts phase encoding steps in the 2nd (through-slab) phase encoding direction in 3D sequences */
+
+    short ACQFlag;
+    int* ACQ; /* a 3-state flag that instructs the interpreter to alter the sequence when executing multiple repeats as follows: 
+                blocks with ONCE==0 are executed on every repetition; ONCE==1: only on the first repetition; ONCE==2: only on the last repetition */
+
+    /* Counters to inform the interpreter */
+    short ONCEFlag;
+    int* ONCE; /* spectroscopic acquisition counter */
+
+    /* Flags to inform the reconstruction */
+    short NAVFlag;
+    short* NAV; /* navigator data flag */
+
+    short REVFlag;
+    short* REV; /* flag indicating that the readout direction is reversed */
+
+    short SMSFlag;
+    short* SMS; /* simultaneous multi-slice (SMS) acquisition */
+
+    short REFFlag;
+    short* REF; /* 	parallel imaging flag indicating reference / auto-calibration data */
+
+    short IMAFlag;
+    short* IMA; /* parallel imaging flag indicating imaging data within the ACS region */
+
+    short NOISEFlag;
+    short* NOISE; /* flag for the noise adjust scan e.g for the parallel imaging acceleration */
+
     /* Flags to inform the interpreter */
-    short pmcFlag;
-    short* pmc;
+    short PMCFlag;
+    short* PMC; /* flag for the MoCo/PMC Pulseq version marking blocks that can/should be prospectively corrected for motion */
 
-    short noRotFlag;
-    short* noRot;
+    short NOROTFlag;
+    short* NOROT; /* instructs the interpreter to ignore the rotation of the FOV specified on the UI for the given block(s) */
 
-    short noPosFlag;
-    short* noPos;
+    short NOPOSFlag;
+    short* NOPOS; /* instructs the interpreter to ignore the the FOV offset specified on the UI for the given block(s) */
 
-    short noSlcFlag;
-    short* noSlc;
+    short NOSLCFlag; 
+    short* NOSCL; /* instructs the interpreter to ignore the scaling of the FOV specified on the UI for the given block(s) */
 
     /* USER */
     short user1Flag;

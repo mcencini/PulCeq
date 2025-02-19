@@ -1,5 +1,7 @@
 """Main PyPulSeg API."""
 
+from . import autoseg  # noqa
+
 # from . import demo  # noqa
 # from . import _core  # noqa
 
