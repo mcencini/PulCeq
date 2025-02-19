@@ -36,6 +36,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest", "pytest-black", "pytest-cov", "pytest-sugar", "pytest-xdist"]
 doc = ["sphinx", "pydata-sphinx-theme", "myst-nb", "matplotlib", "sphinx-copybutton"]
+demo = ["pulpy", "mri-nufft"]
 
 [project.urls]
 "Homepage" = "https://github.com/HarmonizedMRI/PulCeq"
@@ -59,7 +60,7 @@ fallback_version="v99-dev"
 
 # Linting using ruff.
 [tool.ruff]
-src = ["src", "tests"]
+src = ["python", "tests"]
 select = ["E", "F", "B", "Q", "D", "UP", "ANN"]
 extend-exclude = [ 
 "example_*.py" , 
