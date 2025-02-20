@@ -6,44 +6,77 @@ classdef testSubseq < matlab.unittest.TestCase
             seq = repmat(megre_warmup(), 1, 32);
             seq = [seq, repmat(megre(), 1, 1024)];
 
-            subseq = pulseg.autoseg.segment_sequence(seq);
+            [subseq_def, subseq_lut] = pulseg.autoseg.segment_sequence(seq);
 
             % Verify number of segments
-            testCase.verifyEqual(length(subseq), 2);
+            testCase.verifyEqual(length(subseq_def), 2);
 
             % Verify sequence content
-            testCase.verifyEqual(subseq{1}, repmat(megre_warmup(), 1, 32));
-            testCase.verifyEqual(subseq{2}, repmat(megre(), 1, 1024));
+            testCase.verifyEqual(subseq_def{1}, megre_warmup());
+            testCase.verifyEqual(subseq_def{2}, megre());
+            
+            % Verify segments lookup table
+            testCase.verifyEqual(subseq_lut, [ones(32 * length(megre_warmup()), 1); 2 * ones(1024 * length(megre()), 1)]);
         end
 
         function test_megre(testCase)
             seq = [noisecal(), repmat(pical(), 1, 64), repmat(megre_warmup(), 1, 32), repmat(megre(), 1, 1024)];
 
-            subseq = pulseg.autoseg.segment_sequence(seq);
+            [subseq_def, subseq_lut] = pulseg.autoseg.segment_sequence(seq);
 
             % Verify number of segments
-            testCase.verifyEqual(length(subseq), 4);
+            testCase.verifyEqual(length(subseq_def), 4);
 
             % Verify sequence content
-            testCase.verifyEqual(subseq{1}, noisecal());
-            testCase.verifyEqual(subseq{2}, repmat(pical(), 1, 64));
-            testCase.verifyEqual(subseq{3}, repmat(megre_warmup(), 1, 32));
-            testCase.verifyEqual(subseq{4}, repmat(megre(), 1, 1024));
+            testCase.verifyEqual(subseq_def{1}, noisecal());
+            testCase.verifyEqual(subseq_def{2}, pical());
+            testCase.verifyEqual(subseq_def{3}, megre_warmup());
+            testCase.verifyEqual(subseq_def{4}, megre());
+            
+            % Verify segments lookup table
+            testCase.verifyEqual(subseq_lut, ...
+               [ones(length(noisecal()), 1); ...
+                2 * ones(64 * length(pical()), 1); ...
+                3 * ones(32 * length(megre_warmup()), 1); ...
+                4 * ones(1024 * length(megre()), 1)]);
+        end
+        
+        function test_simple_mprage(testCase)
+            seq = [mprage_warmup(), repmat(mprage(), 1, 32)];
+
+            [subseq_def, subseq_lut] = pulseg.autoseg.segment_sequence(seq);
+
+            % Verify number of segments
+            testCase.verifyEqual(length(subseq_def), 2);
+
+            % Verify sequence content
+            testCase.verifyEqual(subseq_def{1}, mprage_warmup());
+            testCase.verifyEqual(subseq_def{2}, mprage());
+            
+            % Verify segments lookup table
+            testCase.verifyEqual(subseq_lut, [ones(length(mprage_warmup()), 1); 2 * ones(32 * length(mprage()), 1)]);
         end
 
         function test_mprage(testCase)
             seq = [noisecal(), repmat(pical(), 1, 64), mprage_warmup(), repmat([mprage(), repmat(navscan(), 1, 3)], 1, 32)];
 
-            subseq = pulseg.autoseg.segment_sequence(seq);
+            [subseq_def, subseq_lut] = pulseg.autoseg.segment_sequence(seq);
 
             % Verify number of segments
-            testCase.verifyEqual(length(subseq), 4);
+            testCase.verifyEqual(length(subseq_def), 4);
 
             % Verify sequence content
-            testCase.verifyEqual(subseq{1}, noisecal());
-            testCase.verifyEqual(subseq{2}, repmat(pical(), 1, 64));
-            testCase.verifyEqual(subseq{3}, mprage_warmup());
-            testCase.verifyEqual(subseq{4}, repmat([mprage(), repmat(navscan(), 1, 3)], 1, 32));
+            testCase.verifyEqual(subseq_def{1}, noisecal());
+            testCase.verifyEqual(subseq_def{2}, pical());
+            testCase.verifyEqual(subseq_def{3}, mprage_warmup());
+            testCase.verifyEqual(subseq_def{4}, [mprage(), repmat(navscan(), 1, 3)]);
+            
+            % Verify segments lookup table
+            testCase.verifyEqual(subseq_lut, ...
+               [ones(length(noisecal()), 1); ...
+                2 * ones(64 * length(pical()), 1); ...
+                3 * ones(length(mprage_warmup()), 1); ...
+                4 * ones(32 * (length(mprage()) + 3 * length(navscan())), 1)]);
         end
     end
 end

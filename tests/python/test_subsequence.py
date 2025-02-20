@@ -83,6 +83,21 @@ def megre():
     """
     return _noisecal() + 64 * _pical() + 32 * _megre_warmup() + 1024 * _megre()
 
+
+@fixture
+def simple_mprage():
+    """
+    Simple MPRAGE block representation.
+
+    Consists of a single MPRAGE dummy segment for warmup (acquiring 32 lines)
+    followed by the actual acquisition, consisting of 32 blocks of interleaved
+    MPRAGE segment + motion nav segment (three orthogonal 2D acquisitions),
+    corresponding to a (ky, kz) = (32, 32) kspace size.
+
+    """
+    return _mprage_warmup() + 32 * _mprage()
+
+
 @fixture
 def mprage():
     """
@@ -105,31 +120,60 @@ def mprage():
 
 
 def test_simple_megre(simple_megre):
-    subseq = pypulseg.autoseg.segment_sequence(simple_megre)
+    subseq_def, subseq_lut = pypulseg.autoseg.segment_sequence(simple_megre)
 
     # check
-    assert len(subseq) == 2
-    npt.assert_allclose(subseq[0], 32 * _megre_warmup())
-    npt.assert_allclose(subseq[1], 1024 * _megre())
+    assert len(subseq_def) == 2
+    npt.assert_allclose(subseq_def[0], _megre_warmup())
+    npt.assert_allclose(subseq_def[1], _megre())
+    npt.assert_allclose(
+        subseq_lut, 32 * len(_megre_warmup()) * [0] + 1024 * len(_megre()) * [1]
+    )
 
 
 def test_megre(megre):
-    subseq = pypulseg.autoseg.segment_sequence(megre)
+    subseq_def, subseq_lut = pypulseg.autoseg.segment_sequence(megre)
 
     # check
-    assert len(subseq) == 4
-    npt.assert_allclose(subseq[0], _noisecal())
-    npt.assert_allclose(subseq[1], 64 * _pical())
-    npt.assert_allclose(subseq[2], 32 * _megre_warmup())
-    npt.assert_allclose(subseq[3], 1024 * _megre())
+    assert len(subseq_def) == 4
+    npt.assert_allclose(subseq_def[0], _noisecal())
+    npt.assert_allclose(subseq_def[1], _pical())
+    npt.assert_allclose(subseq_def[2], _megre_warmup())
+    npt.assert_allclose(subseq_def[3], _megre())
+    npt.assert_allclose(
+        subseq_lut,
+        len(_noisecal()) * [0]
+        + 64 * len(_pical()) * [1]
+        + 32 * len(_megre_warmup()) * [2]
+        + 1024 * len(_megre()) * [3],
+    )
+
+
+def test_simple_mprage(simple_mprage):
+    subseq_def, subseq_lut = pypulseg.autoseg.segment_sequence(simple_mprage)
+
+    # check
+    assert len(subseq_def) == 2
+    npt.assert_allclose(subseq_def[0], _mprage_warmup())
+    npt.assert_allclose(subseq_def[1], _mprage())
+    npt.assert_allclose(
+        subseq_lut, len(_mprage_warmup()) * [0] + 32 * len(_mprage()) * [1]
+    )
 
 
 def test_mprage(mprage):
-    subseq = pypulseg.autoseg.segment_sequence(mprage)
+    subseq_def, subseq_lut = pypulseg.autoseg.segment_sequence(mprage)
 
     # check
-    assert len(subseq) == 4
-    npt.assert_allclose(subseq[0], _noisecal())
-    npt.assert_allclose(subseq[1], 64 * _pical())
-    npt.assert_allclose(subseq[2], _mprage_warmup())
-    npt.assert_allclose(subseq[3], 32 * (_mprage() + 3 * _navscan()))
+    assert len(subseq_def) == 4
+    npt.assert_allclose(subseq_def[0], _noisecal())
+    npt.assert_allclose(subseq_def[1], _pical())
+    npt.assert_allclose(subseq_def[2], _mprage_warmup())
+    npt.assert_allclose(subseq_def[3], (_mprage() + 3 * _navscan()))
+    npt.assert_allclose(
+        subseq_lut,
+        len(_noisecal()) * [0]
+        + 64 * len(_pical()) * [1]
+        + len(_mprage_warmup()) * [2]
+        + 32 * (len(_mprage()) + 3 * len(_navscan())) * [3],
+    )
