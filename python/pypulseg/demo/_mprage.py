@@ -17,7 +17,7 @@ def design_mprage(
     seq_filename: str = "cart_pypulseq.seq",
 ):
     """
-    Design 3D GRE with Cartesian k-space encoding.
+    Design 3D MPRAGE with Cartesian k-space encoding.
 
     Parameters
     ----------
@@ -65,6 +65,12 @@ def design_mprage(
     # ======
     # CREATE EVENTS
     # ======
+    rf_prep = pp.make_block_pulse(
+        flip_angle=math.pi, 
+        system=system, 
+        duration=500e-6, 
+        time_bw_product=4
+        )
     rf, gss, _ = pp.make_sinc_pulse(
         flip_angle=alpha * math.pi / 180,
         duration=3e-3,
@@ -101,6 +107,11 @@ def design_mprage(
 
     # Gradient spoiling
     gz_spoil = pp.make_trapezoid(channel="z", area=4 / slab_thickness, system=system)
+    
+    # Delays
+    TI, TR, T_recovery = 140e-3, 10e-3, 1e-3
+    delay_TI = TI - pp.calc_duration(rf_prep) / 2 - pp.calc_duration(gz_spoil)
+    delay_TR = TR - pp.calc_duration(rf) - pp.calc_duration(gx_pre) - pp.calc_duration(gx) - pp.calc_duration(gx_spoil)
 
     # Initialize RF phase and increment
     rf_phase = 0
@@ -111,6 +122,10 @@ def design_mprage(
     # ======
     # Loop over phase encodes and define sequence blocks
     for z in tqdm(range(-1, Nz)):
+        seq.add_block(rf_prep)
+        seq.add_block(gx_spoil, gy_spoil, gz_spoil)
+        seq.add_block(pp.make_delay(delay_TI))
+    
         # Pre-register PE events that repeat in the inner loop
         gzpre = pp.scale_grad(grad=gzphase, scale=pez_steps[z])
         gzpre.id = seq.register_grad_event(gzpre)

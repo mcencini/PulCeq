@@ -77,17 +77,17 @@ class PulseqShapeTrap:
 
     Attributes
     ----------
-    riseTime : int
+    rise_time : int
         Ramp-up time of the trapezoid (in microseconds).
-    flatTime : int
+    flat_time : int
         Flat-top time of the trapezoid (in microseconds).
-    fallTime : int
+    fall_time : int
         Ramp-down time of the trapezoid (in microseconds).
     """
 
-    riseTime: int
-    flatTime: int
-    fallTime: int
+    rise_time: int
+    flat_time: int
+    fall_time: int
 
     def to_bytes(self, byteswap: bool = False) -> bytes:
         """
@@ -105,9 +105,9 @@ class PulseqShapeTrap:
         """
         endian = ">" if byteswap else "<"
         return (
-            struct.pack(endian + "i", self.riseTime)
-            + struct.pack(endian + "i", self.flatTime)
-            + struct.pack(endian + "i", self.fallTime)
+            struct.pack(endian + "i", self.rise_time)
+            + struct.pack(endian + "i", self.flat_time)
+            + struct.pack(endian + "i", self.fall_time)
         )
 
     @classmethod

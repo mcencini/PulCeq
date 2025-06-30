@@ -1,6 +1,6 @@
-"""Cartesian 3D GRE example."""
+"""Non-Cartesian (stack-of-stars) 3D GRE example."""
 
-__all__ = ["design_gre"]
+__all__ = ["design_sos"]
 
 import math
 
@@ -10,14 +10,15 @@ from tqdm import tqdm
 import pypulseq as pp
 
 
-def design_gre(
+def design_sos(
     fov=(256, 180),
     mtx=(256, 150),
+    use_rot_ext: bool = True,
     write_seq: bool = False,
-    seq_filename: str = "cart_pypulseq.seq",
+    seq_filename: str = "noncart_pypulseq.seq",
 ):
     """
-    Design 3D MPRAGE with Cartesian k-space encoding.
+    Design 3D GRE with stack-of-stars k-space encoding.
 
     Parameters
     ----------
@@ -27,12 +28,16 @@ def design_gre(
     mtx : tuple, optional
         Image grid specified as ``(nx=ny, nz)``.
         The default is ``(256, 150)``.
+    use_rot_ext : bool, optional
+        Use custom Pulseq rotation extension
+        to reduce file size. Only compatible with GE interpeter (TOPPE).
+        The default is ``True``.
     write_seq : bool, optional
         Save sequence to disk as ``.seq``.
         The default is ``False``.
     seq_filename : str, optional
         Sequence filename.
-        The default is ``"cart_pypulseq.seq"``.
+        The default is ``"noncart_pypulseq.seq"``.
 
     Returns
     -------
@@ -46,7 +51,9 @@ def design_gre(
     # Create a new sequence object
     seq = pp.Sequence()
     fov, slab_thickness = fov[0] * 1e-3, fov[1] * 1e-3  # in-plane FOV, slab thickness
-    Nx, Ny, Nz = mtx[0], mtx[0], mtx[1]  # in-plane resolution, slice thickness
+    Nr, Nz = mtx[0], mtx[1]  # in-plane resolution, slice thickness
+
+    print(f"Using rotation extension: {use_rot_ext}")
 
     # RF specs
     alpha = 10  # flip angle
@@ -79,25 +86,27 @@ def design_gre(
     )
 
     # Define other gradients and ADC events
-    delta_kx, delta_ky, delta_kz = 1 / fov, 1 / fov, 1 / slab_thickness
+    delta_kr, delta_kz = 1 / fov, 1 / slab_thickness
     gread = pp.make_trapezoid(
-        channel="x", flat_area=Nx * delta_kx, flat_time=3.2e-3, system=system
+        channel="x", flat_area=Nr * delta_kr, flat_time=3.2e-3, system=system
     )
     adc = pp.make_adc(
-        num_samples=Nx, duration=gread.flat_time, delay=gread.rise_time, system=system
+        num_samples=Nr, duration=gread.flat_time, delay=gread.rise_time, system=system
     )
-    gxpre = pp.make_trapezoid(
+    grpre = pp.make_trapezoid(
         channel="x", area=-gread.area / 2, duration=1e-3, system=system
     )
-    gxrew = pp.scale_grad(grad=gxpre, scale=-1)
-    gxrew.id = seq.register_grad_event(gxpre)
-
-    gyphase = pp.make_trapezoid(channel="y", area=-delta_ky * Ny, system=system)
-    gzphase = pp.make_trapezoid(channel="z", area=-delta_kz * Nz, system=system)
+    grrew = pp.scale_grad(grad=grpre, scale=-1)
+    grrew.id = seq.register_grad_event(grpre)
+    gphase = pp.make_trapezoid(channel="z", area=-delta_kz * Nz, system=system)
 
     # Phase encoding plan and rotation
-    pey_steps = ((np.arange(Ny)) - Ny / 2) / Ny * 2
-    pez_steps = ((np.arange(Nz)) - Nz / 2) / Nz * 2
+    pe_steps = ((np.arange(Nz)) - Nz / 2) / Nz * 2
+    delta = np.deg2rad(137.5)  # GA
+    phi = np.arange(Nr) * delta
+
+    if use_rot_ext:
+        rotmat = _rotation_matrix(phi)
 
     # Gradient spoiling
     gz_spoil = pp.make_trapezoid(channel="z", area=4 / slab_thickness, system=system)
@@ -112,20 +121,12 @@ def design_gre(
     # Loop over phase encodes and define sequence blocks
     for z in tqdm(range(-1, Nz)):
         # Pre-register PE events that repeat in the inner loop
-        gzpre = pp.scale_grad(grad=gzphase, scale=pez_steps[z])
+        gzpre = pp.scale_grad(grad=gphase, scale=pe_steps[z])
         gzpre.id = seq.register_grad_event(gzpre)
-        gzrew = pp.scale_grad(grad=gzphase, scale=-pez_steps[z])
+        gzrew = pp.scale_grad(grad=gphase, scale=-pe_steps[z])
         gzrew.id = seq.register_grad_event(gzrew)
 
-        for y in range(Ny):
-            # Compute PE events
-            if z < 0:  # dummy for pre-scane and steady state prep
-                gypre = pp.scale_grad(grad=gyphase, scale=0.0)
-                gyrew = pp.scale_grad(grad=gyphase, scale=0.0)
-            else:
-                gypre = pp.scale_grad(grad=gyphase, scale=pey_steps[y])
-                gyrew = pp.scale_grad(grad=gyphase, scale=-pey_steps[y])
-
+        for r in range(Nr):
             # Compute RF and ADC phase for spoiling and signal demodulation
             rf.phase_offset = rf_phase / 180 * np.pi
             adc.phase_offset = rf_phase / 180 * np.pi
@@ -136,17 +137,33 @@ def design_gre(
             # Slab refocusing gradient
             seq.add_block(gss_reph)
 
-            # Read-prewinding and phase encoding gradients
-            seq.add_block(gxpre, gypre, gzpre)
+            if use_rot_ext:
+                # Create rotation event
+                rot = pp.make_rotation(rotmat[r])
 
-            # Add readout
-            if z < 0:
-                seq.add_block(gread)
+                # Read-prewinding and phase encoding gradients
+                seq.add_block(grpre, gzpre, rot)
+
+                # Add readout
+                if z < 0:
+                    seq.add_block(gread, rot)
+                else:
+                    seq.add_block(gread, adc, rot)
+
+                # Rewind
+                seq.add_block(grrew, gzrew, rot)
             else:
-                seq.add_block(gread, adc)
+                # Read-prewinding and phase encoding gradients
+                seq.add_block(*pp.rotate(grpre, gzpre, angle=phi[r], axis="z"))
 
-            # Rewind
-            seq.add_block(gxrew, gyrew, gzrew)
+                # Add readout
+                if z < 0:
+                    seq.add_block(*pp.rotate(gread, angle=phi[r], axis="z"))
+                else:
+                    seq.add_block(*pp.rotate(gread, adc, angle=phi[r], axis="z"))
+
+                # Rewind
+                seq.add_block(*pp.rotate(grrew, gzrew, angle=phi[r], axis="z"))
 
             # Spoil
             seq.add_block(gz_spoil)
@@ -169,10 +186,30 @@ def design_gre(
     if write_seq:
         # Prepare the sequence output for the scanner
         seq.set_definition(key="FOV", value=[fov, fov, slab_thickness / Nz])
-        seq.set_definition(key="Name", value="cart_gre")
+        seq.set_definition(key="Name", value="noncart_gre")
 
         seq.write(seq_filename)
     else:
         seq = seq.remove_duplicates()
 
     return seq
+
+
+# %% subroutines
+def _rotation_matrix(theta):
+    # R[0] = (R[0][0], R[0][1], R[0][2])
+    R0 = np.stack(
+        (np.cos(theta), -np.sin(theta), np.zeros_like(theta)), axis=1
+    )  # (nangles, 3)
+
+    # R[1] = (R[1][0], R[1][1], R[1][2])
+    R1 = np.stack(
+        (np.sin(theta), np.cos(theta), np.zeros_like(theta)), axis=1
+    )  # (nangles, 3)
+
+    # R[2] = (R[2][0], R[2][1], R[2][2])
+    R2 = np.stack(
+        (np.zeros_like(theta), np.zeros_like(theta), np.ones_like(theta)), axis=1
+    )  # (nangles, 3)
+
+    return np.stack((R0, R1, R2), axis=1)  # (nangles, 3, 3)

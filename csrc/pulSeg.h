@@ -27,217 +27,271 @@
 /****************************************************************/ 
 /*            Structs defining normalized shapes                */
 /****************************************************************/ 
-/** @struct PulseqShapeArbitrary
+/** @struct ShapeArbitrary
    * @brief  Arbitrary shape struct
    *
-   *  @var PulseqShapeArbitrary::nSamples
+   *  @var ShapeArbitrary::nSamples
    *    Number of waveform samples.
-   *  @var PulseqShapeArbitrary::samples
+   *  @var ShapeArbitrary::samples
    *    Array of waveform samples.
    */
 typedef struct {
-    int nSamples; /* Number of waveform samples */
-    float *samples;
-} PulseqShapeArbitrary; /* mirrors Pulseq CompressedShape */
+    int nSamples;   /* @brief Number of waveform samples */
+    float *samples; /* @brief Waveform samples */
+} ShapeArbitrary; /* mirrors Pulseq CompressedShape */
 
-/** @struct PulseqShapeTrap
+/** @struct ShapeTrap
    * @brief  Trapzoid shape struct
    *
-   *  @var PulseqShapeTrap::riseTime
+   *  @var ShapeTrap::riseTime
    *    Ramp up time of trapezoid (us).
-   *  @var PulseqShapeTrap::flatTime
+   *  @var ShapeTrap::flatTime
    *    Flat-top time of trapezoid (us).
-   *  @var PulseqShapeTrap::fallTime
+   *  @var ShapeTrap::fallTime
    *    Ramp down time of trapezoid (us).
    */
 typedef struct {
-    int riseTime; /* Ramp up time of trapezoid (us)  */
-    int flatTime; /* Flat-top time of trapezoid (us)  */
-    int fallTime; /* Ramp down time of trapezoid (us) */
-} PulseqShapeTrap; /* no Pulseq equivalent */
+    long riseTime; /* @brief Ramp up time of trapezoid (us)  */
+    long flatTime; /* @brief Flat-top time of trapezoid (us)  */
+    long fallTime; /* @brief Ramp down time of trapezoid (us) */
+} ShapeTrap; /* no Pulseq equivalent */
 
 /****************************************************************/ 
 /*                  Pulseq event structs                        */
 /****************************************************************/
-/** @struct PulseqRF
+/** @struct RFEvent
    * @brief  RF event
    *
-   *  @var PulseqRF::type
+   *  @var RFEvent::type
    *    Whether RF is NULL (0) or defined (1).
-   *  @var PulseqRF::amplitude
+   *  @var RFEvent::amplitude
    *    Peak magnitude of magShape (Hz).
-   *  @var PulseqRF::magShape
+   *  @var RFEvent::magShape
    *    Magnitude waveform shape.
-   *  @var PulseqRF::phaseShape
+   *  @var RFEvent::phaseShape
    *    Phase waveform shape (for complex-valued RF pulses).
-   *  @var PulseqRF::timeShape
+   *  @var RFEvent::timeShape
    *    Timepoints for RF waveform shape (for irregular raster).
-   *  @var PulseqRF::freqOffset
+   *  @var RFEvent::center
+   *    Effective RF center of the pulse shape measured from the start of the shape (us).
+   *  @var RFEvent::freqPPM
+   *    B0-dependent frequency offset of transmitter (ppm).
+   *  @var RFEvent::phasePPM
+   *    B0-dependent phase offset of transmitter (rad/MHz).
+   *  @var RFEvent::freqOffset
    *    Frequency offset of transmitter (Hz).
-   *  @var PulseqRF::phaseOffset
+   *  @var RFEvent::phaseOffset
    *    Phase offset of transmitter (rad).
-   *  @var PulseqRF::delay
+   *  @var RFEvent::delay
    *    Delay prior to the pulse (us).
-   *  @var PulseqRF::nUserInt
-   *    Number of integer user parameters.
-   *  @var PulseqRF::nUserInt
-   *    Array of integer user parameters.
-   *  @var PulseqRF::nUserFloat
-   *    Number of floating point user parameters.
-   *  @var PulseqRF::userFloat
-   *    Array of floating point user parameters.
+   * @var RFEvent::use 
+   *    Single character indicating the intended use of the pulse, e.g. e,r,etc...
    */
 typedef struct {
-    /* Header section */
-    short type; /* NULL or ARBITRARY */
-    
-    /* Waveforms */
-    float amplitude;                 /* Peak magnitude of magShape (Hz) */
-    PulseqShapeArbitrary magShape;   /* Arbitrary waveform, unitary peak amplitude */
-    PulseqShapeArbitrary phaseShape; /* Abitrary waveform */
-    PulseqShapeArbitrary timeShape;  /* Arbitrary waveform */
-    float freqOffset;                /* Frequency offset of transmitter (Hz) */
-	float phaseOffset;               /* Phase offset of transmitter (rad) */
-    int delay;                       /* Delay prior to the pulse (us) */
-    
-    /* User parameters arrays available for use as needed by the client program */
-    /* Must be defined to be allocated dynamically by the client program */
-    int nUserInt;     /* Default: 0 */
-    int* userInt;
-    int nUserFloat; /* Default: 0 */
-    float* userFloat;
-
-} PulseqRF; /* mirrors Pulseq RFEvent */
+    short type;                /* @brief NULL or ARBITRARY */    
+    float amplitude;           /* @brief Peak magnitude of magShape (Hz) */
+    ShapeArbitrary magShape;   /* @brief Arbitrary waveform, unitary peak amplitude */
+    ShapeArbitrary phaseShape; /* @brief Abitrary waveform */
+    ShapeArbitrary timeShape;  /* @brief Arbitrary waveform */
+    float center;              /* @brief Effective RF center of the pulse shape measured from the start of the shape (us) */
+    float freqPPM;             /* @brief B0-dependent frequency offset of transmitter (ppm) */
+    float phasePPM;            /* @brief B0-dependent phase offset of transmitter (rad/MHz) */
+    float freqOffset;          /* @brief Frequency offset of transmitter (Hz) */
+	float phaseOffset;         /* @brief Phase offset of transmitter (rad) */
+    int delay;                 /* @brief Delay prior to the pulse (us) */
+    char use;                  /* @brief Single character indicating the intended use of the pulse, e.g. e,r,etc... */
+} RFEvent; /* mirrors Pulseq RFEvent */
 
 /** @struct PulseqGrad
    * @brief  Gradient event. 
    *
-   *  @var PulseqGrad::type
+   *  @var GradEvent::type
    *    Whether gradient is NULL (0), TRAP (1) or ARBITRARY (2).
-   *  @var ::amplitude
+   *  @var GradEvent::amplitude
    *    Peak amplitude of the gradient (Hz/m).
-   *  @var PulseqGrad::delay
+   *  @var GradEvent::delay
    *    Delay prior to the gradient (us).
-   *  @var PulseqGrad::trap
+   *  @var GradEvent::trap
    *    Trapezoid shape (for type == 1).
-   *  @var PulseqGrad::waveShape
+   *  @var GradEvent::waveShape
    *    Gradient waveform shape (for type == 2).
-   *  @var PulseqGrad::timeShape
+   *  @var GradEvent::timeShape
    *    Timepoints for Gradient waveform shape (for type == 2).
+   *  @var GradEvent::first
+   *    Amplitude at the start of the shape (for type == 2).
+   *  @var GradEvent::last
+   *    Amplitude at the end of the shape(for type == 2).
    */
 typedef struct {
-    /* Header section */
-    short type; /* NULL, TRAP, or ARBITRARY */
-    
-    float amplitude; /* Peak amplitude of the gradient (Hz/m) */
-    int delay;       /* Delay prior to the gradient (us) */
-    
-    /* Waveforms */
-    PulseqShapeTrap trap;           /* Trapezoid, unitary plateau amplitude */
-    PulseqShapeArbitrary waveShape; /* Arbitrary waveform, unitary peak amplitude */
-    PulseqShapeArbitrary timeShape; /* Arbitrary waveform */
-    
-} PulseqGrad; /* mirrors Pulseq GradEvent */
+    short type;               /* @brief NULL, TRAP, or ARBITRARY */  
+    float amplitude;          /* @brief Peak amplitude of the gradient (Hz/m) */
+    int delay;                /* @brief Delay prior to the gradient (us) */
+    ShapeTrap trap;           /* @brief Trapezoid, unitary plateau amplitude */
+    ShapeArbitrary waveShape; /* @brief Arbitrary waveform, unitary peak amplitude */
+    ShapeArbitrary timeShape; /* @brief Arbitrary waveform */
+    float first;              /* @brief Amplitude at the start of the shape for arbitrary gradient */
+    float last;               /* @brief Amplitude at the end of the shape for arbitrary gradient */
+} GradEvent; /* mirrors Pulseq GradEvent */
 
-/** @struct PulseqADC
+/** @struct ADCEvent
    * @brief  ADC event. 
    *
-   *  @var PulseqADC::type
+   *  @var ADCEvent::type
    *    Whether ADC is NULL (0) or defined (1).
-   *  @var PulseqADC::numSamples
+   *  @var ADCEvent::numSamples
    *    Number of ADC samples.
-   *  @var PulseqADC::dwellTime
+   *  @var ADCEvent::dwellTime
    *    Dwell time of ADC readout (ns).
-   *  @var PulseqADC::delay
+   *  @var ADCEvent::delay
    *    Delay before first sample (us).
+   *  @var ADCEvent::freqPPM
+   *    B0-dependent frequency offset of receiver (ppm).
+   *  @var ADCEvent::phasePPM
+   *    B0-dependent phase offset of receiver (rad/MHz).
+   *  @var ADCEvent::freqOffset
+   *    Frequency offset of receiver (Hz).
+   *  @var ADCEvent::phaseOffset
+   *    Phase offset of receiver (rad).
+   *  @var ADCEvent::phaseModulationShape
+   *    Phase modulation shape of receiver (rad).
    */
 typedef struct {
-    /* Header section */
-    short   type; /* NULL or ADC */
-    
-    int numSamples; /* Number of ADC samples */
-    int dwellTime;  /* Dwell time of ADC readout (ns) */
-    int delay;      /* Delay before first sample (us) */
-    
-} PulseqADC; /* mirrors Pulseq ADCEvent */
+    short type;                          /* @brief NULL or ADC */
+    int numSamples;                      /* @brief Number of ADC samples */
+    int dwellTime;                       /* @brief Dwell time of ADC readout (ns) */
+    int delay;                           /* @brief Delay before first sample (us) */
+    float freqPPM;                       /* @brief B0-dependent frequency offset of receiver (ppm) */
+    float phasePPM;                      /* @brief B0-dependent phase offset of receiver (rad/MHz) */
+    float freqOffset;                    /* @brief Frequency offset of receiver (Hz) */
+	float phaseOffset;                   /* @brief Phase offset of receiver (rad) */
+    ShapeArbitrary phaseModulationShape; /* @brief Phase modulation shape of receiver (rad) */
+} ADCEvent; /* mirrors Pulseq ADCEvent */
 
-/** @struct PulseqTrig
+/** @struct TriggerEvent
    * @brief  Trigger event. 
    *
-   *  @var PulseqTrig::type
+   *  @var TriggerEvent::type
    *    Whether trigger is OFF (0) or ON (1).
-   *  @var PulseqTrig::duration
+   *  @var TriggerEvent::duration
    *    Duration of trigger event (us).
-   *  @var PulseqTrig::delay
+   *  @var TriggerEvent::delay
    *    Delay prior to the trigger event (us).
-   *  @var PulseqTrig::triggerType
+   *  @var TriggerEvent::triggerType
    *    Type of trigger (system dependent). 0: undefined / unused.
-   *  @var PulseqTrig::triggerChannel
+   *  @var TriggerEvent::triggerChannel
    *    Channel of trigger (system dependent). 0: undefined / unused.
    */
 typedef struct {
-    /* Header section */
-    short  type; /* OFF or ON */
-    
-    int duration;        /* Duration of trigger event (us) */
-    int delay;           /* Delay prior to the trigger event (us) */
-    int triggerType;     /* Type of trigger (system dependent). 0: undefined / unused */
-    int triggerChannel;  /* Channel of trigger (system dependent). 0: undefined / unused */
-    
-} PulseqTrig; /* mirrors Pulseq TriggerEvent */
+    short type;         /* @brief OFF or ON */
+    long duration;      /* @brief Duration of trigger event (us) */
+    long delay;         /* @brief Delay prior to the trigger event (us) */
+    int triggerType;    /* @brief Type of trigger (system dependent). 0: undefined / unused */
+    int triggerChannel; /* @brief Channel of trigger (system dependent). 0: undefined / unused */
+} TriggerEvent; /* mirrors Pulseq TriggerEvent */
+
+#define SOFT_DELAY_HINT_LENGTH 32
+/** @struct SoftDelayEvent
+   * @brief  Soft Delay event. 
+   *
+   *  @var SoftDelayEvent::type
+   *    Whether delay is NULL (0) or DEFINED (1).
+   *  @var SoftDelayEvent::numID
+   *    Numeric index of the soft delay to help the intepreter (together with the hint string) to identify the delay and allocate it to the UI element.
+   *  @var SoftDelayEvent::offset
+   *    Offset (positive or negative) added to the delay after the division by the factor (us).
+   *  @var SoftDelayEvent::factor
+   *    Factor by which the value on the user interface needs to be divided for calculating the final delay applied to the sequence.
+   *  @var SoftDelayEvent::hint
+   *    Text hint corresponding to this soft delay, e.g. TE.
+   */
+typedef struct {
+    short type;                        /* @brief NULL or DEFINED */
+    int numID;                         /* @brief Numeric index of the soft delay to help the intepreter (together with the hint string) to identify the delay and allocate it to the UI element */
+    int offset;                        /* @brief Offset (positive or negative) added to the delay after the division by the factor (us) */
+    int factor;                        /* @brief Factor by which the value on the user interface needs to be divided for calculating the final delay applied to the sequence */
+    char hint[SOFT_DELAY_HINT_LENGTH]; /* @brief Text hint corresponding to this soft delay, e.g. TE */
+} SoftDelayEvent; /* mirrors Pulseq SoftDelayEvent */
+
+/** @struct RotationEvent
+   * @brief  Rotation event. 
+   *
+   *  @var RotationEvent::type
+   *    Whether rotation is NULL (0) or DEFINED (1).
+   *  @var RotationEvent::rotQuaternion
+   *    Gradient rotation quaternion.
+   */
+typedef struct {
+    short type;        /* @brief NULL or DEFINED */
+    double rotQuaternion; /* @brief Gradient rotation quaternion */
+} RotationEvent; /* mirrors Pulseq RotationEvent */
+
+/** @struct RfShimmingEvent
+   * @brief  RF Shimming event. 
+   *
+   *  @var RfShimmingEvent::type
+   *    Whether rf shimming is NULL (0) or DEFINED (1).
+   *  @var RfShimmingEvent::ID
+   *    Unique ID of the RF shimming object.
+   *  @var RfShimmingEvent::nChan
+   *    Number of RF channels.
+   *  @var RfShimmingEvent::amplitudes
+   *    Amplitude scaling factor for each channel.
+   *  @var RfShimmingEvent::phases
+   *    Additional phase for each channel.
+   */
+typedef struct {
+    short type;        /* @brief NULL or DEFINED */
+    int ID;            /* @brief Unique ID of the RF shimming object */
+    int nChan;         /* @brief Number of RF channels */
+    float* amplitudes; /* @brief Amplitude scaling factor for each channel */
+    float* phases;     /* @brief Additional phase for each channel */
+} RfShimmingEvent; /* mirrors Pulseq SoftDelayEvent */
 
 /*********************************************************************************************************/ 
 /*                             Block, Segment(s), Loop, and Sequence structs                             */
 /*********************************************************************************************************/ 
-/** @struct PulseqBlock
+/** @struct SeqBlock
    * @brief  Block struct - a (typically short) array of these is used to contain a list of the base/parent blocks
    *
-   *  @var PulseqBlock::ID
+   *  @var SeqBlock::ID
    *    Unique block ID.
-   *  @var PulseqBlock::duration_ru
+   *  @var SeqBlock::duration_ru
    *    Block duration in block raster units.
-   *  @var PulseqBlock::rf
+   *  @var SeqBlock::blockDurationRaster
+   *    Duration raster (us).
+   *  @var SeqBlock::rf
    *    RF event in the block.
-   *  @var PulseqBlock::gx
-   *    X-axis Grad event in the block.
-   *  @var PulseqBlock::gy
-   *    Y-axis Grad event in the block.
-   *  @var PulseqBlock::gz
-   *    Z-axis Grad event in the block.
-   *  @var PulseqBlock::adc
+   *  @var SeqBlock::gx
+   *    X-axis Grad event in the block along X-axis.
+   *  @var SeqBlock::gy
+   *    Y-axis Grad event in the block along Y-axis.
+   *  @var SeqBlock::gz
+   *    Z-axis Grad event in the block along Z-axis.
+   *  @var SeqBlock::adc
    *    ADC event in the block.
-   *  @var PulseqBlock::trig
+   *  @var SeqBlock::trig
    *    Trigger event in the block.
-   *  @var PulseqBlock::nUserInt
-   *    Number of integer user parameters.
-   *  @var PulseqBlock::nUserInt
-   *    Array of integer user parameters.
-   *  @var PulseqBlock::nUserFloat
-   *    Number of floating point user parameters.
-   *  @var PulseqBlock::userFloat
-   *    Array of floating point user parameters.
+   *  @var SeqBlock::softDelay
+   *    SoftDelay event in the block.
+   *  @var SeqBlock::rotation
+   *    Rotation event in the block.
+   *  @var SeqBlock::rfShim
+   *    RF Shimming event in the block.
    */
 typedef struct {
-    /* Header section */
-    int ID; /* Unique block ID */
-
-    /* Block definition */
-    int duration_ru; /* Duration of the block in raster units */
-    PulseqRF   rf;
-    PulseqGrad gx;
-    PulseqGrad gy;
-    PulseqGrad gz;
-    PulseqADC  adc;
-    PulseqTrig trig;
-
-    /* User parameters arrays available for use as needed by the client program */
-    /* Must be defined to be allocated dynamically by the client program */
-    int nUserInt;     /* Default: 0 */
-    int* userInt;
-    int nUserFloat; /* Default: 0 */
-    float* userFloat;
-    
-} PulseqBlock; /* mirrors Pulseq SeqBlock */
+    int ID;                     /* @brief Unique block ID */
+    long duration_ru;           /* @brief Duration of the block in raster units */
+    double blockDurationRaster; /* @brief Duration raster (us) */
+    RFEvent   rf;               /* @brief RF event in the block */
+    GradEvent gx;               /* @brief Grad event in the block along X-axis */
+    GradEvent gy;               /* @brief Grad event in the block along Y-axis */
+    GradEvent gz;               /* @brief Grad event in the block along Z-axis */
+    ADCEvent  adc;              /* @brief ADC event in the block */
+    TriggerEvent trig;          /* @brief Trigger event in the block */
+    SoftDelayEvent softDelay;   /* @brief SoftDelay event in the block */
+    RotationEvent rotation;     /* @brief Rotation event in the block */
+    RfShimmingEvent rfShim;     /* @brief RF Shimming event in the block */
+} SeqBlock; /* mirrors Pulseq SeqBlock */
 
 /** @struct Segment
    * @brief  Struct containing block IDs that make up a segment 
@@ -258,8 +312,7 @@ typedef struct {
    *    Array of floating point user parameters.
    */
 typedef struct {
-    /* Header section */
-    short  segmentID; /* Unique segment ID */
+    short segmentID; /* Unique segment ID */
     
     /* Segment definition */
     short nBlocksInSegment;
@@ -394,7 +447,6 @@ typedef struct {
  *  inform proprietary gradient safety checks.
  */
 typedef struct {
-    /* Header section */
     int nBlocks;         /* Number of rows (length of BLOCKS section in .seq file) */
 
     short* segmentID;
@@ -500,26 +552,6 @@ typedef struct {
     short NOSLCFlag; 
     short* NOSCL; /* instructs the interpreter to ignore the scaling of the FOV specified on the UI for the given block(s) */
 
-    /* USER */
-    short user1Flag;
-    float* user1;
-    short user2Flag;
-    float* user2;
-    short user3Flag;
-    float* user3;
-    short user4Flag;
-    float* user4;
-    short user5Flag;
-    float* user5;
-    short user6Flag;
-    float* user6;
-    short user7Flag;
-    float* user7;
-    short user8Flag;
-    float* user8;
-    short user9Flag;
-    float* user9;
-
 } Loop; /* no Pulseq equivalence */
 
 /** @struct SegmentedSequence
@@ -555,7 +587,6 @@ typedef struct {
    *    Array of floating point user parameters.
    */
 typedef struct {
-    /* Header section */
 	int version_combined; /* 1000000 * version_major + 1000 * version_minor + version_revision */
 	
 	/* Base Pulseq blocks */
@@ -577,7 +608,7 @@ typedef struct {
         
     /* User parameters arrays available for use as needed by the client program */
     /* Must be defined to be allocated dynamically by the client program */
-    int nUserInt;     /* Default: 0 */
+    int nUserInt;   /* Default: 0 */
     int* userInt;
     int nUserFloat; /* Default: 0 */
     float* userFloat;
