@@ -1,8 +1,8 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-/* It will hopefully be possible to use 'typedef enum' definitions 
-   here in future EPIC releases */
+#define DEFINITION_NAME_LENGTH 32
+#define MAX_LINE_LENGTH = 256
 
 /* gradient/RF types */
 #define TRAP 1
@@ -34,6 +34,5 @@
 #define NOPOS 20 /* | flag         |      No      | Instructs the interpreter to ignore the the FOV offset specified on the UI for the given block(s) */
 #define NOSCL 21 /* | flag         |      No      | Instructs the interpreter to ignore the scaling of the FOV specified on the UI for the given block(s) */
 #define ONCE 22  /* | 3-state flag |      No      | A 3-state flag that instructs the interpreter to alter the sequence when executing multiple repeats as follows: blocks with ONCE==0 are executed on every repetition; ONCE==1: only on the first repetition; ONCE==2: only on the last repetition */
-
 
 #endif

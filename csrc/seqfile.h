@@ -10,11 +10,10 @@
 #include "constants.h"
 #include "event.h"
 
-#define DEFINITION_NAME_LENGTH 32
 typedef struct {
     char name[DEFINITION_NAME_LENGTH];
     int valueSize;
-    float *value;
+    char** value;
 } Definition;
 
 /**
