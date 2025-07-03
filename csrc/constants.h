@@ -2,7 +2,7 @@
 #define CONSTANTS_H
 
 #define DEFINITION_NAME_LENGTH 32
-#define MAX_LINE_LENGTH = 256
+#define MAX_LINE_LENGTH 256
 
 /* gradient/RF types */
 #define TRAP 1
