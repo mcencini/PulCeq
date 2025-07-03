@@ -127,7 +127,20 @@ void seqFileFree(SeqFile* seq);
  */
 void seqFileReset(SeqFile* seq);
 
+/**
+ * @brief Read [DEFINITIONS] section from a sequence file into the definitions table.
+ *
+ * Each line inside the [DEFINITIONS] section is expected to contain a key-value pair:
+ * - Format: `key value` (separated by space or tabs)
+ * - Lines beginning with `#` or empty lines are skipped
+ * - Section ends when a new section header (e.g., [BLOCKS], [RF], etc.) is encountered
+ *
+ * This function updates `seq.definitionsLibrary` and `seq.numDefinitions`.
+ *
+ * @param seq The SeqFile structure containing the file path and output table.
+ */
 void readDefinitions(SeqFile* seq);
+
 void readLibraries(SeqFile* seq, int readBlocks);
 
 // SeqBlock getBlock(SeqFile* seq, int blockIndex);

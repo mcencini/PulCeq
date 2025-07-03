@@ -3,7 +3,9 @@
  * @brief Implementation of Pulseq seqfile reading.
  *
  */
-#include "pulSeg.h"
+
+#include <stdio.h>
+#include "alloc.h"
 #include "seqfile.h"
 
 SeqFile* seqFile(char* filePath){
@@ -72,9 +74,71 @@ void seqFileReset(SeqFile* seq) {
     seqFileInit(seq);
 }
 
-/*************************/
-/*** Private functions ***/
-/*************************/
+void readDefinitions(SeqFile* seq) {
+    FILE* fp = fopen(seq->filePath, "r");
+    if (!fp) {
+        fprintf(stderr, "ERROR: Unable to open file: %s\n", seq->filePath);
+        return;
+    }
+
+    char line[MAX_LINE_LENGTH];
+    int inDefinitions = 0;
+
+    Definition* defs = NULL;
+    int defCount = 0;
+
+    while (fgets(line, sizeof(line), fp)) {
+        char* ptr = trim(line);
+
+        /* Skip empty or comment lines */
+        if (*ptr == '\0' || *ptr == '#') continue;
+
+        /* Detect section headers */
+        if (*ptr == '[') {
+            if (strncmp(ptr, "[DEFINITIONS]", 13) == 0) {
+                inDefinitions = 1;
+                continue;
+            } else if (inDefinitions) {
+                break;  /* exit when next section starts */
+            } else {
+                continue;
+            }
+        }
+
+        if (inDefinitions) {
+            /* Allocate space for new definition */
+            defs = realloc(defs, (defCount + 1) * sizeof(Definition));
+            Definition* def = &defs[defCount];
+            def->key = NULL;
+            def->values = NULL;
+            def->numValues = 0;
+
+            /* Tokenize */
+            char* token = strtok(ptr, " \t");
+            if (!token) continue;
+
+            def->key = strdup(token);  /* first token is key */
+
+            /* Parse values */
+            while ((token = strtok(NULL, " \t\n\r"))) {
+                def->values = realloc(def->values, (def->numValues + 1) * sizeof(char*));
+                def->values[def->numValues] = strdup(token);
+                def->numValues++;
+            }
+
+            defCount++;
+        }
+    }
+
+    fclose(fp);
+
+    /* Assign to SeqFile */
+    seq->definitionsLibrary = defs;
+    seq->numDefinitions = defCount;
+    seq->isDefinitionsLibraryParsed = 1;
+}
+
+/*************************  Local utils  ****************************************/
 #define INIT_LIBRARY(seq, fieldPtr, sizeField, flagField) \
     do { \
         (seq)->fieldPtr = NULL; \
@@ -103,7 +167,6 @@ void seqFileInit(SeqFile* seq){
     INIT_LIBRARY(seq, triggerLibrary, triggerLibrarySize, isTriggerLibraryParsed);
     seq->softDelayHintLibrary = NULL;
 }
-
 
 /**
  * @brief Map string label names to integer label codes.

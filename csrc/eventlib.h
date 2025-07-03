@@ -19,9 +19,8 @@ struct SeqFile;  /* Forward declaration */
  * Sets seq.isAdcLibrary to 1 after successful load.
  *
  * @param[in,out] seq Sequence struct containing filePath and adcLibrary info
- * @return 0 on success, non-zero on failure
  */
-int readAdcLibrary(struct SeqFile* seq);
+void readAdcLibrary(struct SeqFile* seq);
 
 /**
  * @brief Read [EXTENSIONS] section from the sequence file.
@@ -37,9 +36,8 @@ int readAdcLibrary(struct SeqFile* seq);
  * The numerical ID (TYPE_ID) is used in [BLOCKS] to reference a particular extension.
  *
  * @param seq Pointer to SeqFile structure that holds extensions array and file path.
- * @return 0 on success, non-zero on failure.
  */
-int readExtensionsLibrary(struct SeqFile* seq);
+void readExtensionsLibrary(struct SeqFile* seq);
 
 /**
  * @brief Read the GRAD and TRAP libraries from sequence file.
@@ -48,9 +46,9 @@ int readExtensionsLibrary(struct SeqFile* seq);
  * Applies a flag of 1 to identify these as gradient blocks.
  *
  * @param[in,out] seq Sequence struct containing filePath and gradLibrary info
- * @return 0 on success, non-zero on failure
  */
-int readGradLibrary(struct SeqFile* seq);
+void readGradLibrary(struct SeqFile* seq);
+
 /**
  * @brief Read the RF library from sequence file.
  *
@@ -58,8 +56,7 @@ int readGradLibrary(struct SeqFile* seq);
  * Sets seq.isRfLibrary to 1 after successful load.
  *
  * @param[in,out] seq Sequence struct containing filePath and rfLibrary info
- * @return 0 on success, non-zero on failure
  */
-int readRfLibrary(struct SeqFile* seq);
+void readRfLibrary(struct SeqFile* seq);
 
 #endif /* EVENTLIB_H */
