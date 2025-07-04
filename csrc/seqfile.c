@@ -88,7 +88,7 @@ void readDefinitions(SeqFile* seq)
 
     while (fgets(line, sizeof(line), f)) {
         char* p = line;
-        while (isspace((unsigned char)*p)) p++;
+        while (is_space((unsigned char)*p)) p++;
 
         if (*p == '\0' || *p == '#') continue;
 
