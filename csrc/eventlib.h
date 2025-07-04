@@ -6,10 +6,6 @@
 #ifndef EVENTLIB_H
 #define EVENTLIB_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 struct SeqFile;  /* Forward declaration */
 
 /**
@@ -20,7 +16,7 @@ struct SeqFile;  /* Forward declaration */
  *
  * @param[in,out] seq Sequence struct containing filePath and adcLibrary info
  */
-void readAdcLibrary(struct SeqFile* seq);
+void readAdcLibrary(SeqFile* seq);
 
 /**
  * @brief Read [EXTENSIONS] section from the sequence file.
@@ -37,7 +33,7 @@ void readAdcLibrary(struct SeqFile* seq);
  *
  * @param seq Pointer to SeqFile structure that holds extensions array and file path.
  */
-void readExtensionsLibrary(struct SeqFile* seq);
+void readExtensionsLibrary(SeqFile* seq);
 
 /**
  * @brief Read the GRAD and TRAP libraries from sequence file.
@@ -47,7 +43,7 @@ void readExtensionsLibrary(struct SeqFile* seq);
  *
  * @param[in,out] seq Sequence struct containing filePath and gradLibrary info
  */
-void readGradLibrary(struct SeqFile* seq);
+void readGradLibrary(SeqFile* seq);
 
 /**
  * @brief Read the RF library from sequence file.
@@ -57,6 +53,6 @@ void readGradLibrary(struct SeqFile* seq);
  *
  * @param[in,out] seq Sequence struct containing filePath and rfLibrary info
  */
-void readRfLibrary(struct SeqFile* seq);
+void readRfLibrary(SeqFile* seq);
 
 #endif /* EVENTLIB_H */

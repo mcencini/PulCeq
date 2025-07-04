@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+
 #include "alloc.h"
 #include "seqfile.h"
 

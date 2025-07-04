@@ -8,10 +8,16 @@
 #define TRAP 1
 #define GRAD 2
 
-/**************************************/ 
-/*         Labels and Flags           */
-/**************************************/
-/****** Label       |     Type     | Data Mapping | Description   */
+/*********************************************************************      Extensions     **************************************************************************************/
+#define EXT_DELAY     1
+#define EXT_LABELINC  2
+#define EXT_LABELINC  3
+#define EXT_RF_SHIM   4
+#define EXT_ROTATION  5
+#define EXT_TRIGGER   6
+
+/*********************************************************************      Labels and Flags     **************************************************************************************/
+/****** Label       |     Type     | Data Mapping | Description ***********************************************************************************************************************/
 #define SLC 1    /* | counter      |      Yes     | Slice counter (or slab counter for 3D multi-slab sequences) */
 #define SEG 2    /* | counter      |      Yes     | Segment counter e.g. for segmented FLASH or EPI */
 #define REP 3    /* | counter      |      Yes     | Repetition counter */

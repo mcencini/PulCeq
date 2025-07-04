@@ -7,6 +7,7 @@
 #define SEQFILE_H
 
 #include <string.h>
+
 #include "constants.h"
 #include "event.h"
 

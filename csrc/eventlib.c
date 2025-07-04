@@ -4,8 +4,13 @@
  *
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "alloc.h"
 #include "constants.h"
+#include "c_type.h"
 #include "eventlib.h"
 #include "seqfile.h"
 
@@ -124,20 +129,6 @@ typedef struct {
     int size;         /**< Number of values to scale */
     const float* values; /**< Array of scaling factors */
 } Scale;
-
-/**
- * @brief Check whether a character is a whitespace character.
- *
- * This custom implementation matches the standard definition of isspace(),
- * including space, horizontal tab, newline, vertical tab, form feed, and carriage return.
- *
- * @param c The character to check (typically as unsigned char or casted to int).
- * @return Non-zero if the character is a whitespace character; 0 otherwise.
- */
-static int is_space(int c)
-{
-    return (c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r');
-}
 
 /**
  * @brief Initialize a standard library array for given sections.
