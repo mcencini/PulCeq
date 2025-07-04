@@ -74,67 +74,73 @@ void seqFileReset(SeqFile* seq) {
     seqFileInit(seq);
 }
 
-void readDefinitions(SeqFile* seq) {
-    FILE* fp = fopen(seq->filePath, "r");
-    if (!fp) {
-        fprintf(stderr, "ERROR: Unable to open file: %s\n", seq->filePath);
-        return;
-    }
+void readDefinitions(SeqFile* seq)
+{
+    if (seq->isDefinitionsLibraryParsed) return;
+    FILE* f = fopen(seq->filePath, "r");
+    if (!f) return;
 
     char line[MAX_LINE_LENGTH];
-    int inDefinitions = 0;
+    int inSection = 0;
+    int count = 0;
 
     Definition* defs = NULL;
-    int defCount = 0;
 
-    while (fgets(line, sizeof(line), fp)) {
-        char* ptr = trim(line);
+    while (fgets(line, sizeof(line), f)) {
+        char* p = line;
+        while (isspace((unsigned char)*p)) p++;
 
-        /* Skip empty or comment lines */
-        if (*ptr == '\0' || *ptr == '#') continue;
+        if (*p == '\0' || *p == '#') continue;
 
-        /* Detect section headers */
-        if (*ptr == '[') {
-            if (strncmp(ptr, "[DEFINITIONS]", 13) == 0) {
-                inDefinitions = 1;
-                continue;
-            } else if (inDefinitions) {
-                break;  /* exit when next section starts */
-            } else {
-                continue;
+        if (!inSection) {
+            if (strncmp(p, "[DEFINITIONS]", 13) == 0) {
+                inSection = 1;
             }
+            continue;
         }
 
-        if (inDefinitions) {
-            /* Allocate space for new definition */
-            defs = realloc(defs, (defCount + 1) * sizeof(Definition));
-            Definition* def = &defs[defCount];
-            def->key = NULL;
-            def->values = NULL;
-            def->numValues = 0;
+        if (*p == '[') break;  /* Reached next section */
 
-            /* Tokenize */
-            char* token = strtok(ptr, " \t");
-            if (!token) continue;
+        /* Allocate new definition */
+        Definition def;
+        def.valueSize = 0;
+        def.value = NULL;
 
-            def->key = strdup(token);  /* first token is key */
+        /* Parse name */
+        char* nameToken = strtok(p, " \t\r\n");
+        if (!nameToken) continue;
+        strncpy(def.name, nameToken, DEFINITION_NAME_LENGTH - 1);
+        def.name[DEFINITION_NAME_LENGTH - 1] = '\0';
 
-            /* Parse values */
-            while ((token = strtok(NULL, " \t\n\r"))) {
-                def->values = realloc(def->values, (def->numValues + 1) * sizeof(char*));
-                def->values[def->numValues] = strdup(token);
-                def->numValues++;
+        /* Parse values */
+        char* token;
+        while ((token = strtok(NULL, " \t\r\n")) != NULL) {
+            char** newValueArray = (char**) ALLOC(sizeof(char*) * (def.valueSize + 1));
+            for (int i = 0; i < def.valueSize; i++) {
+                newValueArray[i] = def.value[i];
             }
 
-            defCount++;
+            newValueArray[def.valueSize] = (char*) ALLOC(strlen(token) + 1);
+            strcpy(newValueArray[def.valueSize], token);
+            if (def.value) FREE(def.value);
+            def.value = newValueArray;
+            def.valueSize++;
         }
+
+        /* Grow global definitions array */
+        Definition* newDefs = (Definition*) ALLOC(sizeof(Definition) * (count + 1));
+        for (int i = 0; i < count; i++) {
+            newDefs[i] = defs[i];
+        }
+        newDefs[count] = def;
+        if (defs) FREE(defs);
+        defs = newDefs;
+        count++;
     }
 
-    fclose(fp);
-
-    /* Assign to SeqFile */
+    fclose(f);
     seq->definitionsLibrary = defs;
-    seq->numDefinitions = defCount;
+    seq->numDefinitions = count;
     seq->isDefinitionsLibraryParsed = 1;
 }
 
