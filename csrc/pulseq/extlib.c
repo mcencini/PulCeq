@@ -17,8 +17,35 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
         .values = (float[]){ 1, 1, 1 } 
     };
 
-    /* Check if library was already parsed */
-    if (seq->isExtensionsLibraryParsed) return;
+    Scale triggerScale = { 
+        .size = 3, 
+        .values = (float[]){ 1, 1, 1 } 
+    };
+
+    Scale rotationsScale = { 
+        .size = 3, 
+        .values = (float[]){ 1, 1, 1 } 
+    };
+
+    Scale labelsetScale = { 
+        .size = 3, 
+        .values = (float[]){ 1, 1, 1 } 
+    };
+
+    Scale labelincScale = { 
+        .size = 3, 
+        .values = (float[]){ 1, 1, 1 } 
+    };
+    
+    Scale delaysScale = { 
+        .size = 3, 
+        .values = (float[]){ 1, 1, 1 } 
+    };
+
+    Scale rfshimScale = { 
+        .size = 3, 
+        .values = (float[]){ 1, 1, 1 } 
+    };
 
     /* Go to the correct section */
     getSectionOffsets(&(seq->offsets).extensions, seq, f, "[EXTENSIONS]", 1, 1);
@@ -88,81 +115,51 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
         return;
     }
 
-    seq->isExtensionsLibraryParsed = 1;
-}
-
-void readExtensions(SeqFile* seq)
-{
-    if (seq->isExtensionsLibraryParsed) return;
-
-    FILE* f = fopen(seq->filePath, "r");
-    if (!f) return 1;
-
-    char line[MAX_LINE_LENGTH];
-    int maxID = -1;
-
-    /* First pass: find max extension ID to allocate extensionMap */
-    while (fgets(line, sizeof(line), f)) {
-        char* p = line;
-        while (is_space((unsigned char)*p)) p++;
-        if (*p == '\0' || *p == '#') continue;
-
-        char name[32];
-        int id;
-        if (sscanf(p, "extension %31s %d", name, &id) == 2) {
-            if (id > maxID) maxID = id;
+    if (seq->offsets.triggers > 0){
+        ret = readStandardLibrary(f, seq->offsets.triggers, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+        if (ret != 0) {
+            fprintf(stderr, "Error: Failed to initialize trigger library\n");
+            return;
         }
     }
 
-    if (maxID < 0) {
-        fclose(f);
-        return 0;  /* No extensions found, still valid */
+    if (seq->offsets.rotations > 0){
+        ret = readStandardLibrary(f, seq->offsets.rotations, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+        if (ret != 0) {
+            fprintf(stderr, "Error: Failed to initialize rotations library\n");
+            return;
+        }
     }
 
-    seq->extensionMapSize = maxID + 1;
-    seq->extensionMap = (int*) ALLOC(sizeof(int) * seq->extensionMapSize);
-    if (!seq->extensionMap) {
-        fclose(f);
-        return 2;
+    if (seq->offsets.labelset > 0){
+        ret = readStandardLibrary(f, seq->offsets.labelset, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+        if (ret != 0) {
+            fprintf(stderr, "Error: Failed to initialize labelset library\n");
+            return;
+        }
     }
 
-    for (int i = 0; i < seq->extensionMapSize; i++) {
-        seq->extensionMap[i] = 0;
+    if (seq->offsets.labelinc > 0){
+        ret = readStandardLibrary(f, seq->offsets.labelinc, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+        if (ret != 0) {
+            fprintf(stderr, "Error: Failed to initialize labelinc library\n");
+            return;
+        }
     }
 
-    /* Second pass: parse and dispatch */
-    rewind(f);
-    while (fgets(line, sizeof(line), f)) {
-        char* p = line;
-        while (is_space((unsigned char)*p)) p++;
-        if (*p == '\0' || *p == '#') continue;
-
-        char name[32];
-        int id;
-        if (sscanf(p, "extension %31s %d", name, &id) != 2) continue;
-
-        if (strcmp(name, "TRIGGERS") == 0) {
-            seq->extensionMap[id] = EXT_TRIGGER;
-            readExtensionTriggers(seq, id);
-        } else if (strcmp(name, "ROTATIONS") == 0) {
-            seq->extensionMap[id] = EXT_ROTATION;
-            readExtensionRotations(seq, id);
-        } else if (strcmp(name, "RF_SHIM") == 0) {
-            seq->extensionMap[id] = EXT_RF_SHIM;
-            readExtensionRfShim(seq, id);
-        } else if (strcmp(name, "LABELSET") == 0) {
-            seq->extensionMap[id] = EXT_LABELSET;
-            readExtensionLabelSet(seq, id);
-        } else if (strcmp(name, "LABELINC") == 0) {
-            seq->extensionMap[id] = EXT_LABELINC;
-            readExtensionLabelInc(seq, id);
-        } else if (strcmp(name, "DELAYS") == 0) {
-            seq->extensionMap[id] = EXT_DELAY;
-            readExtensionDelays(seq, id);
-        } /* Unknown extensions silently ignored */
+    if (seq->offsets.delays > 0){
+        ret = readStandardLibrary(f, seq->offsets.delays, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+        if (ret != 0) {
+            fprintf(stderr, "Error: Failed to initialize delays library\n");
+            return;
+        }
     }
 
-    fclose(f);
-    seq->isExtensionsLibraryParsed = 1;
-    return;
+    if (seq->offsets.rfshim > 0){
+        ret = readStandardLibrary(f, seq->offsets.rfshim, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+        if (ret != 0) {
+            fprintf(stderr, "Error: Failed to initialize rf shim library\n");
+            return;
+        }
+    }
 }
