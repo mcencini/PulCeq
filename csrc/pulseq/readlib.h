@@ -12,6 +12,7 @@
 #include "constants.h"
 
 /**
+ * @struct Scale
  * @brief Scale struct used for multiplying parsed library values.
  */
 typedef struct {

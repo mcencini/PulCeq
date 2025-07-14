@@ -6,6 +6,11 @@
 #ifndef SEQFILE_H
 #define SEQFILE_H
 
+/**
+ * @struct SectionOffset
+ * @brief Line positions of the different sections of a Pulseq file.
+ * 
+ */
 typedef struct {
     long scan_cursor;
     long version;
@@ -26,6 +31,12 @@ typedef struct {
     long shapes;
 } SectionOffsets;
 
+/**
+ * @struct Definition
+ * @brief Custom definition for sequence description.
+ * 
+ * @note Values are stored as char, and must be casted to the correct datatype according to interpreter needs.
+ */
 typedef struct {
     char name[DEFINITION_NAME_LENGTH];
     int valueSize;
