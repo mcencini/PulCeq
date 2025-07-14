@@ -17,14 +17,12 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** 
         if (offsets[sec] < 0) continue;  /* skip not found */
 
         if (fseek(f, offsets[sec], SEEK_SET) != 0) {
-            fclose(f);
-            return 2;
+            return 1;
         }
 
         /* Skip the section header line */
         if (!fgets(line, sizeof(line), f)) {
-            fclose(f);
-            return 3;
+            return 1;
         }
 
         /* Read until next section or EOF */
@@ -45,7 +43,7 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** 
     if (maxIndex < 0) {
         *target = NULL;
         *targetCount = 0;
-        return 4; /* no entries found */
+        return 1; /* no entries found */
     }
 
     /* Allocate zero-filled 2D array */
