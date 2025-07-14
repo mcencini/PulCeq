@@ -1,0 +1,57 @@
+/**
+ * @file readlib.h
+ * @brief Public API for parsing EventLibraries from Pulseq files.
+ *
+ */
+#ifndef READLIB_H
+#define READLIB_H
+
+#include <stdio.h>
+
+#include "alloc.h"
+#include "constants.h"
+
+/**
+ * @brief Scale struct used for multiplying parsed library values.
+ */
+typedef struct {
+    int size;         /**< Number of values to scale */
+    const float* values; /**< Array of scaling factors */
+} Scale;
+
+/**
+ * @brief Initialize a combined library array from multiple section offsets.
+ *
+ * For each section offset, seeks and reads lines to find the maximum index in first column.
+ * Allocates and zero-fills a float** array with (maxIndex + 1) rows and numEntries columns.
+ *
+ * @param[in] f              Opened file handle (text mode)
+ * @param[in] offsets        Array of file offsets for sections.
+ * @param[in] numSections    Number of sections.
+ * @param[out] target        Pointer to float** pointer to store allocated 2D array.
+ * @param[out] targetCount   Pointer to int to store allocated row count.
+ * @param[in] numEntries     Number of columns (entries) per row.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** target, int* targetCount, int numEntries);
+
+/**
+ * @brief Read and parse one standard library section from file at given offset.
+ *
+ * Reads lines starting at offset until next section or EOF.
+ * Parses index and values, scales values, and stores in target array.
+ * If flag >= 0, sets target[index][0] = flag.
+ *
+ * @param[in] f              Opened file handle (text mode)
+ * @param[in] offset         File offset where section starts.
+ * @param[in,out] target     Pre-allocated 2D float array.
+ * @param[in] targetCount    Number of rows in target.
+ * @param[in] scale          Scale struct with size and values.
+ * @param[in] flag           Flag to store at target[index][0], or -1 to ignore.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, Scale scale, int flag);
+
+#endif /* READLIB_H */
