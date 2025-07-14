@@ -4,9 +4,14 @@
  *
  */
 
+#include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
-#include "alloc.h"
+#include "pulseq/alloc.h"
+#include "pulseq/constants.h"
+#include "pulseq/event.h"
+
 #include "seqfile.h"
 
 SeqFile* seqFile(char* filePath){
@@ -71,6 +76,7 @@ void seqFileReset(SeqFile* seq) {
     }
 
     if (seq->isTriggerLibraryParsed) FREE(seq->triggerLibrary);
+    FREE(seq->extensionLUT);
 
     seqFileInit(seq);
 }
@@ -89,7 +95,7 @@ void readDefinitions(SeqFile* seq)
 
     while (fgets(line, sizeof(line), f)) {
         char* p = line;
-        while (is_space((unsigned char)*p)) p++;
+        while (isspace((unsigned char)*p)) p++;
 
         if (*p == '\0' || *p == '#') continue;
 
@@ -173,6 +179,30 @@ void seqFileInit(SeqFile* seq){
     INIT_LIBRARY(seq, softDelayLibrary, softDelayLibrarySize, isSoftDelayLibraryParsed);
     INIT_LIBRARY(seq, triggerLibrary, triggerLibrarySize, isTriggerLibraryParsed);
     seq->softDelayHintLibrary = NULL;
+    for (int i = 0; i < 8; i++){
+        seq->extensionMap[i] = -1;
+    }
+    seq->extensionLUTSize = 0;
+    seq->extensionLUT = NULL;
+
+    seq->offsets.scan_cursor = -1;
+    seq->offsets.version = -1;
+    seq->offsets.signature = -1;
+    seq->offsets.definitions = -1;
+    seq->offsets.blocks = -1;
+    seq->offsets.rf = -1;
+    seq->offsets.grad = -1;
+    seq->offsets.trap = -1;
+    seq->offsets.adc = -1;
+    seq->offsets.extensions = -1;
+    seq->offsets.triggers = -1;
+    seq->offsets.rfshim = -1;
+    seq->offsets.labelset = -1;
+    seq->offsets.labelinc = -1;
+    seq->offsets.delays = -1;
+    seq->offsets.rotations = -1;
+    seq->offsets.shapes = -1;
+
 }
 
 /**

@@ -6,10 +6,25 @@
 #ifndef SEQFILE_H
 #define SEQFILE_H
 
-#include <string.h>
-
-#include "constants.h"
-#include "event.h"
+typedef struct {
+    long scan_cursor;
+    long version;
+    long signature;
+    long definitions;
+    long blocks;
+    long rf;
+    long grad;
+    long trap;
+    long adc;
+    long extensions;
+    long triggers;
+    long rotations;
+    long labelset;
+    long labelinc;
+    long delays;
+    long rfshim;
+    long shapes;
+} SectionOffsets;
 
 typedef struct {
     char name[DEFINITION_NAME_LENGTH];
@@ -30,6 +45,7 @@ typedef struct {
  */
 typedef struct {
     char* filePath;                 /**< @brief Path to the sequence (.seq) file. */
+    SectionOffsets offsets;         /**< @brief Line position of each section. */
 
     int versionCombined;            /**< @brief Combined version number calculated as:
                                          1000000 * versionMajor + 1000 * versionMinor + versionRevision. */
@@ -41,35 +57,10 @@ typedef struct {
     int numDefinitions;             /**< @brief Number of definitions parsed. */
     Definition *definitionsLibrary; /**< @brief Array of parsed definitions. */
 
-    int isAdcLibraryParsed;         /**< @brief Flag indicating if the ADC library was parsed. */
-    int adcLibrarySize;             /**< @brief Number of ADC entries. */
-    float (*adcLibrary)[8];         /**< @brief ADC library data with columns:
-                                        num, dwell, delay, freqPPM, phasePPM, freq, phase, phase_id. */
-
     int isBlockLibraryParsed;       /**< @brief Flag indicating if the block library was parsed. */
     int blockLibrarySize;           /**< @brief Number of block entries. */
     int (*blockLibrary)[6];         /**< @brief Block library data with columns:
                                          duration, rf, gx, gy, gz, ext. */
-
-    int isExtensionsLibraryParsed;  /**< @brief Flag indicating if the extensions library was parsed. */
-    int extensionsLibrarySize;      /**< @brief Number of extension entries. */
-    int (*extensionsLibrary)[3];    /**< @brief Extensions library data with columns:
-                                          type, ref, next_id. */
-
-    int isGradLibraryParsed;        /**< @brief Flag indicating if the gradient library was parsed. */
-    int gradLibrarySize;            /**< @brief Number of gradient entries. */
-    float (*gradLibrary)[7];        /**< @brief Gradient library data with columns:
-                                         type, amp, rise/first flat, last fall, shape_id, delay, time_id, unused/delay. */
-
-    int isLabelincLibraryParsed;    /**< @brief Flag indicating if the label increment library was parsed. */
-    int labelincLibrarySize;        /**< @brief Number of label increment entries. */
-    int (*labelincLibrary)[2];      /**< @brief Label increment data with columns:
-                                         increment, labelstring index. */
-
-    int isLabelsetLibraryParsed;    /**< @brief Flag indicating if the label set library was parsed. */
-    int labelsetLibrarySize;        /**< @brief Number of label set entries. */
-    int (*labelsetLibrary)[2];      /**< @brief Label set data with columns:
-                                         set, labelstring index. */
 
     int isRfLibraryParsed;          /**< @brief Flag indicating if the RF library was parsed. */
     int rfLibrarySize;              /**< @brief Number of RF entries. */
@@ -77,19 +68,40 @@ typedef struct {
                                          amp, mag_id, phase_id, time_id, center, delay,
                                          freqPPM, phasePPM, freq, phase. */
 
-    int isRfShimLibraryParsed;      /**< @brief Flag indicating if the RF shim library was parsed. */
-    int rfShimLibrarySize;          /**< @brief Number of RF shim entries (channels). */
-    float** rfShimLibrary;          /**< @brief RF shim data; per-channel magnitude and phase arrays:
-                                         magn_c1, phase_c1, magn_c2, phase_c2, ... */
+    int isGradLibraryParsed;        /**< @brief Flag indicating if the gradient library was parsed. */
+    int gradLibrarySize;            /**< @brief Number of gradient entries. */
+    float (*gradLibrary)[7];        /**< @brief Gradient library data with columns:
+                                         type, amp, rise/first flat, last fall, shape_id, delay, time_id, unused/delay. */
+
+    int isAdcLibraryParsed;         /**< @brief Flag indicating if the ADC library was parsed. */
+    int adcLibrarySize;             /**< @brief Number of ADC entries. */
+    float (*adcLibrary)[8];         /**< @brief ADC library data with columns:
+                                        num, dwell, delay, freqPPM, phasePPM, freq, phase, phase_id. */
+
+    int isExtensionsLibraryParsed;  /**< @brief Flag indicating if the extensions library was parsed. */
+    int extensionsLibrarySize;      /**< @brief Number of extension entries. */
+    int (*extensionsLibrary)[3];    /**< @brief Extensions library data with columns:
+                                          type, ref, next_id. */
+
+    int isTriggerLibraryParsed;     /**< @brief Flag indicating if the trigger library was parsed. */
+    int triggerLibrarySize;         /**< @brief Number of trigger entries. */
+    int (*triggerLibrary)[4];       /**< @brief Trigger library data with columns:
+                                         duration, delay, type, channel. */
 
     int isRotationLibraryParsed;    /**< @brief Flag indicating if the rotation library was parsed. */
     int rotationLibrarySize;        /**< @brief Number of rotation entries. */
     float (*rotationLibrary)[4];    /**< @brief Rotation quaternion data with columns:
                                          RotQuat0, RotQuatX, RotQuatY, RotQuatZ. */
 
-    int isShapeLibraryParsed;       /**< @brief Flag indicating if the shape library was parsed. */
-    int shapeLibrarySize;           /**< @brief Number of shape entries. */
-    ShapeArbitrary** shapeLibrary;  /**< @brief Array of pointers to arbitrary shape structures. */
+    int isLabelsetLibraryParsed;    /**< @brief Flag indicating if the label set library was parsed. */
+    int labelsetLibrarySize;        /**< @brief Number of label set entries. */
+    int (*labelsetLibrary)[2];      /**< @brief Label set data with columns:
+                                         set, labelstring index. */
+
+    int isLabelincLibraryParsed;    /**< @brief Flag indicating if the label increment library was parsed. */
+    int labelincLibrarySize;        /**< @brief Number of label increment entries. */
+    int (*labelincLibrary)[2];      /**< @brief Label increment data with columns:
+                                         increment, labelstring index. */
 
     int isSoftDelayLibraryParsed;   /**< @brief Flag indicating if the soft delay library was parsed. */
     int softDelayLibrarySize;       /**< @brief Number of soft delay entries. */
@@ -97,10 +109,19 @@ typedef struct {
                                          numID, offset, factor. */
     char (*softDelayHintLibrary)[SOFT_DELAY_HINT_LENGTH]; /**< @brief Hint strings related to soft delays. */
 
-    int isTriggerLibraryParsed;     /**< @brief Flag indicating if the trigger library was parsed. */
-    int triggerLibrarySize;         /**< @brief Number of trigger entries. */
-    int (*triggerLibrary)[4];       /**< @brief Trigger library data with columns:
-                                         duration, delay, type, channel. */
+    int isRfShimLibraryParsed;      /**< @brief Flag indicating if the RF shim library was parsed. */
+    int rfShimLibrarySize;          /**< @brief Number of RF shim entries (channels). */
+    float** rfShimLibrary;          /**< @brief RF shim data; per-channel magnitude and phase arrays:
+                                         magn_c1, phase_c1, magn_c2, phase_c2, ... */
+
+    int extensionMap[8];            /**< @brief Map assigning to each EXT Enum its actual numerical ID written in SeqFile */
+    int extensionLUTSize;           /**< @brief Size of look-up table to retrieve from a given extension numerical ID the underlying Enum (type) */
+    int *extensionLUT;              /**< @brief Look-up table to retrieve from a given extension numerical ID the underlying Enum (type) */
+
+    int isShapeLibraryParsed;       /**< @brief Flag indicating if the shape library was parsed. */
+    int shapeLibrarySize;           /**< @brief Number of shape entries. */
+    ShapeArbitrary** shapeLibrary;  /**< @brief Array of pointers to arbitrary shape structures. */
+
 } SeqFile;
 
 /**
