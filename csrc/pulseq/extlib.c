@@ -4,6 +4,7 @@
  *
  */
 
+#include <math.h>
 #include "extlib.h"
 
 #include "../seqfile.h"
@@ -17,34 +18,14 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
         .values = (float[]){ 1, 1, 1 } 
     };
 
-    Scale triggerScale = { 
-        .size = 3, 
-        .values = (float[]){ 1, 1, 1 } 
+    Scale trigScale = { 
+        .size = 4, 
+        .values = (float[]){ 1, 1, 1, 1 } 
     };
 
-    Scale rotationsScale = { 
-        .size = 3, 
-        .values = (float[]){ 1, 1, 1 } 
-    };
-
-    Scale labelsetScale = { 
-        .size = 3, 
-        .values = (float[]){ 1, 1, 1 } 
-    };
-
-    Scale labelincScale = { 
-        .size = 3, 
-        .values = (float[]){ 1, 1, 1 } 
-    };
-    
-    Scale delaysScale = { 
-        .size = 3, 
-        .values = (float[]){ 1, 1, 1 } 
-    };
-
-    Scale rfshimScale = { 
-        .size = 3, 
-        .values = (float[]){ 1, 1, 1 } 
+    Scale rotScale = { 
+        .size = 4, 
+        .values = (float[]){ 1, 1, 1, 1 } 
     };
 
     /* Check if library was already parsed */
@@ -63,54 +44,55 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
         return;
     }
 
-    if (seq->offsets.triggers > 0){
-        ret = initStandardLibrary(f, seq->offsets.triggers, 1, &seq->extensionsLibrary, &seq->extensionsLibrarySize, extScale.size);
+    if (seq->offsets.triggers >= 0){
+        ret = initStandardLibrary(f, seq->offsets.triggers, 1, &seq->triggerLibrary, &seq->triggerLibrarySize, trigScale.size);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize trigger library\n");
             return;
         }
     }
 
-    if (seq->offsets.rotations > 0){
-        ret = initStandardLibrary(f, seq->offsets.rotations, 1, &seq->extensionsLibrary, &seq->extensionsLibrarySize, extScale.size);
+    if (seq->offsets.rotations >= 0){
+        ret = initStandardLibrary(f, seq->offsets.rotations, 1, &seq->rotationLibrary, &seq->rotationLibrarySize, rotScale.size);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize rotations library\n");
             return;
         }
     }
 
-    if (seq->offsets.labelset > 0){
-        ret = initStandardLibrary(f, seq->offsets.labelset, 1, &seq->extensionsLibrary, &seq->extensionsLibrarySize, extScale.size);
+    if (seq->offsets.labelset >= 0){
+        ret = initStandardLibrary(f, seq->offsets.labelset, 1, &seq->labelsetLibrary, &seq->labelsetLibrarySize, 2);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize labelset library\n");
             return;
         }
     }
 
-    if (seq->offsets.labelinc > 0){
-        ret = initStandardLibrary(f, seq->offsets.labelinc, 1, &seq->extensionsLibrary, &seq->extensionsLibrarySize, extScale.size);
+    if (seq->offsets.labelinc >= 0){
+        ret = initStandardLibrary(f, seq->offsets.labelinc, 1, &seq->labelincLibrary, &seq->labelincLibrarySize, 2);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize labelinc library\n");
             return;
         }
     }
 
-    if (seq->offsets.delays > 0){
-        ret = initStandardLibrary(f, seq->offsets.delays, 1, &seq->extensionsLibrary, &seq->extensionsLibrarySize, extScale.size);
+    if (seq->offsets.delays >= 0){
+        ret = initStandardLibrary(f, seq->offsets.delays, 1, &seq->softDelayLibrary, &seq->softDelayLibrarySize, 3);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize delays library\n");
             return;
         }
     }
 
-    if (seq->offsets.rfshim > 0){
+    /*
+    if (seq->offsets.rfshim >= 0){
         ret = initStandardLibrary(f, seq->offsets.rfshim, 1, &seq->extensionsLibrary, &seq->extensionsLibrarySize, extScale.size);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize rf shim library\n");
             return;
         }
     }
-
+    */
     /* Parse Extensions library */
     ret = readStandardLibrary(f, seq->offsets.extensions, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
     if (ret != 0) {
@@ -118,53 +100,62 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
         return;
     }
 
-    if (seq->offsets.triggers > 0){
-        ret = readStandardLibrary(f, seq->offsets.triggers, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+    if (seq->offsets.triggers >= 0){
+        ret = readStandardLibrary(f, seq->offsets.triggers, seq->triggerLibrary, seq->triggerLibrarySize, trigScale, -1);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize trigger library\n");
             return;
         }
     }
 
-    if (seq->offsets.rotations > 0){
-        ret = readStandardLibrary(f, seq->offsets.rotations, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+    if (seq->offsets.rotations >= 0){
+        ret = readStandardLibrary(f, seq->offsets.rotations, seq->rotationLibrary, seq->rotationLibrarySize, rotScale, -1);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize rotations library\n");
             return;
         }
+        float quatNorm;
+        for(int n = 1; n < seq->rotationLibrarySize; n++){
+            quatNorm = sqrtf(powf(seq->rotationLibrary[n][0], 2) + powf(seq->rotationLibrary[n][1], 2) + powf(seq->rotationLibrary[n][2], 2) + powf(seq->rotationLibrary[n][3], 2));
+            seq->rotationLibrary[n][0] = seq->rotationLibrary[n][0] / quatNorm; /* manually unroll - with so few entries, more readable than loop */
+            seq->rotationLibrary[n][1] = seq->rotationLibrary[n][1] / quatNorm;
+            seq->rotationLibrary[n][2] = seq->rotationLibrary[n][2] / quatNorm;
+            seq->rotationLibrary[n][3] = seq->rotationLibrary[n][3] / quatNorm;
+        }
     }
 
-    if (seq->offsets.labelset > 0){
-        ret = readStandardLibrary(f, seq->offsets.labelset, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+    if (seq->offsets.labelset >= 0){
+        ret = readLabelLibrary(f, seq->offsets.labelset, seq->labelsetLibrary, seq->labelsetLibrarySize);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize labelset library\n");
             return;
         }
     }
 
-    if (seq->offsets.labelinc > 0){
-        ret = readStandardLibrary(f, seq->offsets.labelinc, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+    if (seq->offsets.labelinc >= 0){
+        ret = readLabelLibrary(f, seq->offsets.labelinc, seq->labelincLibrary, seq->labelincLibrarySize);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize labelinc library\n");
             return;
         }
     }
 
-    if (seq->offsets.delays > 0){
-        ret = readStandardLibrary(f, seq->offsets.delays, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+    if (seq->offsets.delays >= 0){
+        ret = readDelayLibrary(f, seq->offsets.delays, seq->softDelayLibrary, seq->softDelayLibrarySize);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize delays library\n");
             return;
         }
     }
 
-    if (seq->offsets.rfshim > 0){
+    /*
+    if (seq->offsets.rfshim >= 0){
         ret = readStandardLibrary(f, seq->offsets.rfshim, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize rf shim library\n");
             return;
         }
     }
-
+    */
     seq->isExtensionsLibraryParsed = 1;
 }

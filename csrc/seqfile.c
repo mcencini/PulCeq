@@ -47,7 +47,6 @@ void seqFileReset(SeqFile* seq) {
         FREE(seq->labelsetLibrary);
         FREE(seq->labelincLibrary);
         FREE(seq->softDelayLibrary);
-        FREE(seq->softDelayHintLibrary);
         for (int i = 0; i < seq->rfShimLibrarySize; i++) {
             FREE(seq->rfShimLibrary[i]);
         }
@@ -181,7 +180,6 @@ void seqFileInit(SeqFile* seq){
     INIT_LIBRARY(seq, labelsetLibrary, labelsetLibrarySize, isExtensionsLibraryParsed);
     INIT_LIBRARY(seq, labelincLibrary, labelincLibrarySize, isExtensionsLibraryParsed);
     INIT_LIBRARY(seq, softDelayLibrary, softDelayLibrarySize, isExtensionsLibraryParsed);
-    seq->softDelayHintLibrary = NULL;
     INIT_LIBRARY(seq, rfShimLibrary, rfShimLibrarySize, isExtensionsLibraryParsed);
         for (int i = 0; i < 8; i++){
         seq->extensionMap[i] = -1;
@@ -189,51 +187,4 @@ void seqFileInit(SeqFile* seq){
     seq->extensionLUTSize = 0;
     seq->extensionLUT = NULL;
     INIT_LIBRARY(seq, shapeLibrary, shapeLibrarySize, isShapeLibraryParsed);
-}
-
-/**
- * @brief Map string label names to integer label codes.
- * 
- * @param[in] label The string representation of the label (e.g., "LIN").
- * @return int The corresponding numeric code, or -1 if not recognized.
- */
-int parseLabelType(const char *label) {
-    if (label == NULL) return -1;
-
-    struct {
-        const char *name;
-        int value;
-    } static const labelTable[] = {
-        { "SLC", SLC },
-        { "SEG", SEG },
-        { "REP", REP },
-        { "AVG", AVG },
-        { "SET", SET },
-        { "ECO", ECO },
-        { "PHS", PHS },
-        { "LIN", LIN },
-        { "PAR", PAR },
-        { "ACQ", ACQ },
-        { "TRID", TRID },
-        { "NAV", NAV },
-        { "REV", REV },
-        { "SMS", SMS },
-        { "REF", REF },
-        { "IMA", IMA },
-        { "NOISE", NOISE },
-        { "PMC", PMC },
-        { "NOROT", NOROT },
-        { "NOPOS", NOPOS },
-        { "NOSCL", NOSCL },
-        { "ONCE", ONCE },
-        { NULL, -1 }  /* Sentinel */
-    };
-
-    for (int i = 0; labelTable[i].name != NULL; i++) {
-        if (strcmp(label, labelTable[i].name) == 0) {
-            return labelTable[i].value;
-        }
-    }
-
-    return -1;  /* Not found */
 }

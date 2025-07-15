@@ -55,4 +55,34 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** 
  */
 int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, Scale scale, int flag);
 
+/**
+ * @brief Read and parse labelset/labelinc library section from file at given offset.
+ *
+ * Reads lines starting at offset until next section or EOF.
+ * Parses index and values and stores in target array.
+ *
+ * @param[in] f              Opened file handle (text mode)
+ * @param[in] offset         File offset where section starts.
+ * @param[in,out] target     Pre-allocated 2D float array.
+ * @param[in] targetCount    Number of rows in target.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int readLabelLibrary(FILE* f, long offset, float (*target)[2], int targetCount);
+
+/**
+ * @brief Read and parse soft delay library section from file at given offset.
+ *
+ * Reads lines starting at offset until next section or EOF.
+ * Parses index and values and stores in target array.
+ *
+ * @param[in] f              Opened file handle (text mode)
+ * @param[in] offset         File offset where section starts.
+ * @param[in,out] target     Pre-allocated 2D float array.
+ * @param[in] targetCount    Number of rows in target.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int readDelayLibrary(FILE* f, long offset, float (*target)[3], int targetCount);
+
 #endif /* READLIB_H */

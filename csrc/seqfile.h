@@ -113,11 +113,9 @@ typedef struct {
                                          increment, labelstring index. */
 
     int softDelayLibrarySize;       /**< @brief Number of soft delay entries. */
-    int (*softDelayLibrary)[3];     /**< @brief Soft delay data with columns:
-                                         numID, offset, factor. */
-    char (*softDelayHintLibrary)[SOFT_DELAY_HINT_LENGTH]; /**< @brief Hint strings related to soft delays. */
+    int (*softDelayLibrary)[3];     /**< @brief Soft delay data with columns:  numID, offset, factor. */
 
-    int rfShimLibrarySize;          /**< @brief Number of RF shim entries (channels). */
+    int rfShimLibrarySize;          /**< @brief Number of RF shim entries. */
     float** rfShimLibrary;          /**< @brief RF shim data; per-channel magnitude and phase arrays:
                                          magn_c1, phase_c1, magn_c2, phase_c2, ... */
 

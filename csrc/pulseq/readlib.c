@@ -67,22 +67,6 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** 
     return 0;
 }
 
-/**
- * @brief Read and parse one standard library section from file at given offset.
- *
- * Reads lines starting at offset until next section or EOF.
- * Parses index and values, scales values, and stores in target array.
- * If flag >= 0, sets target[index][0] = flag.
- *
- * @param[in] f              Opened file handle (text mode)
- * @param[in] offset         File offset where section starts.
- * @param[in,out] target     Pre-allocated 2D float array.
- * @param[in] targetCount    Number of rows in target.
- * @param[in] scale          Scale struct with size and values.
- * @param[in] flag           Flag to store at target[index][0], or -1 to ignore.
- *
- * @return 0 on success, non-zero on failure.
- */
 int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, Scale scale, int flag)
 {
     char line[MAX_LINE_LENGTH];
@@ -140,3 +124,132 @@ int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, S
 
     return 0;
 }
+
+int readLabelLibrary(FILE* f, long offset, float (*target)[2], int targetCount) {
+    if (!f || offset < 0) return 1;
+
+    char line[MAX_LINE_LENGTH];
+    if (fseek(f, offset, SEEK_SET) != 0) return 1;
+
+    /* Skip section header line */
+    fgets(line, sizeof(line), f);
+
+    while (fgets(line, sizeof(line), f)) {
+        char* p = line;
+        while (*p == ' ' || *p == '\t') p++;
+        if (*p == '[' || *p == '\0' || *p == '#') continue;
+
+        int idx;
+        float val;
+        char label[32];
+
+        if (sscanf(p, "%d %f %31s", &idx, &val, label) == 3 &&
+            idx >= 0 && idx < targetCount) {
+
+            int labelCode = label2enum(label);
+
+            target[idx][0] = val;
+            target[idx][1] = (float)labelCode;
+        }
+    }
+
+    return 0;
+}
+
+int readDelayLibrary(FILE* f, long offset, float (*target)[3], int targetCount) {
+    if (!f || offset < 0) return 1;
+
+    char line[MAX_LINE_LENGTH];
+    if (fseek(f, offset, SEEK_SET) != 0) return 1;
+    
+    /* Skip section header line */
+    fgets(line, sizeof(line), f);
+
+    while (fgets(line, sizeof(line), f)) {
+        char* p = line;
+        while (*p == ' ' || *p == '\t') p++;
+        if (*p == '[' || *p == '\0' || *p == '#') continue;
+
+        int idx;
+        float offsetVal, scaleVal;
+        char hint[32];
+
+        if (sscanf(p, "%d %f %f %31s", &idx, &offsetVal, &scaleVal, hint) == 4 &&
+            idx >= 0 && idx < targetCount) {
+
+            int hintCode = hint2enum(hint);
+
+            target[idx][0] = offsetVal;
+            target[idx][1] = scaleVal;
+            target[idx][2] = (float)hintCode;
+        }
+    }
+
+    return 0;
+}
+
+/**************************************************** local utils /****************************************************/
+int label2enum(const char *label) {
+    if (!label) return -1;
+
+    struct {
+        const char *name;
+        int value;
+    } static const table[] = {
+        { "SLC", SLC }, 
+        { "SEG", SEG }, 
+        { "REP", REP }, 
+        { "AVG", AVG },
+        { "SET", SET }, 
+        { "ECO", ECO }, 
+        { "PHS", PHS }, 
+        { "LIN", LIN },
+        { "PAR", PAR }, 
+        { "ACQ", ACQ }, 
+        { "TRID", TRID },
+        { "NAV", NAV },
+        { "REV", REV }, 
+        { "SMS", SMS }, 
+        { "REF", REF }, 
+        { "IMA", IMA },
+        { "NOISE", NOISE }, 
+        { "PMC", PMC }, 
+        { "NOROT", NOROT },
+        { "NOPOS", NOPOS }, 
+        { "NOSCL", NOSCL }, 
+        { "ONCE", ONCE },
+        { NULL, -1 }
+    };
+
+    for (int i = 0; table[i].name != NULL; i++) {
+        if (strcmp(label, table[i].name) == 0) return table[i].value;
+    }
+
+    return -1;
+}
+
+int hint2enum(const char *hint) {
+    if (!hint) return -1;
+
+    struct {
+        const char *name;
+        int value;
+    } static const table[] = {
+        { "TE", HINT_TE }, 
+        { "TR", HINT_TR },
+        { "TI", HINT_TI }, 
+        { "ESP", HINT_ESP },
+        { "RECTIME", HINT_RECTIME },
+        { "T2PREP", HINT_T2PREP }, 
+        { "TE2", HINT_TE2 },
+        { "TR2", HINT_TR2 },
+        { NULL, -1 }
+    };
+
+    for (int i = 0; table[i].name != NULL; i++) {
+        if (strcmp(hint, table[i].name) == 0) return table[i].value;
+    }
+
+    return -1;
+}
+

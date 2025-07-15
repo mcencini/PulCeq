@@ -9,11 +9,11 @@
 #define DEFINITION_NAME_LENGTH 32
 #define MAX_LINE_LENGTH 256
 
-/* gradient/RF types */
+/********************************************************************      Gradient types     *******************************************************************************************/
 #define TRAP 1
 #define GRAD 2
 
-/*********************************************************************      Extensions     **************************************************************************************/
+/*********************************************************************      Extensions     *******************************************************************************************/
 #define EXT_LIST      0
 #define EXT_TRIGGER   1
 #define EXT_ROTATION  2
@@ -23,8 +23,18 @@
 #define EXT_DELAY     6
 #define EXT_UNKNOWN   7 /* marks the end of the enum, should always be the last */
 
-/*********************************************************************      Labels and Flags     **************************************************************************************/
-/****** Label       |     Type     | Data Mapping | Description ***********************************************************************************************************************/
+/*********************************************************************      Time Hints     ******************************************************************************************/
+#define HINT_TE 1
+#define HINT_TR 2
+#define HINT_TI 3
+#define HINT_ESP 4
+#define HINT_RECTIME 5
+#define HINT_T2PREP 6
+#define HINT_TE2 7
+#define HINT_TR2 8
+
+/*********************************************************************      Labels and Flags     ******************************************************************************************/
+/*      Label       |     Type     | Data Mapping | Description                                                                                                                           */                    
 #define SLC 1    /* | counter      |      Yes     | Slice counter (or slab counter for 3D multi-slab sequences) */
 #define SEG 2    /* | counter      |      Yes     | Segment counter e.g. for segmented FLASH or EPI */
 #define REP 3    /* | counter      |      Yes     | Repetition counter */
