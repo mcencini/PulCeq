@@ -47,6 +47,9 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
         .values = (float[]){ 1, 1, 1 } 
     };
 
+    /* Check if library was already parsed */
+    if (seq->isExtensionsLibraryParsed) return;
+
     /* Go to the correct section */
     getSectionOffsets(&(seq->offsets).extensions, seq, f, "[EXTENSIONS]", 1, 1);
     if (seq->offsets.extensions < 0) {
@@ -162,4 +165,6 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
             return;
         }
     }
+
+    seq->isExtensionsLibraryParsed = 1;
 }

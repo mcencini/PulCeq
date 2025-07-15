@@ -9,8 +9,6 @@
 #include <string.h>
 
 #include "pulseq/alloc.h"
-#include "pulseq/constants.h"
-#include "pulseq/event.h"
 
 #include "seqfile.h"
 
@@ -38,26 +36,23 @@ void seqFileReset(SeqFile* seq) {
         }
         FREE(seq->definitionsLibrary);
     }
-
-    if (seq->isAdcLibraryParsed)        FREE(seq->adcLibrary);
     if (seq->isBlockLibraryParsed)      FREE(seq->blockLibrary);
-    if (seq->isExtensionsLibraryParsed) FREE(seq->extensionsLibrary);
-    if (seq->isGradLibraryParsed)       FREE(seq->gradLibrary);
-    if (seq->isLabelincLibraryParsed)   FREE(seq->labelincLibrary);
-    if (seq->isLabelsetLibraryParsed)   FREE(seq->labelsetLibrary);
     if (seq->isRfLibraryParsed)         FREE(seq->rfLibrary);
-
-    if (seq->isRfShimLibraryParsed && seq->rfShimLibrary) {
-        for (i = 0; i < seq->rfShimLibrarySize; i++) {
+    if (seq->isGradLibraryParsed)       FREE(seq->gradLibrary);
+    if (seq->isAdcLibraryParsed)        FREE(seq->adcLibrary);
+    if (seq->isExtensionsLibraryParsed) {
+        FREE(seq->extensionsLibrary);
+        FREE(seq->triggerLibrary);
+        FREE(seq->rotationLibrary);
+        FREE(seq->labelsetLibrary);
+        FREE(seq->labelincLibrary);
+        FREE(seq->softDelayLibrary);
+        FREE(seq->softDelayHintLibrary);
+        for (int i = 0; i < seq->rfShimLibrarySize; i++) {
             FREE(seq->rfShimLibrary[i]);
         }
         FREE(seq->rfShimLibrary);
-        seq->rfShimLibrarySize = 0;
-        seq->isRfShimLibraryParsed = 0;
     }
-
-    if (seq->isRotationLibraryParsed) FREE(seq->rotationLibrary);
-
     if (seq->isShapeLibraryParsed && seq->shapeLibrary) {
         for (i = 0; i < seq->shapeLibrarySize; i++) {
             if (seq->shapeLibrary[i]) {
@@ -69,13 +64,6 @@ void seqFileReset(SeqFile* seq) {
         }
         FREE(seq->shapeLibrary);
     }
-
-    if (seq->isSoftDelayLibraryParsed) {
-        FREE(seq->softDelayLibrary);
-        FREE(seq->softDelayHintLibrary);
-    }
-
-    if (seq->isTriggerLibraryParsed) FREE(seq->triggerLibrary);
     FREE(seq->extensionLUT);
 
     seqFileInit(seq);
@@ -165,29 +153,8 @@ void readDefinitions(SeqFile* seq)
  * @param[in] seq The uninitialized SeqFile structure.
  */
 void seqFileInit(SeqFile* seq){
-    INIT_LIBRARY(seq, definitionsLibrary, numDefinitions, isDefinitionsLibraryParsed);
-    INIT_LIBRARY(seq, adcLibrary, adcLibrarySize, isAdcLibraryParsed);
-    INIT_LIBRARY(seq, blockLibrary, blockLibrarySize, isBlockLibraryParsed);
-    INIT_LIBRARY(seq, extensionsLibrary, extensionsLibrarySize, isExtensionsLibraryParsed);
-    INIT_LIBRARY(seq, gradLibrary, gradLibrarySize, isGradLibraryParsed);
-    INIT_LIBRARY(seq, labelincLibrary, labelincLibrarySize, isLabelincLibraryParsed);
-    INIT_LIBRARY(seq, labelsetLibrary, labelsetLibrarySize, isLabelsetLibraryParsed);
-    INIT_LIBRARY(seq, rfLibrary, rfLibrarySize, isRfLibraryParsed);
-    INIT_LIBRARY(seq, rfShimLibrary, rfShimLibrarySize, isRfShimLibraryParsed);
-    INIT_LIBRARY(seq, rotationLibrary, rotationLibrarySize, isRotationLibraryParsed);
-    INIT_LIBRARY(seq, shapeLibrary, shapeLibrarySize, isShapeLibraryParsed);
-    INIT_LIBRARY(seq, softDelayLibrary, softDelayLibrarySize, isSoftDelayLibraryParsed);
-    INIT_LIBRARY(seq, triggerLibrary, triggerLibrarySize, isTriggerLibraryParsed);
-    seq->softDelayHintLibrary = NULL;
-    for (int i = 0; i < 8; i++){
-        seq->extensionMap[i] = -1;
-    }
-    seq->extensionLUTSize = 0;
-    seq->extensionLUT = NULL;
-
     seq->offsets.scan_cursor = -1;
     seq->offsets.version = -1;
-    seq->offsets.signature = -1;
     seq->offsets.definitions = -1;
     seq->offsets.blocks = -1;
     seq->offsets.rf = -1;
@@ -203,6 +170,25 @@ void seqFileInit(SeqFile* seq){
     seq->offsets.rotations = -1;
     seq->offsets.shapes = -1;
 
+    INIT_LIBRARY(seq, definitionsLibrary, numDefinitions, isDefinitionsLibraryParsed);
+    INIT_LIBRARY(seq, blockLibrary, numBlocks, isBlockLibraryParsed);
+    INIT_LIBRARY(seq, rfLibrary, rfLibrarySize, isRfLibraryParsed);
+    INIT_LIBRARY(seq, gradLibrary, gradLibrarySize, isGradLibraryParsed);
+    INIT_LIBRARY(seq, adcLibrary, adcLibrarySize, isAdcLibraryParsed);
+    INIT_LIBRARY(seq, extensionsLibrary, extensionsLibrarySize, isExtensionsLibraryParsed);
+    INIT_LIBRARY(seq, triggerLibrary, triggerLibrarySize, isExtensionsLibraryParsed);
+    INIT_LIBRARY(seq, rotationLibrary, rotationLibrarySize, isExtensionsLibraryParsed);
+    INIT_LIBRARY(seq, labelsetLibrary, labelsetLibrarySize, isExtensionsLibraryParsed);
+    INIT_LIBRARY(seq, labelincLibrary, labelincLibrarySize, isExtensionsLibraryParsed);
+    INIT_LIBRARY(seq, softDelayLibrary, softDelayLibrarySize, isExtensionsLibraryParsed);
+    seq->softDelayHintLibrary = NULL;
+    INIT_LIBRARY(seq, rfShimLibrary, rfShimLibrarySize, isExtensionsLibraryParsed);
+        for (int i = 0; i < 8; i++){
+        seq->extensionMap[i] = -1;
+    }
+    seq->extensionLUTSize = 0;
+    seq->extensionLUT = NULL;
+    INIT_LIBRARY(seq, shapeLibrary, shapeLibrarySize, isShapeLibraryParsed);
 }
 
 /**

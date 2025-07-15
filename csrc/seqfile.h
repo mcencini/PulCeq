@@ -6,6 +6,9 @@
 #ifndef SEQFILE_H
 #define SEQFILE_H
 
+#include "pulseq/constants.h"
+#include "pulseq/event.h"
+
 /**
  * @struct SectionOffset
  * @brief Line positions of the different sections of a Pulseq file.
@@ -14,7 +17,6 @@
 typedef struct {
     long scan_cursor;
     long version;
-    long signature;
     long definitions;
     long blocks;
     long rf;
@@ -69,7 +71,7 @@ typedef struct {
     Definition *definitionsLibrary; /**< @brief Array of parsed definitions. */
 
     int isBlockLibraryParsed;       /**< @brief Flag indicating if the block library was parsed. */
-    int blockLibrarySize;           /**< @brief Number of block entries. */
+    int numBlocks;                  /**< @brief Number of block entries. */
     int (*blockLibrary)[6];         /**< @brief Block library data with columns:
                                          duration, rf, gx, gy, gz, ext. */
 
@@ -94,33 +96,27 @@ typedef struct {
     int (*extensionsLibrary)[3];    /**< @brief Extensions library data with columns:
                                           type, ref, next_id. */
 
-    int isTriggerLibraryParsed;     /**< @brief Flag indicating if the trigger library was parsed. */
     int triggerLibrarySize;         /**< @brief Number of trigger entries. */
     int (*triggerLibrary)[4];       /**< @brief Trigger library data with columns:
                                          duration, delay, type, channel. */
 
-    int isRotationLibraryParsed;    /**< @brief Flag indicating if the rotation library was parsed. */
     int rotationLibrarySize;        /**< @brief Number of rotation entries. */
     float (*rotationLibrary)[4];    /**< @brief Rotation quaternion data with columns:
                                          RotQuat0, RotQuatX, RotQuatY, RotQuatZ. */
 
-    int isLabelsetLibraryParsed;    /**< @brief Flag indicating if the label set library was parsed. */
     int labelsetLibrarySize;        /**< @brief Number of label set entries. */
     int (*labelsetLibrary)[2];      /**< @brief Label set data with columns:
                                          set, labelstring index. */
 
-    int isLabelincLibraryParsed;    /**< @brief Flag indicating if the label increment library was parsed. */
     int labelincLibrarySize;        /**< @brief Number of label increment entries. */
     int (*labelincLibrary)[2];      /**< @brief Label increment data with columns:
                                          increment, labelstring index. */
 
-    int isSoftDelayLibraryParsed;   /**< @brief Flag indicating if the soft delay library was parsed. */
     int softDelayLibrarySize;       /**< @brief Number of soft delay entries. */
     int (*softDelayLibrary)[3];     /**< @brief Soft delay data with columns:
                                          numID, offset, factor. */
     char (*softDelayHintLibrary)[SOFT_DELAY_HINT_LENGTH]; /**< @brief Hint strings related to soft delays. */
 
-    int isRfShimLibraryParsed;      /**< @brief Flag indicating if the RF shim library was parsed. */
     int rfShimLibrarySize;          /**< @brief Number of RF shim entries (channels). */
     float** rfShimLibrary;          /**< @brief RF shim data; per-channel magnitude and phase arrays:
                                          magn_c1, phase_c1, magn_c2, phase_c2, ... */
