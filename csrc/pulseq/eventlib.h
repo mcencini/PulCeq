@@ -11,6 +11,18 @@
 
 typedef struct SeqFile SeqFile;  /* Forward declaration */
 
+
+/**
+ * @brief Read the Definitions library from sequence file.
+ *
+ * Initializes and reads the [RF] section.
+ * Sets seq.isDefinitionsLibrary to 1 after successful load.
+ *
+ * @param[in,out] seq Sequence struct containing filePath and DefinitionsLibrary info
+ * @param[in] f Pointer to SeqFile handle.
+ */
+void readDefinitionsLibrary(SeqFile* seq, FILE* f);
+
 /**
  * @brief Read the RF library from sequence file.
  *

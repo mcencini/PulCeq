@@ -183,6 +183,6 @@ void readDefinitions(SeqFile* seq);
 
 void readLibraries(SeqFile* seq, int readBlocks);
 
-// SeqBlock getBlock(SeqFile* seq, int blockIndex);
+/* SeqBlock getBlock(SeqFile* seq, int blockIndex); */
 
 #endif /* SEQFILE_H */

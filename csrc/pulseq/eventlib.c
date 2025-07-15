@@ -8,6 +8,75 @@
 
 #include "../seqfile.h"
 
+void readDefinitionsLibrary(SeqFile* seq, FILE* f)
+{
+    /* Check if library was already parsed */
+    if (seq->isDefinitionsLibraryParsed) return;
+
+    char line[MAX_LINE_LENGTH];
+    int inSection = 0;
+    int count = 0;
+
+    Definition* defs = NULL;
+
+    while (fgets(line, sizeof(line), f)) {
+        char* p = line;
+        while (isspace((unsigned char)*p)) p++;
+
+        if (*p == '\0' || *p == '#') continue;
+
+        if (!inSection) {
+            if (strncmp(p, "[DEFINITIONS]", 13) == 0) {
+                inSection = 1;
+            }
+            continue;
+        }
+
+        if (*p == '[') break;  /* Reached next section */
+
+        /* Allocate new definition */
+        Definition def;
+        def.valueSize = 0;
+        def.value = NULL;
+
+        /* Parse name */
+        char* nameToken = strtok(p, " \t\r\n");
+        if (!nameToken) continue;
+        strncpy(def.name, nameToken, DEFINITION_NAME_LENGTH - 1);
+        def.name[DEFINITION_NAME_LENGTH - 1] = '\0';
+
+        /* Parse values */
+        char* token;
+        while ((token = strtok(NULL, " \t\r\n")) != NULL) {
+            char** newValueArray = (char**) ALLOC(sizeof(char*) * (def.valueSize + 1));
+            for (int i = 0; i < def.valueSize; i++) {
+                newValueArray[i] = def.value[i];
+            }
+
+            newValueArray[def.valueSize] = (char*) ALLOC(strlen(token) + 1);
+            strcpy(newValueArray[def.valueSize], token);
+            if (def.value) FREE(def.value);
+            def.value = newValueArray;
+            def.valueSize++;
+        }
+
+        /* Grow global definitions array */
+        Definition* newDefs = (Definition*) ALLOC(sizeof(Definition) * (count + 1));
+        for (int i = 0; i < count; i++) {
+            newDefs[i] = defs[i];
+        }
+        newDefs[count] = def;
+        if (defs) FREE(defs);
+        defs = newDefs;
+        count++;
+    }
+
+    seq->definitionsLibrary = defs;
+    seq->numDefinitions = count;
+
+    seq->isDefinitionsLibraryParsed = 1;
+}
+
 void readRfLibrary(SeqFile* seq, FILE* f)
 {
     int ret;
