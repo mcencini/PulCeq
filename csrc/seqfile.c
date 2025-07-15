@@ -30,6 +30,7 @@ void seqFileReset(SeqFile* seq) {
     if (!seq) return;
 
     int i;
+    int j;
     if (seq->isDefinitionsLibraryParsed && seq->definitionsLibrary) {
         for (i = 0; i < seq->numDefinitions; i++) {
             FREE(seq->definitionsLibrary[i].value);
@@ -47,8 +48,8 @@ void seqFileReset(SeqFile* seq) {
         FREE(seq->labelsetLibrary);
         FREE(seq->labelincLibrary);
         FREE(seq->softDelayLibrary);
-        for (int i = 0; i < seq->rfShimLibrarySize; i++) {
-            FREE(seq->rfShimLibrary[i]);
+        for (i = 0; i < seq->rfShimLibrarySize; i++) {
+            FREE(seq->rfShimLibrary[i].values);
         }
         FREE(seq->rfShimLibrary);
     }
@@ -152,6 +153,7 @@ void readDefinitions(SeqFile* seq)
  * @param[in] seq The uninitialized SeqFile structure.
  */
 void seqFileInit(SeqFile* seq){
+    int i;
     seq->offsets.scan_cursor = -1;
     seq->offsets.version = -1;
     seq->offsets.definitions = -1;
@@ -179,9 +181,12 @@ void seqFileInit(SeqFile* seq){
     INIT_LIBRARY(seq, rotationLibrary, rotationLibrarySize, isExtensionsLibraryParsed);
     INIT_LIBRARY(seq, labelsetLibrary, labelsetLibrarySize, isExtensionsLibraryParsed);
     INIT_LIBRARY(seq, labelincLibrary, labelincLibrarySize, isExtensionsLibraryParsed);
+    for (i = 0; i < 22; i++){
+        seq->isLabelDefined[i] = 0;
+    }
     INIT_LIBRARY(seq, softDelayLibrary, softDelayLibrarySize, isExtensionsLibraryParsed);
     INIT_LIBRARY(seq, rfShimLibrary, rfShimLibrarySize, isExtensionsLibraryParsed);
-        for (int i = 0; i < 8; i++){
+    for (i = 0; i < 8; i++){
         seq->extensionMap[i] = -1;
     }
     seq->extensionLUTSize = 0;

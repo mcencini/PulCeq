@@ -12,6 +12,7 @@
 void readExtensionLibrary(SeqFile* seq, FILE* f)
 {
     int ret;
+    int n;
 
     Scale extScale = { 
         .size = 3, 
@@ -84,15 +85,14 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
         }
     }
 
-    /*
     if (seq->offsets.rfshim >= 0){
-        ret = initStandardLibrary(f, seq->offsets.rfshim, 1, &seq->extensionsLibrary, &seq->extensionsLibrarySize, extScale.size);
+        ret = initRfShimLibrary(f, seq->offsets.rfshim, &seq->rfShimLibrarySize, &seq->rfShimLibrarySize);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize rf shim library\n");
             return;
         }
     }
-    */
+
     /* Parse Extensions library */
     ret = readStandardLibrary(f, seq->offsets.extensions, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
     if (ret != 0) {
@@ -125,7 +125,7 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
     }
 
     if (seq->offsets.labelset >= 0){
-        ret = readLabelLibrary(f, seq->offsets.labelset, seq->labelsetLibrary, seq->labelsetLibrarySize);
+        ret = readLabelLibrary(f, seq->offsets.labelset, seq->labelsetLibrary, seq->labelsetLibrarySize, seq->isLabelDefined);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize labelset library\n");
             return;
@@ -133,7 +133,7 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
     }
 
     if (seq->offsets.labelinc >= 0){
-        ret = readLabelLibrary(f, seq->offsets.labelinc, seq->labelincLibrary, seq->labelincLibrarySize);
+        ret = readLabelLibrary(f, seq->offsets.labelinc, seq->labelincLibrary, seq->labelincLibrarySize, seq->isLabelDefined);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize labelinc library\n");
             return;
@@ -148,14 +148,26 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
         }
     }
 
-    /*
     if (seq->offsets.rfshim >= 0){
-        ret = readStandardLibrary(f, seq->offsets.rfshim, seq->extensionsLibrary, seq->extensionsLibrarySize, extScale, -1);
+        ret = readRfShimLibrary(f, seq->offsets.rfshim, seq->rfShimLibrary, seq->rfShimLibrarySize);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize rf shim library\n");
             return;
         }
     }
-    */
+
+    /* Prepare extensionLUT */
+    for (n = 0; n < 8; n++){
+        if (seq->extensionLUTSize < seq->extensionMap[n]){
+            seq->extensionLUTSize = seq->extensionMap[n];
+        }
+    }
+    if (seq->extensionLUTSize > 0){
+        seq->extensionLUT = ALLOC(sizeof(int) * seq->extensionLUTSize);
+        for (n = 0; n < 8; n++){
+            seq->extensionLUT[seq->extensionMap[n]] = n;
+        }
+    }
+
     seq->isExtensionsLibraryParsed = 1;
 }

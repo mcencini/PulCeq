@@ -38,6 +38,19 @@ typedef struct {
 int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** target, int* targetCount, int numEntries);
 
 /**
+ * @brief Initialize rf shim library.
+ *
+ *
+ * @param[in] f              Opened file handle (text mode)
+ * @param[in] offsets        Array of file offsets for sections.
+ * @param[out] target        Pointer to RfShimEntry* pointer to store allocated array.
+ * @param[out] targetCount   Pointer to int to store allocated row count.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCount);
+
+/**
  * @brief Read and parse one standard library section from file at given offset.
  *
  * Reads lines starting at offset until next section or EOF.
@@ -65,10 +78,11 @@ int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, S
  * @param[in] offset         File offset where section starts.
  * @param[in,out] target     Pre-allocated 2D float array.
  * @param[in] targetCount    Number of rows in target.
+ * @param[in] isLabelDefined Table to store whether a given label/flag is present or not in SeqFile.
  *
  * @return 0 on success, non-zero on failure.
  */
-int readLabelLibrary(FILE* f, long offset, float (*target)[2], int targetCount);
+int readLabelLibrary(FILE* f, long offset, float** target, int targetCount, int* isLabelDefined);
 
 /**
  * @brief Read and parse soft delay library section from file at given offset.
@@ -83,6 +97,22 @@ int readLabelLibrary(FILE* f, long offset, float (*target)[2], int targetCount);
  *
  * @return 0 on success, non-zero on failure.
  */
-int readDelayLibrary(FILE* f, long offset, float (*target)[3], int targetCount);
+int readDelayLibrary(FILE* f, long offset, float** target, int targetCount);
+
+/**
+ * @brief Read and parse rf shim library section from file at given offset.
+ *
+ * Reads lines starting at offset until next section or EOF.
+ * Parses index and values and stores in target array.
+ * If flag >= 0, sets target[index][0] = flag.
+ *
+ * @param[in] f              Opened file handle (text mode)
+ * @param[in] offset         File offset where section starts.
+ * @param[in,out] target     Pre-allocated 2D float array.
+ * @param[in] targetCount    Number of rows in target.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int readRfShimLibrary(FILE* f, long offset, RfShimEntry* target, int targetCount);
 
 #endif /* READLIB_H */

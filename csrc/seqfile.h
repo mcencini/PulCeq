@@ -45,6 +45,18 @@ typedef struct {
     char** value;
 } Definition;
 
+
+/**
+ * @struct RfShimEntry
+ * @brief Custom structure for RF shim description. Needed to handle variable nChannels case.
+ * 
+ */
+typedef struct {
+    int nChannels;   /**< Number of channels */
+    float* values;   /**< Pointer to array of size 2 * nChannels (mag1, phase1, mag2, phase2, ...) */
+} RfShimEntry;
+
+
 /**
  * @struct SeqFile
  * @brief Represents a parsed sequence file containing various libraries and metadata.
@@ -104,6 +116,7 @@ typedef struct {
     float (*rotationLibrary)[4];    /**< @brief Rotation quaternion data with columns:
                                          RotQuat0, RotQuatX, RotQuatY, RotQuatZ. */
 
+    int isLabelDefined[22];         /**< For each type of Label in constants.h, flags whether it was defined or not in the given SeqFile */
     int labelsetLibrarySize;        /**< @brief Number of label set entries. */
     int (*labelsetLibrary)[2];      /**< @brief Label set data with columns:
                                          set, labelstring index. */
@@ -116,7 +129,7 @@ typedef struct {
     int (*softDelayLibrary)[3];     /**< @brief Soft delay data with columns:  numID, offset, factor. */
 
     int rfShimLibrarySize;          /**< @brief Number of RF shim entries. */
-    float** rfShimLibrary;          /**< @brief RF shim data; per-channel magnitude and phase arrays:
+    RfShimEntry* rfShimLibrary;     /**< @brief RF shim data; per-channel magnitude and phase arrays:
                                          magn_c1, phase_c1, magn_c2, phase_c2, ... */
 
     int extensionMap[8];            /**< @brief Map assigning to each EXT Enum its actual numerical ID written in SeqFile */

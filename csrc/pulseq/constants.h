@@ -7,6 +7,7 @@
 #define CONSTANTS_H
 
 #define DEFINITION_NAME_LENGTH 32
+#define LABEL_NAME_LENGTH 32
 #define MAX_LINE_LENGTH 256
 
 /********************************************************************      Gradient types     *******************************************************************************************/

@@ -6,6 +6,8 @@
 
 #include "readlib.h"
 
+#include "../seqfile.h"
+
 int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** target, int* targetCount, int numEntries)
 {
     if (!f) return 1;
@@ -14,7 +16,7 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** 
     int maxIndex = -1;
 
     for (int sec = 0; sec < numSections; sec++) {
-        if (offsets[sec] < 0) continue;  /* skip not found */
+        if (offsets[sec] < 0) continue;  /* Skip not found */
 
         if (fseek(f, offsets[sec], SEEK_SET) != 0) {
             return 1;
@@ -31,7 +33,7 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** 
             while (*p == ' ' || *p == '\t') p++;
             if (*p == '[') break; /* Next section starts */
 
-            if (*p == '\0' || *p == '#') continue; /* skip blank/comment */
+            if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
 
             int idx = -1;
             if (sscanf(p, "%d", &idx) == 1) {
@@ -43,7 +45,7 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** 
     if (maxIndex < 0) {
         *target = NULL;
         *targetCount = 0;
-        return 1; /* no entries found */
+        return 1; /* No entries found */
     }
 
     /* Allocate zero-filled 2D array */
@@ -60,6 +62,46 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** 
         for (int j = 0; j < numEntries; j++) {
             array[i][j] = 0.0f;
         }
+    }
+
+    *target = array;
+    *targetCount = maxIndex + 1;
+    return 0;
+}
+
+int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCount)
+{
+    if (!f || !target || !targetCount) return 1;
+
+    char line[MAX_LINE_LENGTH];
+    int maxIndex = -1;
+
+    if (fseek(f, offset, SEEK_SET) != 0) return 1;
+
+    /* Skip the section header line */
+    if (!fgets(line, sizeof(line), f)) return 1;
+
+    /* First pass: determine max index */
+    while (fgets(line, sizeof(line), f)) {
+        char* p = line;
+        while (*p == ' ' || *p == '\t') p++;
+        if (*p == '[' || *p == '\0' || *p == '#') continue;
+
+        int idx;
+        if (sscanf(p, "%d", &idx) == 1 && idx > maxIndex) {
+            maxIndex = idx;
+        }
+    }
+
+    if (maxIndex < 0) return 1;
+
+    /* Allocate array of RfShimEntry */
+    RfShimEntry* array = (RfShimEntry*) ALLOC(sizeof(RfShimEntry) * (maxIndex + 1));
+    if (!array) return 1;
+
+    for (int i = 0; i <= maxIndex; i++) {
+        array[i].nChannels = 0;
+        array[i].values = NULL;
     }
 
     *target = array;
@@ -125,7 +167,7 @@ int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, S
     return 0;
 }
 
-int readLabelLibrary(FILE* f, long offset, float (*target)[2], int targetCount) {
+int readLabelLibrary(FILE* f, long offset, float** target, int targetCount, int* isLabelDefined) {
     if (!f || offset < 0) return 1;
 
     char line[MAX_LINE_LENGTH];
@@ -141,12 +183,17 @@ int readLabelLibrary(FILE* f, long offset, float (*target)[2], int targetCount) 
 
         int idx;
         float val;
-        char label[32];
+        char label[LABEL_NAME_LENGTH];
 
         if (sscanf(p, "%d %f %31s", &idx, &val, label) == 3 &&
             idx >= 0 && idx < targetCount) {
 
             int labelCode = label2enum(label);
+            
+            /* bookkeep found labels and flags */
+            if (labelCode > 0){
+                isLabelDefined[labelCode] = 1;
+            }
 
             target[idx][0] = val;
             target[idx][1] = (float)labelCode;
@@ -156,7 +203,7 @@ int readLabelLibrary(FILE* f, long offset, float (*target)[2], int targetCount) 
     return 0;
 }
 
-int readDelayLibrary(FILE* f, long offset, float (*target)[3], int targetCount) {
+int readDelayLibrary(FILE* f, long offset, float** target, int targetCount) {
     if (!f || offset < 0) return 1;
 
     char line[MAX_LINE_LENGTH];
@@ -172,7 +219,7 @@ int readDelayLibrary(FILE* f, long offset, float (*target)[3], int targetCount) 
 
         int idx;
         float offsetVal, scaleVal;
-        char hint[32];
+        char hint[SOFT_DELAY_HINT_LENGTH];
 
         if (sscanf(p, "%d %f %f %31s", &idx, &offsetVal, &scaleVal, hint) == 4 &&
             idx >= 0 && idx < targetCount) {
@@ -183,6 +230,51 @@ int readDelayLibrary(FILE* f, long offset, float (*target)[3], int targetCount) 
             target[idx][1] = scaleVal;
             target[idx][2] = (float)hintCode;
         }
+    }
+
+    return 0;
+}
+
+int readRfShimLibrary(FILE* f, long offset, RfShimEntry* target, int targetCount)
+{
+    if (!f || !target) return 1;
+
+    char line[MAX_LINE_LENGTH];
+    if (fseek(f, offset, SEEK_SET) != 0) return 1;
+
+    /* Skip section header line */
+    if (!fgets(line, sizeof(line), f)) return 1;
+
+    while (fgets(line, sizeof(line), f)) {
+        char* p = line;
+        while (*p == ' ' || *p == '\t') p++;
+        if (*p == '[' || *p == '\0' || *p == '#') continue;
+
+        int idx, nCh;
+        if (sscanf(p, "%d %d", &idx, &nCh) != 2) continue;
+        if (idx < 0 || idx >= targetCount || nCh <= 0) continue;
+
+        /* Skip past the index and nCh */
+        while (*p && *p != ' ') p++; while (*p == ' ') p++;
+        while (*p && *p != ' ') p++; while (*p == ' ') p++;
+
+        float* values = (float*) ALLOC(sizeof(float) * 2 * nCh);
+        if (!values) return 1;
+
+        for (int i = 0; i < 2 * nCh; i++) {
+            float val;
+            int consumed = 0;
+            if (sscanf(p, "%f%n", &val, &consumed) != 1) {
+                FREE(values);
+                break;
+            }
+            values[i] = val;
+            p += consumed;
+            while (*p == ' ' || *p == '\t') p++;
+        }
+
+        target[idx].nChannels = nCh;
+        target[idx].values = values;
     }
 
     return 0;
