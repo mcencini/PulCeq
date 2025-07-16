@@ -1,9 +1,17 @@
+
 # Set the minimum required version of CMake
 cmake_minimum_required(VERSION 3.10)
 
-# Define the pulSeg library
-add_library(pulSeg pulSeg.c)
+project(PulCeqLib)
 
-# Include directories for pulSeg (if any)
-target_include_directories(pulSeg PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Minimal ANSI C89 Pulseq reader library
+file(GLOB PULSEQ_INTERNAL "pulseq/*.c" "pulseq/*.h")
+add_library(pulseq pulseq.c ${PULSEQ_INTERNAL})
+target_include_directories(pulseq PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Higher abstraction library (future, placeholder)
+file(GLOB PULSEG_INTERNAL "pulseg/*.c" "pulseg/*.h")
+add_library(pulseg pulseg.c ${PULSEG_INTERNAL})
+target_include_directories(pulseg PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

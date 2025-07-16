@@ -1,9 +1,10 @@
+
 # Set the minimum required version of CMake
 cmake_minimum_required(VERSION 3.10)
-project(PulSeg)
+project(PulSegTests)
 
-# Add the pulSeg library as a subdirectory (relative to your source directory)
-add_subdirectory(../../csrc ${CMAKE_BINARY_DIR}/pulSeg)  # Avoids 'csrc' folder in 'build'
+# Add the csrc library folder as a subdirectory
+add_subdirectory(../../csrc ${CMAKE_BINARY_DIR}/csrc_build)
 
 # Collect all test source files
 file(GLOB TEST_SOURCES "*.c")
@@ -13,14 +14,17 @@ add_executable(run_tests ${TEST_SOURCES})
 
 # Specify the output directory for the compiled test executable
 set_target_properties(run_tests PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)  # Output in 'build/bin' folder
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Link the test executable with the pulSeg library
-target_link_libraries(run_tests PRIVATE pulSeg)
+# Link the test executable with the pulseq and pulseg libraries
+target_link_libraries(run_tests PRIVATE pulseq pulseg)
 
-# Ensure that the pulSeg library is built first
-add_dependencies(run_tests pulSeg)
+# Ensure that the libraries are built first
+add_dependencies(run_tests pulseq pulseg)
 
-# Enable warnings for better code quality
-target_compile_options(run_tests PRIVATE -Wall -Wextra)
+# Use the top-level csrc directory for public API headers
+target_include_directories(run_tests PRIVATE ../../csrc)
+
+# Enable warnings and enforce ANSI C89 compliance
+target_compile_options(run_tests PRIVATE -Wall -Wextra -std=c89 -pedantic -Werror)
 

@@ -8,10 +8,6 @@
 #include "pulseq/block.h"
 #include "pulseq/seqfile.h"
 
-/* Forward declarations for public structs */
-typedef struct SeqFile SeqFile;
-typedef struct SeqBlock SeqBlock;
-
 /* Public API */
 SeqFile* seqFile(char* filePath);
 void seqFileFree(SeqFile* seq);
