@@ -13,27 +13,22 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
 {
     int ret;
     int n;
-
-    Scale extScale = { 
-        .size = 3, 
-        .values = (float[]){ 1, 1, 1 } 
-    };
-
-    Scale trigScale = { 
-        .size = 4, 
-        .values = (float[]){ 1, 1, 1, 1 } 
-    };
-
-    Scale rotScale = { 
-        .size = 4, 
-        .values = (float[]){ 1, 1, 1, 1 } 
-    };
+    Scale extScale;
+    extScale.size = 3;
+    extScale.values = (float[]){ 1, 1, 1 };
+    Scale trigScale;
+    trigScale.size = 4;
+    trigScale.values = (float[]){ 1, 1, 1, 1 };
+    Scale rotScale;
+    rotScale.size = 4;
+    rotScale.values = (float[]){ 1, 1, 1, 1 };
+    const char* ext_section[] = {"[EXTENSIONS]"};
 
     /* Check if library was already parsed */
     if (seq->isExtensionsLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&(seq->offsets).extensions, seq, f, (const char*[]){"[EXTENSIONS]"}, 1, 1);
+    getSectionOffsets(&(seq->offsets).extensions, seq, f, ext_section, 1, 1);
     if (seq->offsets.extensions < 0) {
         return;
     }

@@ -29,10 +29,8 @@ void seqFileFree(SeqFile *seq){
 }
 
 void seqFileReset(SeqFile* seq) {
+    int i, j;
     if (!seq) return;
-
-    int i;
-    int j;
     if (seq->isDefinitionsLibraryParsed && seq->definitionsLibrary) {
         for (i = 0; i < seq->numDefinitions; i++) {
             FREE(seq->definitionsLibrary[i].value);
@@ -55,16 +53,14 @@ void seqFileReset(SeqFile* seq) {
         }
         FREE(seq->rfShimLibrary);
     }
-    if (seq->isShapeLibraryParsed && seq->shapeLibrary) {
-        for (i = 0; i < seq->shapeLibrarySize; i++) {
-            if (seq->shapeLibrary[i]) {
-                FREE(seq->shapeLibrary[i]->samples);
-                seq->shapeLibrary[i]->numUncompressedSamples = 0;
-                seq->shapeLibrary[i]->numSamples = 0;
-                FREE(seq->shapeLibrary[i]);
-            }
+    if (seq->isShapesLibraryParsed && seq->shapesLibrary) {
+        for (i = 0; i < seq->shapesLibrarySize; i++) {
+            FREE(seq->shapesLibrary[i].samples);
+            seq->shapesLibrary[i].numUncompressedSamples = 0;
+            seq->shapesLibrary[i].numSamples = 0;
+            FREE(seq->shapesLibrary[i]);
         }
-        FREE(seq->shapeLibrary);
+        FREE(seq->shapesLibrary);
     }
     FREE(seq->extensionLUT);
 
@@ -136,5 +132,5 @@ void seqFileInit(SeqFile* seq){
     }
     seq->extensionLUTSize = 0;
     seq->extensionLUT = NULL;
-    INIT_LIBRARY(seq, shapeLibrary, shapeLibrarySize, isShapeLibraryParsed);
+    INIT_LIBRARY(seq, shapesLibrary, shapesLibrarySize, isShapesLibraryParsed);
 }
