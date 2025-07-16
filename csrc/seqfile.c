@@ -69,7 +69,6 @@ void seqFileReset(SeqFile* seq) {
 
 void readDefinitions(SeqFile* seq)
 {
-    int ret;
     FILE* f = fopen(seq->filePath, "r");
     
     if (!f) return;
@@ -79,6 +78,29 @@ void readDefinitions(SeqFile* seq)
     return;
 }
 
+void readLibraries(SeqFile* seq, int readBlocks)
+{
+    FILE* f = fopen(seq->filePath, "r");
+    
+    if (!f) return;
+    readDefinitionsLibrary(seq, f); 
+    if (readBlocks) {
+        readBlockLibrary(seq, f);
+    }
+    readRfLibrary(seq, f);
+    readGradLibrary(seq, f);
+    readAdcLibrary(seq, f);
+    readShapesLibrary(seq, f);
+    readExtensionsLibrary(seq, f);      
+    fclose(f);
+    
+    return;
+}
+
+void readSeq(SeqFile *seq)
+{
+    readLibraries(seq, 1);
+}
 
 /*************************  Local utils  ****************************************/
 #define INIT_LIBRARY(seq, fieldPtr, sizeField, flagField) \

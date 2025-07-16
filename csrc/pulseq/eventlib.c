@@ -79,6 +79,41 @@ void readDefinitionsLibrary(SeqFile* seq, FILE* f)
     seq->isDefinitionsLibraryParsed = 1;
 }
 
+void readBlockLibrary(SeqFile* seq, FILE* f)
+{
+    int ret;
+    float block_values[6] = {1, 1, 1, 1, 1, 1};
+    Scale blockScale;
+    blockScale.size = 6;
+    blockScale.values = block_values;
+    const char* block_section[] = {"[BLOCKS]"};
+
+    /* Check if library was already parsed */
+    if (seq->isBlockLibraryParsed) return;
+
+    /* Go to the correct section */
+    getSectionOffsets(&(seq->offsets).blocks, seq, f, block_section, 1, 0);
+    if (seq->offsets.blocks < 0) {
+        return;
+    }
+
+    /* Preallocate library */
+    ret = initStandardLibrary(f,  &(seq->offsets).blocks, 1, &seq->blockLibrary, &seq->numBlocks, blockScale.size);
+    if (ret != 0) {
+        fprintf(stderr, "Error: Failed to initialize rfLibrary\n");
+        return;
+    }
+
+    /* Parse Block library */
+    ret = readStandardLibrary(f, seq->offsets.blocks, seq->blockLibrary, seq->numBlocks, blockScale, -1);
+    if (ret != 0) {
+        fprintf(stderr, "Error: Failed to read blockLibrary from file %s\n", seq->filePath);
+        return;
+    }
+
+    seq->isBlockLibraryParsed = 1;
+}
+
 void readRfLibrary(SeqFile* seq, FILE* f)
 {
     int ret;

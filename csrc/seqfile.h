@@ -181,7 +181,29 @@ void seqFileReset(SeqFile* seq);
  */
 void readDefinitions(SeqFile* seq);
 
+/**
+ * @brief Read all libraries from a sequence file.
+ *
+ * This function reads the definitions, blocks, RF, gradients, ADC, extensions,
+ * triggers, rotations, label sets, label increments, soft delays, RF shims,
+ * and shapes libraries from the specified sequence file.
+ *
+ * @param seq The SeqFile structure containing the file path and output tables.
+ * @param readBlocks Flag to indicate whether to read the block library.
+ */
 void readLibraries(SeqFile* seq, int readBlocks);
+
+/**
+ * @brief Read the sequence file and populate the SeqFile structure.
+ *
+ * This function reads the sequence file specified in `seq.filePath` and populates
+ * the SeqFile structure with all relevant data, including definitions, blocks,
+ * RF, gradients, ADC, extensions, triggers, rotations, label sets, label increments,
+ * soft delays, RF shims, and shapes libraries.
+ *
+ * @param seq The SeqFile structure to be populated.
+ */
+void readSeq(SeqFile* seq);
 
 /* SeqBlock getBlock(SeqFile* seq, int blockIndex); */
 

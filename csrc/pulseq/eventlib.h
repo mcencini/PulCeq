@@ -15,19 +15,30 @@ typedef struct SeqFile SeqFile;  /* Forward declaration */
 /**
  * @brief Read the Definitions library from sequence file.
  *
- * Initializes and reads the [RF] section.
- * Sets seq.isDefinitionsLibrary to 1 after successful load.
+ * Initializes and reads the [DEFINITIONS] section.
+ * Sets seq.isDefinitionsLibraryParsed to 1 after successful load.
  *
- * @param[in,out] seq Sequence struct containing filePath and DefinitionsLibrary info
+ * @param[in,out] seq Sequence struct containing filePath and definitionsLibrary info
  * @param[in] f Pointer to SeqFile handle.
  */
 void readDefinitionsLibrary(SeqFile* seq, FILE* f);
 
 /**
+ * @brief Read the Block library from sequence file.
+ *
+ * Initializes and reads the [BLOCKS] section.
+ * Sets seq.isBlockLibraryParsed to 1 after successful load.
+ *
+ * @param[in,out] seq Sequence struct containing filePath and blockLibrary info
+ * @param[in] f Pointer to SeqFile handle.
+ */
+void readBlockLibrary(SeqFile* seq, FILE* f);
+
+/**
  * @brief Read the RF library from sequence file.
  *
  * Initializes and reads the [RF] section.
- * Sets seq.isRfLibrary to 1 after successful load.
+ * Sets seq.isRfLibraryParsed to 1 after successful load.
  *
  * @param[in,out] seq Sequence struct containing filePath and rfLibrary info
  * @param[in] f Pointer to SeqFile handle.
@@ -49,11 +60,22 @@ void readGradLibrary(SeqFile* seq, FILE* f);
  * @brief Read the ADC library from sequence file.
  *
  * Initializes and reads the [ADC] section.
- * Sets seq.isAdcLibrary to 1 after successful load.
+ * Sets seq.isAdcLibraryParsed to 1 after successful load.
  *
  * @param[in,out] seq Sequence struct containing filePath and adcLibrary info
  * @param[in] f Pointer to SeqFile handle.
  */
 void readAdcLibrary(SeqFile* seq, FILE* f);
+
+/**
+ * @brief Read the Shapes library from sequence file.
+ *
+ * Initializes and reads the [SHAPES] section.
+ * Sets seq.isShapesLibraryParsed to 1 after successful load.
+ *
+ * @param[in,out] seq Sequence struct containing filePath and shapesLibrary info
+ * @param[in] f Pointer to SeqFile handle.
+ */
+void readShapesLibrary(SeqFile* seq, FILE* f);
 
 #endif /* EVENTLIB_H */
