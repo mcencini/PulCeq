@@ -82,9 +82,9 @@ void readDefinitionsLibrary(SeqFile* seq, FILE* f)
 void readBlockLibrary(SeqFile* seq, FILE* f)
 {
     int ret;
-    float block_values[6] = {1, 1, 1, 1, 1, 1};
+    float block_values[7] = {1, 1, 1, 1, 1, 1, 1};
     Scale blockScale;
-    blockScale.size = 6;
+    blockScale.size = 7;
     blockScale.values = block_values;
     const char* block_section[] = {"[BLOCKS]"};
 

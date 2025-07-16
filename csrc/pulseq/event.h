@@ -53,9 +53,9 @@ ShapeArbitrary* decompressShape(const ShapeArbitrary* encoded);
    *    Ramp down time of trapezoid (us).
    */
 typedef struct {
-    long riseTime; /* @brief Ramp up time of trapezoid (us)  */
-    long flatTime; /* @brief Flat-top time of trapezoid (us)  */
-    long fallTime; /* @brief Ramp down time of trapezoid (us) */
+    long riseTime; /**< @brief Ramp up time of trapezoid (us)  */
+    long flatTime; /**< @brief Flat-top time of trapezoid (us)  */
+    long fallTime; /**< @brief Ramp down time of trapezoid (us) */
 } ShapeTrap; /* no Pulseq equivalent */
 
 /****************************************************************/ 
@@ -90,18 +90,18 @@ typedef struct {
    *    Single character indicating the intended use of the pulse, e.g. e,r,etc...
    */
 typedef struct {
-    short type;                /* @brief NULL or ARBITRARY */    
-    float amplitude;           /* @brief Peak magnitude of magShape (Hz) */
-    ShapeArbitrary magShape;   /* @brief Arbitrary waveform, unitary peak amplitude */
-    ShapeArbitrary phaseShape; /* @brief Abitrary waveform */
-    ShapeArbitrary timeShape;  /* @brief Arbitrary waveform */
-    float center;              /* @brief Effective RF center of the pulse shape measured from the start of the shape (us) */
-    float freqPPM;             /* @brief B0-dependent frequency offset of transmitter (ppm) */
-    float phasePPM;            /* @brief B0-dependent phase offset of transmitter (rad/MHz) */
-    float freqOffset;          /* @brief Frequency offset of transmitter (Hz) */
-	float phaseOffset;         /* @brief Phase offset of transmitter (rad) */
-    int delay;                 /* @brief Delay prior to the pulse (us) */
-    char use;                  /* @brief Single character indicating the intended use of the pulse, e.g. e,r,etc... */
+    short type;                /**< @brief NULL or ARBITRARY */    
+    float amplitude;           /**< @brief Peak magnitude of magShape (Hz) */
+    ShapeArbitrary magShape;   /**< @brief Arbitrary waveform, unitary peak amplitude */
+    ShapeArbitrary phaseShape; /**< @brief Abitrary waveform */
+    ShapeArbitrary timeShape;  /**< @brief Arbitrary waveform */
+    float center;              /**< @brief Effective RF center of the pulse shape measured from the start of the shape (us) */
+    float freqPPM;             /**< @brief B0-dependent frequency offset of transmitter (ppm) */
+    float phasePPM;            /**< @brief B0-dependent phase offset of transmitter (rad/MHz) */
+    float freqOffset;          /**< @brief Frequency offset of transmitter (Hz) */
+	float phaseOffset;         /**< @brief Phase offset of transmitter (rad) */
+    int delay;                 /**< @brief Delay prior to the pulse (us) */
+    char use;                  /**< @brief Single character indicating the intended use of the pulse, e.g. e,r,etc... */
 } RFEvent; /* mirrors Pulseq RFEvent */
 
 /** @struct PulseqGrad
@@ -125,14 +125,14 @@ typedef struct {
    *    Amplitude at the end of the shape(for type == 2).
    */
 typedef struct {
-    short type;               /* @brief NULL, TRAP, or ARBITRARY */  
-    float amplitude;          /* @brief Peak amplitude of the gradient (Hz/m) */
-    int delay;                /* @brief Delay prior to the gradient (us) */
-    ShapeTrap trap;           /* @brief Trapezoid, unitary plateau amplitude */
-    ShapeArbitrary waveShape; /* @brief Arbitrary waveform, unitary peak amplitude */
-    ShapeArbitrary timeShape; /* @brief Arbitrary waveform */
-    float first;              /* @brief Amplitude at the start of the shape for arbitrary gradient */
-    float last;               /* @brief Amplitude at the end of the shape for arbitrary gradient */
+    short type;               /**< @brief NULL, TRAP, or ARBITRARY */  
+    float amplitude;          /**< @brief Peak amplitude of the gradient (Hz/m) */
+    int delay;                /**< @brief Delay prior to the gradient (us) */
+    ShapeTrap trap;           /**< @brief Trapezoid, unitary plateau amplitude */
+    ShapeArbitrary waveShape; /**< @brief Arbitrary waveform, unitary peak amplitude */
+    ShapeArbitrary timeShape; /**< @brief Arbitrary waveform */
+    float first;              /**< @brief Amplitude at the start of the shape for arbitrary gradient */
+    float last;               /**< @brief Amplitude at the end of the shape for arbitrary gradient */
 } GradEvent; /* mirrors Pulseq GradEvent */
 
 /** @struct ADCEvent
@@ -158,15 +158,15 @@ typedef struct {
    *    Phase modulation shape of receiver (rad).
    */
 typedef struct {
-    short type;                          /* @brief NULL or ADC */
-    int numSamples;                      /* @brief Number of ADC samples */
-    int dwellTime;                       /* @brief Dwell time of ADC readout (ns) */
-    int delay;                           /* @brief Delay before first sample (us) */
-    float freqPPM;                       /* @brief B0-dependent frequency offset of receiver (ppm) */
-    float phasePPM;                      /* @brief B0-dependent phase offset of receiver (rad/MHz) */
-    float freqOffset;                    /* @brief Frequency offset of receiver (Hz) */
-	float phaseOffset;                   /* @brief Phase offset of receiver (rad) */
-    ShapeArbitrary phaseModulationShape; /* @brief Phase modulation shape of receiver (rad) */
+    short type;                          /**< @brief NULL or ADC */
+    int numSamples;                      /**< @brief Number of ADC samples */
+    int dwellTime;                       /**< @brief Dwell time of ADC readout (ns) */
+    int delay;                           /**< @brief Delay before first sample (us) */
+    float freqPPM;                       /**< @brief B0-dependent frequency offset of receiver (ppm) */
+    float phasePPM;                      /**< @brief B0-dependent phase offset of receiver (rad/MHz) */
+    float freqOffset;                    /**< @brief Frequency offset of receiver (Hz) */
+	float phaseOffset;                   /**< @brief Phase offset of receiver (rad) */
+    ShapeArbitrary phaseModulationShape; /**< @brief Phase modulation shape of receiver (rad) */
 } ADCEvent; /* mirrors Pulseq ADCEvent */
 
 /** @struct TriggerEvent
@@ -184,12 +184,25 @@ typedef struct {
    *    Channel of trigger (system dependent). 0: undefined / unused.
    */
 typedef struct {
-    short type;         /* @brief OFF or ON */
-    long duration;      /* @brief Duration of trigger event (us) */
-    long delay;         /* @brief Delay prior to the trigger event (us) */
-    int triggerType;    /* @brief Type of trigger (system dependent). 0: undefined / unused */
-    int triggerChannel; /* @brief Channel of trigger (system dependent). 0: undefined / unused */
+    short type;         /**< @brief OFF or ON */
+    long duration;      /**< @brief Duration of trigger event (us) */
+    long delay;         /**< @brief Delay prior to the trigger event (us) */
+    int triggerType;    /**< @brief Type of trigger (system dependent). 0: undefined / unused */
+    int triggerChannel; /**< @brief Channel of trigger (system dependent). 0: undefined / unused */
 } TriggerEvent; /* mirrors Pulseq TriggerEvent */
+
+/** @struct RotationEvent
+   * @brief  Rotation event. 
+   *
+   *  @var RotationEvent::type
+   *    Whether rotation is NULL (0) or DEFINED (1).
+   *  @var RotationEvent::rotQuaternion
+   *    Gradient rotation quaternion.
+   */
+typedef struct {
+    short type;        /**< @brief NULL or DEFINED */
+    double rotQuaternion; /**< @brief Gradient rotation quaternion */
+} RotationEvent; /* mirrors Pulseq RotationEvent */
 
 #define SOFT_DELAY_HINT_LENGTH 32
 /** @struct SoftDelayEvent
@@ -207,25 +220,12 @@ typedef struct {
    *    Text hint corresponding to this soft delay, e.g. TE.
    */
 typedef struct {
-    short type;                        /* @brief NULL or DEFINED */
-    int numID;                         /* @brief Numeric index of the soft delay to help the intepreter (together with the hint string) to identify the delay and allocate it to the UI element */
-    int offset;                        /* @brief Offset (positive or negative) added to the delay after the division by the factor (us) */
-    int factor;                        /* @brief Factor by which the value on the user interface needs to be divided for calculating the final delay applied to the sequence */
-    char hint[SOFT_DELAY_HINT_LENGTH]; /* @brief Text hint corresponding to this soft delay, e.g. TE */
+    short type;                        /**< @brief NULL or DEFINED */
+    int numID;                         /**< @brief Numeric index of the soft delay to help the intepreter (together with the hint string) to identify the delay and allocate it to the UI element */
+    int offset;                        /**< @brief Offset (positive or negative) added to the delay after the division by the factor (us) */
+    int factor;                        /**< @brief Factor by which the value on the user interface needs to be divided for calculating the final delay applied to the sequence */
+    char hint[SOFT_DELAY_HINT_LENGTH]; /**< @brief Text hint corresponding to this soft delay, e.g. TE */
 } SoftDelayEvent; /* mirrors Pulseq SoftDelayEvent */
-
-/** @struct RotationEvent
-   * @brief  Rotation event. 
-   *
-   *  @var RotationEvent::type
-   *    Whether rotation is NULL (0) or DEFINED (1).
-   *  @var RotationEvent::rotQuaternion
-   *    Gradient rotation quaternion.
-   */
-typedef struct {
-    short type;        /* @brief NULL or DEFINED */
-    double rotQuaternion; /* @brief Gradient rotation quaternion */
-} RotationEvent; /* mirrors Pulseq RotationEvent */
 
 /** @struct RfShimmingEvent
    * @brief  RF Shimming event. 
@@ -242,11 +242,11 @@ typedef struct {
    *    Additional phase for each channel.
    */
 typedef struct {
-    short type;        /* @brief NULL or DEFINED */
-    int ID;            /* @brief Unique ID of the RF shimming object */
-    int nChan;         /* @brief Number of RF channels */
-    float* amplitudes; /* @brief Amplitude scaling factor for each channel */
-    float* phases;     /* @brief Additional phase for each channel */
-} RfShimmingEvent; /* mirrors Pulseq SoftDelayEvent */
+    short type;        /**< @brief NULL or DEFINED */
+    int ID;            /**< @brief Unique ID of the RF shimming object */
+    int nChan;         /**< @brief Number of RF channels */
+    float* amplitudes; /**< @brief Amplitude scaling factor for each channel */
+    float* phases;     /**< @brief Additional phase for each channel */
+} RfShimmingEvent; /* mirrors Pulseq RfShimmingEvent */
 
 #endif /* EVENT_H */

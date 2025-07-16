@@ -84,8 +84,8 @@ typedef struct {
 
     int isBlockLibraryParsed;       /**< @brief Flag indicating if the block library was parsed. */
     int numBlocks;                  /**< @brief Number of block entries. */
-    int (*blockLibrary)[6];         /**< @brief Block library data with columns:
-                                         duration, rf, gx, gy, gz, ext. */
+    float (*blockLibrary)[7];       /**< @brief Block library data with columns:
+                                         duration, rf, gx, gy, gz, adc, ext. */
 
     int isRfLibraryParsed;          /**< @brief Flag indicating if the RF library was parsed. */
     int rfLibrarySize;              /**< @brief Number of RF entries. */
