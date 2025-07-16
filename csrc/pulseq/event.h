@@ -266,8 +266,6 @@ typedef struct {
     int phs;    /**< Cardiac phase counter */
     int lin;    /**< Line counter in 2D and 3D acquisitions */
     int par;    /**< Partition counter; it counts phase encoding steps in the 2nd (through-slab) phase encoding direction in 3D sequences */
-    int trid;   /**< Marks the beginning of a repeatable module in the sequence (e.g. TR); modules with different timing should be assigned different TRIDs */
-    int set;    /**< Flexible counter without firm assignment */
     int acq;    /**< Spectroscopic acquisition counter */
     int trid;   /**< Marks the beginning of a repeatable module in the sequence (e.g. TR); modules with different timing should be assigned different TRIDs */
     int nav;    /**< Navigator data flag */

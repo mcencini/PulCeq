@@ -14,5 +14,5 @@ void readLibraries(SeqFile* seq, int readBlocks) { __readLibraries(seq, readBloc
 void readSeq(SeqFile* seq) { __readSeq(seq); }
 
 SeqBlock* seqBlock(void) { return __seqBlock(); }
-void seqBlockFree(SeqBlock* block) { __freeBlock(block); }
+void seqBlockFree(SeqBlock* block) { __seqBlockFree(block); }
 SeqBlock* getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) { return __getBlock(seq, blockIndex, parseExtensions); }

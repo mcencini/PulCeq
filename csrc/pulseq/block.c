@@ -8,8 +8,99 @@
 
 #include "alloc.h"
 #include "block.h"
-#include "event.h"
 #include "seqfile.h"
+
+/*********************************************************  local utils  *********************************************************/
+#define MAX_EXTENSIONS_PER_BLOCK 64
+
+/**
+ * @struct RawBlock
+ * @brief  Raw block content IDs and extension data.
+ *
+ * This structure holds the content IDs of a block and its extensions.
+ * It is used to retrieve the raw data from the sequence file.
+ */
+typedef struct {
+    int block_duration;
+    int rf;
+    int gx;
+    int gy;
+    int gz;
+    int adc;
+    int extCount;
+    int ext[MAX_EXTENSIONS_PER_BLOCK][2];  /* [type, ref] */
+} RawBlock;
+
+/**
+ * @brief Get the raw block content IDs from the sequence file.
+ *
+ * @param seq Pointer to the SeqFile structure.
+ * @param blockIndex Index of the block to retrieve.
+ * @param parseExtensions Flag indicating whether to parse extensions.
+ * @return RawBlock containing the block's content IDs and extension data.
+ */
+RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExtensions)
+{
+    RawBlock block;
+    int i, nextExtID, extCount;
+    float* eventFloat;
+    int* extData;
+
+    /* Initialize */
+    block.block_duration = 0;
+    block.rf = 0;
+    block.gx = 0;
+    block.gy = 0;
+    block.gz = 0;
+    block.adc = 0;
+    block.extCount = 0;
+
+    /* Sanity check */
+    if (seq == 0 || blockIndex < 0 || blockIndex >= seq->numBlocks) {
+        return block;
+    }
+
+    /* Access float data row and cast entries to int */
+    eventFloat = seq->blockLibrary[blockIndex];
+
+    int duration = (int)(eventFloat[0]);
+    int rfID = (int)(eventFloat[1]);
+    int gxID = (int)(eventFloat[2]);
+    int gyID = (int)(eventFloat[3]);
+    int gzID = (int)(eventFloat[4]);
+    int adcID  = (int)(eventFloat[5]);
+    int extID = (int)(eventFloat[6]);
+
+    block.block_duration = duration;
+    block.rf = rfID;
+    block.gx = gxID;
+    block.gy = gyID;
+    block.gz = gzID;
+    block.adc = adcID;
+
+    /* Handle extensions if present */
+    if (parseExtensions && extID > 0 && seq->isExtensionsLibraryParsed) {
+        nextExtID = extID;
+        extCount = 0;
+
+        while (
+            nextExtID > 0 &&
+            nextExtID < seq->extensionsLibrarySize &&
+            extCount < MAX_EXTENSIONS_PER_BLOCK
+        ) {
+            extData = seq->extensionsLibrary[nextExtID]; /* [type, ref, next_id] */
+            block.ext[extCount][0] = extData[0];  /* type */
+            block.ext[extCount][1] = extData[1];  /* ref */
+            nextExtID = extData[2];              /* next in chain */
+            extCount++;
+        }
+
+        block.extCount = extCount;
+    }
+
+    return block;
+}
+/*********************************************************  end local utils  *********************************************************/
 
 SeqBlock* __seqBlock(void)
 {
@@ -406,97 +497,3 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
 
     return block;
 }
-
-/*********************************************************  local utils  *********************************************************/
-#define MAX_EXTENSIONS_PER_BLOCK 64
-
-/**
- * @struct RawBlock
- * @brief  Raw block content IDs and extension data.
- *
- * This structure holds the content IDs of a block and its extensions.
- * It is used to retrieve the raw data from the sequence file.
- */
-typedef struct {
-    int block_duration;
-    int rf;
-    int gx;
-    int gy;
-    int gz;
-    int adc;
-    int extCount;
-    int ext[MAX_EXTENSIONS_PER_BLOCK][2];  /* [type, ref] */
-} RawBlock;
-
-/**
- * @brief Get the raw block content IDs from the sequence file.
- *
- * @param seq Pointer to the SeqFile structure.
- * @param blockIndex Index of the block to retrieve.
- * @param parseExtensions Flag indicating whether to parse extensions.
- * @return RawBlock containing the block's content IDs and extension data.
- */
-RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExtensions)
-{
-    RawBlock block;
-    int i, nextExtID, extCount;
-    float* eventFloat;
-    int* extData;
-
-    /* Initialize */
-    block.block_duration = 0;
-    block.rf = 0;
-    block.gx = 0;
-    block.gy = 0;
-    block.gz = 0;
-    block.adc = 0;
-    block.extCount = 0;
-
-    /* Sanity check */
-    if (seq == 0 || blockIndex < 0 || blockIndex >= seq->numBlocks) {
-        return block;
-    }
-
-    /* Access float data row and cast entries to int */
-    eventFloat = seq->blockLibrary[blockIndex];
-
-    int duration = (int)(eventFloat[0]);
-    int rfID = (int)(eventFloat[1]);
-    int gxID = (int)(eventFloat[2]);
-    int gyID = (int)(eventFloat[3]);
-    int gzID = (int)(eventFloat[4]);
-    int adcID  = (int)(eventFloat[5]);
-    int extID = (int)(eventFloat[6]);
-
-    block.block_duration = duration;
-    block.rf = rfID;
-    block.gx = gxID;
-    block.gy = gyID;
-    block.gz = gzID;
-    block.adc = adcID;
-
-    /* Handle extensions if present */
-    if (parseExtensions && extID > 0 && seq->isExtensionsLibraryParsed) {
-        nextExtID = extID;
-        extCount = 0;
-
-        while (
-            nextExtID > 0 &&
-            nextExtID < seq->extensionsLibrarySize &&
-            extCount < MAX_EXTENSIONS_PER_BLOCK
-        ) {
-            extData = seq->extensionsLibrary[nextExtID]; /* [type, ref, next_id] */
-            block.ext[extCount][0] = extData[0];  /* type */
-            block.ext[extCount][1] = extData[1];  /* ref */
-            nextExtID = extData[2];              /* next in chain */
-            extCount++;
-        }
-
-        block.extCount = extCount;
-    }
-
-    return block;
-}
-
-
-

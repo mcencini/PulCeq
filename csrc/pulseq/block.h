@@ -7,6 +7,7 @@
 #define BLOCK_H
 
 #include "event.h"
+#include "seqfile.h"
 
 /** @struct SeqBlock
  * @brief  Sequence block containing RF, gradient, ADC, and trigger events.

@@ -1,7 +1,7 @@
 
 # Set the minimum required version of CMake
 cmake_minimum_required(VERSION 3.10)
-project(PulSegTests)
+project(PulSegTests C)
 
 # Add the csrc library folder as a subdirectory
 add_subdirectory(../../csrc ${CMAKE_BINARY_DIR}/csrc_build)
@@ -17,10 +17,12 @@ set_target_properties(run_tests PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Link the test executable with the pulseq and pulseg libraries
-target_link_libraries(run_tests PRIVATE pulseq pulseg)
+target_link_libraries(run_tests PRIVATE pulseq)
+# target_link_libraries(run_tests PRIVATE pulseq pulseg)
 
 # Ensure that the libraries are built first
-add_dependencies(run_tests pulseq pulseg)
+add_dependencies(run_tests pulseq)
+# add_dependencies(run_tests pulseq pulseg)
 
 # Use the top-level csrc directory for public API headers
 target_include_directories(run_tests PRIVATE ../../csrc)

@@ -6,6 +6,8 @@
 #ifndef ALLOC_H
 #define ALLOC_H
 
+#include <stdlib.h>
+
 /** 
    * Default ALLOC to malloc if it's not already defined
    *

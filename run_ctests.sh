@@ -16,7 +16,7 @@ mkdir -p $BUILD_DIR
 
 # Run cmake to configure the project, pointing to the source directory
 echo "Configuring the project with CMake..."
-cmake -S $SOURCE_DIR -B $BUILD_DIR
+cmake -S $SOURCE_DIR -B $BUILD_DIR -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER= -DCMAKE_CXX_COMPILER_WORKS=FALSE
 
 # Build the project using cmake
 echo "Building the project with CMake..."
