@@ -5,16 +5,16 @@
  */
 
 #include <ctype.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "pulseq/alloc.h"
-#include "pulseq/eventlib.h"
-#include "pulseq/extlib.h"
-
+#include "alloc.h"
+#include "eventlib.h"
+#include "extlib.h"
 #include "seqfile.h"
 
-SeqFile* seqFile(char* filePath){
+SeqFile* __seqFile(char* filePath){
     SeqFile *seq = (SeqFile*) ALLOC(sizeof(SeqFile));
     seqFileInit(seq);
     seq->filePath = (char*) ALLOC(strlen(filePath) + 1);
@@ -22,13 +22,13 @@ SeqFile* seqFile(char* filePath){
     return seq;
 }
 
-void seqFileFree(SeqFile *seq){
+void __seqFileFree(SeqFile *seq){
     seqFileReset(seq);
     FREE(seq->filePath);
     FREE(seq);
 }
 
-void seqFileReset(SeqFile* seq) {
+void __seqFileReset(SeqFile* seq) {
     int i, j;
     if (!seq) return;
     if (seq->isDefinitionsLibraryParsed && seq->definitionsLibrary) {
@@ -67,7 +67,7 @@ void seqFileReset(SeqFile* seq) {
     seqFileInit(seq);
 }
 
-void readDefinitions(SeqFile* seq)
+void __readDefinitions(SeqFile* seq)
 {
     FILE* f = fopen(seq->filePath, "r");
     
@@ -78,7 +78,7 @@ void readDefinitions(SeqFile* seq)
     return;
 }
 
-void readLibraries(SeqFile* seq, int readBlocks)
+void __readLibraries(SeqFile* seq, int readBlocks)
 {
     FILE* f = fopen(seq->filePath, "r");
     
@@ -97,9 +97,9 @@ void readLibraries(SeqFile* seq, int readBlocks)
     return;
 }
 
-void readSeq(SeqFile *seq)
+void __readSeq(SeqFile *seq)
 {
-    readLibraries(seq, 1);
+    __readLibraries(seq, 1);
 }
 
 /*************************  Local utils  ****************************************/

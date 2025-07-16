@@ -5,8 +5,7 @@
  */
 
 #include "readlib.h"
-
-#include "../seqfile.h"
+#include "seqfile.h"
 
 int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** target, int* targetCount, int numEntries)
 {

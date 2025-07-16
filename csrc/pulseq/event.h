@@ -40,7 +40,7 @@ typedef struct {
  *         May be the same as `encoded` if no decompression was needed.
  *         If decompressed, caller is responsible for freeing both the struct and its `samples` field.
  */
-ShapeArbitrary* decompressShape(const ShapeArbitrary* encoded);
+ShapeArbitrary* decompressShape(ShapeArbitrary* encoded);
 
 /** @struct ShapeTrap
    * @brief  Trapzoid shape struct
@@ -200,11 +200,89 @@ typedef struct {
    *    Gradient rotation quaternion.
    */
 typedef struct {
-    short type;        /**< @brief NULL or DEFINED */
-    double rotQuaternion; /**< @brief Gradient rotation quaternion */
+    short type;             /**< @brief NULL or DEFINED */
+    float rotQuaternion[4]; /**< @brief Gradient rotation quaternion */
 } RotationEvent; /* mirrors Pulseq RotationEvent */
 
-#define SOFT_DELAY_HINT_LENGTH 32
+/** @struct LabelEvent
+ * @brief  Label event.
+ * 
+ * @var LabelEvent::type
+ *    Whether label is NULL (0) or DEFINED (1).
+ * @var LabelEvent::slc
+ *    Slice counter.
+ * @var LabelEvent::seg
+ *    Segment counter e.g. for segmented FLASH or EPI.
+ * @var LabelEvent::rep
+ *    Repetition counter.
+ * @var LabelEvent::avg
+ *    Averaging counter.
+ * @var LabelEvent::set
+ *    Flexible counter without firm assignment.
+ * @var LabelEvent::eco
+ *    Echo counter in multi-echo sequences.
+ * @var LabelEvent::phs
+ *    Cardiac phase counter.
+ * @var LabelEvent::lin
+ *    Line counter in 2D and 3D acquisitions.
+ * @var LabelEvent::par
+ *    Partition counter; it counts phase encoding steps in the 2nd (through-slab) phase encoding direction in 3D sequences.
+ * @var LabelEvent::acq
+ *    Spectroscopic acquisition counter.
+ * @var LabelEvent::trid
+ *    Marks the beginning of a repeatable module in the sequence (e.g. TR);
+ *    modules with different timing should be assigned different TRIDs.
+ * @var LabelEvent::nav
+ *    Navigator data flag.
+ * @var LabelEvent::rev
+ *    Flag indicating that the readout direction is reversed.
+ * @var LabelEvent::sms
+ *    Simultaneous multi-slice (SMS) acquisition.
+ * @var LabelEvent::ref
+ *    Parallel imaging flag indicating reference / auto-calibration data.
+ * @var LabelEvent::ima
+ *    Parallel imaging flag indicating imaging data within the ACS region.
+ * @var LabelEvent::noise
+ *    Flag for the noise adjust scan e.g for the parallel imaging acceleration.
+ * @var LabelEvent::pmc
+ *    Flag for the MoCo/PMC Pulseq version marking blocks that can/should be prospectively corrected for motion.
+ * @var LabelEvent::norot
+ *    Instructs the interpreter to ignore the rotation of the FOV specified on the UI for the given block(s).
+ * @var LabelEvent::nopos
+ *    Instructs the interpreter to ignore the the FOV offset specified on the UI for the given block(s).
+ * @var LabelEvent::noslc
+ *    Instructs the interpreter to ignore the FOV scaling specified on the UI for the given block(s).
+ * @var LabelEvent::once
+ *    A 3-state flag indicating whether the label is to be used once (0), multiple times (1), or not at all (2).
+ */
+typedef struct {
+    short type; /**< @brief NULL or DEFINED */
+    int slc;    /**< Slice counter */
+    int seg;    /**< Segment counter e.g. for segmented FLASH or EPI */
+    int rep;    /**< Repetition counter */
+    int avg;    /**< Averaging counter */
+    int set;    /**< Flexible counter without firm assignment */
+    int eco;    /**< Echo counter in multi-echo sequences */
+    int phs;    /**< Cardiac phase counter */
+    int lin;    /**< Line counter in 2D and 3D acquisitions */
+    int par;    /**< Partition counter; it counts phase encoding steps in the 2nd (through-slab) phase encoding direction in 3D sequences */
+    int trid;   /**< Marks the beginning of a repeatable module in the sequence (e.g. TR); modules with different timing should be assigned different TRIDs */
+    int set;    /**< Flexible counter without firm assignment */
+    int acq;    /**< Spectroscopic acquisition counter */
+    int trid;   /**< Marks the beginning of a repeatable module in the sequence (e.g. TR); modules with different timing should be assigned different TRIDs */
+    int nav;    /**< Navigator data flag */
+    int rev;    /**< Flag indicating that the readout direction is reversed */
+    int sms;    /**< Simultaneous multi-slice (SMS) acquisition */
+    int ref;    /**< Parallel imaging flag indicating reference / auto-calibration data */
+    int ima;    /**< Parallel imaging flag indicating imaging data within the ACS region */
+    int noise;  /**< Flag for the noise adjust scan e.g for the parallel imaging acceleration */
+    int pmc;    /**< Flag for the MoCo/PMC Pulseq version marking blocks that can/should be prospectively corrected for motion */
+    int norot;  /**< Instructs the interpreter to ignore the rotation of the FOV specified on the UI for the given block(s) */
+    int nopos;  /**< Instructs the interpreter to ignore the the FOV offset specified on the UI for the given block(s) */
+    int noscl;  /**< Instructs the interpreter to ignore the the FOV scaling specified on the UI for the given block(s) */
+    int once;   /**< A 3-state flag indicating whether the label is to be used once (0), multiple times (1), or not at all (2) */
+} LabelEvent; /* no Pulseq equivalent */
+
 /** @struct SoftDelayEvent
    * @brief  Soft Delay event. 
    *
@@ -220,11 +298,11 @@ typedef struct {
    *    Text hint corresponding to this soft delay, e.g. TE.
    */
 typedef struct {
-    short type;                        /**< @brief NULL or DEFINED */
-    int numID;                         /**< @brief Numeric index of the soft delay to help the intepreter (together with the hint string) to identify the delay and allocate it to the UI element */
-    int offset;                        /**< @brief Offset (positive or negative) added to the delay after the division by the factor (us) */
-    int factor;                        /**< @brief Factor by which the value on the user interface needs to be divided for calculating the final delay applied to the sequence */
-    char hint[SOFT_DELAY_HINT_LENGTH]; /**< @brief Text hint corresponding to this soft delay, e.g. TE */
+    short type; /**< @brief NULL or DEFINED */
+    int numID;  /**< @brief Numeric index of the soft delay to help the intepreter (together with the hint string) to identify the delay and allocate it to the UI element */
+    int offset; /**< @brief Offset (positive or negative) added to the delay after the division by the factor (us) */
+    int factor; /**< @brief Factor by which the value on the user interface needs to be divided for calculating the final delay applied to the sequence */
+    int hintID; /**< @brief Enum hint corresponding to this soft delay, e.g. TE, to help the interpreter to identify the delay and allocate it to the UI element */
 } SoftDelayEvent; /* mirrors Pulseq SoftDelayEvent */
 
 /** @struct RfShimmingEvent
@@ -243,7 +321,6 @@ typedef struct {
    */
 typedef struct {
     short type;        /**< @brief NULL or DEFINED */
-    int ID;            /**< @brief Unique ID of the RF shimming object */
     int nChan;         /**< @brief Number of RF channels */
     float* amplitudes; /**< @brief Amplitude scaling factor for each channel */
     float* phases;     /**< @brief Additional phase for each channel */

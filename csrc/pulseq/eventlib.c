@@ -5,8 +5,7 @@
  */
 
 #include "eventlib.h"
-
-#include "../seqfile.h"
+#include "seqfile.h"
 
 void readDefinitionsLibrary(SeqFile* seq, FILE* f)
 {

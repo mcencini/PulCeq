@@ -12,7 +12,7 @@
 #include "alloc.h"
 #include "event.h"
 
-ShapeArbitrary* decompressShape(const ShapeArbitrary* encoded)
+ShapeArbitrary* decompressShape(ShapeArbitrary* encoded)
 {
     if (encoded->numSamples == encoded->numUncompressedSamples) {
         /* Already uncompressed, return as-is */

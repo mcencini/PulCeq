@@ -4,10 +4,8 @@
  *
  */
 
-
 #include "scanfile.h"
-
-#include "../seqfile.h"
+#include "seqfile.h"
 
 /* Local struct to map section tag to offset field */
 typedef struct {

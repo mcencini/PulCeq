@@ -6,8 +6,8 @@
 #ifndef SEQFILE_H
 #define SEQFILE_H
 
-#include "pulseq/constants.h"
-#include "pulseq/event.h"
+#include "constants.h"
+#include "event.h"
 
 /**
  * @struct SectionOffset
@@ -96,7 +96,7 @@ typedef struct {
     int isGradLibraryParsed;        /**< @brief Flag indicating if the gradient library was parsed. */
     int gradLibrarySize;            /**< @brief Number of gradient entries. */
     float (*gradLibrary)[7];        /**< @brief Gradient library data with columns:
-                                         type, amp, rise/first flat, last fall, shape_id, delay, time_id, unused/delay. */
+                                         type, amp, rise/first, flat/last, fall/shape_id, delay/time_id, unused/delay. */
 
     int isAdcLibraryParsed;         /**< @brief Flag indicating if the ADC library was parsed. */
     int adcLibrarySize;             /**< @brief Number of ADC entries. */
@@ -109,7 +109,7 @@ typedef struct {
                                           type, ref, next_id. */
 
     int triggerLibrarySize;         /**< @brief Number of trigger entries. */
-    int (*triggerLibrary)[4];       /**< @brief Trigger library data with columns:
+    float (*triggerLibrary)[4];     /**< @brief Trigger library data with columns:
                                          duration, delay, type, channel. */
 
     int rotationLibrarySize;        /**< @brief Number of rotation entries. */
@@ -126,7 +126,7 @@ typedef struct {
                                          increment, labelstring index. */
 
     int softDelayLibrarySize;       /**< @brief Number of soft delay entries. */
-    int (*softDelayLibrary)[3];     /**< @brief Soft delay data with columns:  numID, offset, factor. */
+    int (*softDelayLibrary)[4];     /**< @brief Soft delay data with columns:  numID, offset, factor. */
 
     int rfShimLibrarySize;          /**< @brief Number of RF shim entries. */
     RfShimEntry* rfShimLibrary;     /**< @brief RF shim data; per-channel magnitude and phase arrays:
@@ -148,14 +148,14 @@ typedef struct {
  * @param[in] filePath Path on disk of sequence file (.seq).
  * @return Initializes SeqFile structure  
  */
-SeqFile* seqFile(char* filePath);
+SeqFile* __seqFile(char* filePath);
 
 /**
  * @brief Destroy SeqFile struct.
  * 
  * @param[in] seq The SeqFile structure to be destroyed.
  */
-void seqFileFree(SeqFile* seq);
+void __seqFileFree(SeqFile* seq);
 
 /**
  * @brief Reset SeqFile struct.
@@ -165,7 +165,7 @@ void seqFileFree(SeqFile* seq);
  * 
  * @param[in] seq The SeqFile structure to be reset.
  */
-void seqFileReset(SeqFile* seq);
+void __seqFileReset(SeqFile* seq);
 
 /**
  * @brief Read [DEFINITIONS] section from a sequence file into the definitions table.
@@ -179,7 +179,7 @@ void seqFileReset(SeqFile* seq);
  *
  * @param seq The SeqFile structure containing the file path and output table.
  */
-void readDefinitions(SeqFile* seq);
+void __readDefinitions(SeqFile* seq);
 
 /**
  * @brief Read all libraries from a sequence file.
@@ -191,7 +191,7 @@ void readDefinitions(SeqFile* seq);
  * @param seq The SeqFile structure containing the file path and output tables.
  * @param readBlocks Flag to indicate whether to read the block library.
  */
-void readLibraries(SeqFile* seq, int readBlocks);
+void __readLibraries(SeqFile* seq, int readBlocks);
 
 /**
  * @brief Read the sequence file and populate the SeqFile structure.
@@ -203,7 +203,7 @@ void readLibraries(SeqFile* seq, int readBlocks);
  *
  * @param seq The SeqFile structure to be populated.
  */
-void readSeq(SeqFile* seq);
+void __readSeq(SeqFile* seq);
 
 /* SeqBlock getBlock(SeqFile* seq, int blockIndex); */
 
