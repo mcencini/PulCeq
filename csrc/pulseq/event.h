@@ -23,9 +23,9 @@
    *    Array of waveform samples.
    */
 typedef struct {
-    int numUncompressedSamples; /* @brief Number of uncompressed waveform samples */
-    int numSamples;             /* @brief Number of waveform samples */
-    float *samples;             /* @brief Waveform samples */
+    int numUncompressedSamples; /**< @brief Number of uncompressed waveform samples */
+    int numSamples;             /**< @brief Number of waveform samples */
+    float *samples;             /**< @brief Waveform samples */
 } ShapeArbitrary; /* mirrors Pulseq CompressedShape */
 
 /**

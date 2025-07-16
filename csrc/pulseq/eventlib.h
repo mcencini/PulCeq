@@ -6,11 +6,11 @@
 #ifndef EVENTLIB_H
 #define EVENTLIB_H
 
+#include "event.h"
 #include "readlib.h"
 #include "scanfile.h"
 
 typedef struct SeqFile SeqFile;  /* Forward declaration */
-
 
 /**
  * @brief Read the Definitions library from sequence file.

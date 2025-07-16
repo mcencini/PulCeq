@@ -69,6 +69,143 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** 
     return 0;
 }
 
+int initDefinitionsLibrary(FILE* f, long offset, Definition** target, int* targetCount)
+{
+    if (!f || offset < 0 || !target || !targetCount) return 1;
+
+    char line[MAX_LINE_LENGTH];
+    int count = 0;
+    int inSection = 0;
+
+    if (fseek(f, offset, SEEK_SET) != 0) return 2;
+
+    while (fgets(line, sizeof(line), f)) {
+        char* p = line;
+        while (isspace((unsigned char)*p)) p++;
+
+        if (*p == '\0' || *p == '#') continue;
+
+        if (!inSection) {
+            if (strncmp(p, "[DEFINITIONS]", 13) == 0) {
+                inSection = 1;
+            }
+            continue;
+        }
+
+        if (*p == '[') break;  /* Reached next section */
+
+        /* Count valid definition lines */
+        char* nameToken = strtok(p, " \t\r\n");
+        if (nameToken) count++;
+    }
+
+    if (count == 0) {
+        *target = NULL;
+        *targetCount = 0;
+        return 3;  /* no definitions found */
+    }
+
+    Definition* defs = (Definition*) ALLOC(sizeof(Definition) * count);
+    if (!defs) return 4;
+
+    *target = defs;
+    *targetCount = count;
+    return 0;
+}
+
+int initShapesLibrary(FILE* f, long offset, ShapeArbitrary** target, int* targetCount)
+{
+    char line[MAX_LINE_LENGTH];
+    int count, currentIndex;
+    ShapeArbitrary* shapes;
+
+    if (!f || !offset || !target || !targetCount) {
+        return 1;  /* Invalid arguments */
+    }
+
+    if (fseek(f, offset, SEEK_SET) != 0) {
+        return 2;  /* Seek failed */
+    }
+
+    count = 0;
+    currentIndex = -1;
+
+    /* First pass: count number of shapes and collect sizes */
+    while (fgets(line, sizeof(line), f)) {
+        char* p = line;
+        while (*p == ' ' || *p == '\t') p++;
+
+        if (*p == '\0' || *p == '#') continue;
+        if (*p == '[') break;
+
+        if (strncmp(p, "shape_id", 8) == 0) {
+            count++;
+        }
+    }
+
+    if (count == 0) {
+        *target = NULL;
+        *targetCount = 0;
+        return 0;
+    }
+
+    /* Allocate array of shapes */
+    shapes = (ShapeArbitrary*) ALLOC(sizeof(ShapeArbitrary) * count);
+    if (!shapes) return 3;
+
+    /* Reset file pointer for second part of init (still first pass) */
+    if (fseek(f, offset, SEEK_SET) != 0) {
+        FREE(shapes);
+        return 4;
+    }
+
+    currentIndex = -1;
+
+    while (fgets(line, sizeof(line), f)) {
+        char* p = line;
+        while (*p == ' ' || *p == '\t') p++;
+
+        if (*p == '\0' || *p == '#') continue;
+        if (*p == '[') break;
+
+        if (strncmp(p, "shape_id", 8) == 0) {
+            currentIndex++;
+            if (currentIndex >= count) break;
+
+            shapes[currentIndex].numSamples = 0;
+            shapes[currentIndex].numUncompressedSamples = 0;
+            shapes[currentIndex].samples = NULL;
+        }
+        else if (strncmp(p, "num_samples", 11) == 0 && currentIndex >= 0) {
+            int n;
+            if (sscanf(p + 11, "%d", &n) == 1) {
+                shapes[currentIndex].numUncompressedSamples = n;
+            }
+        }
+        else if (currentIndex >= 0) {
+            shapes[currentIndex].numSamples++;
+        }
+    }
+
+    /* Allocate sample arrays */
+    for (currentIndex = 0; currentIndex < count; currentIndex++) {
+        int num = shapes[currentIndex].numSamples;
+        shapes[currentIndex].samples = (float*) ALLOC(sizeof(float) * num);
+        if (!shapes[currentIndex].samples) {
+            int j;
+            for (j = 0; j < currentIndex; j++) {
+                if (shapes[j].samples) FREE(shapes[j].samples);
+            }
+            FREE(shapes);
+            return 5;
+        }
+    }
+
+    *target = shapes;
+    *targetCount = count;
+    return 0;
+}
+
 int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCount)
 {
     if (!f || !target || !targetCount) return 1;

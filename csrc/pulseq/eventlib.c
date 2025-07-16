@@ -10,31 +10,41 @@
 
 void readDefinitionsLibrary(SeqFile* seq, FILE* f)
 {
+    int ret;
+
     /* Check if library was already parsed */
     if (seq->isDefinitionsLibraryParsed) return;
 
-    char line[MAX_LINE_LENGTH];
-    int inSection = 0;
-    int count = 0;
+    /* Go to the correct section */
+    getSectionOffsets(&(seq->offsets).definitions, seq, f, (const char*[]){"[DEFINITIONS]"}, 1, 0);
+    if (seq->offsets.definitions < 0) {
+        return;
+    }
 
-    Definition* defs = NULL;
+    /* Preallocate definitions array */
+    ret = initDefinitionsLibrary(f, &(seq->offsets).definitions, &seq->definitionsLibrary, &seq->numDefinitions);
+    if (ret != 0) {
+        fprintf(stderr, "Error: Failed to initialize definitionsLibrary\n");
+        return;
+    }
+
+    /* Second pass — parse values */
+    if (fseek(f, seq->offsets.definitions, SEEK_SET) != 0) return;
+
+    char line[MAX_LINE_LENGTH];
+
+    /* Skip section header line */
+    if (!fgets(line, sizeof(line), f)) return;
+
+    int defIndex = 0;
 
     while (fgets(line, sizeof(line), f)) {
         char* p = line;
         while (isspace((unsigned char)*p)) p++;
 
         if (*p == '\0' || *p == '#') continue;
+        if (*p == '[') break;  /* Next section begins */
 
-        if (!inSection) {
-            if (strncmp(p, "[DEFINITIONS]", 13) == 0) {
-                inSection = 1;
-            }
-            continue;
-        }
-
-        if (*p == '[') break;  /* Reached next section */
-
-        /* Allocate new definition */
         Definition def;
         def.valueSize = 0;
         def.value = NULL;
@@ -48,31 +58,21 @@ void readDefinitionsLibrary(SeqFile* seq, FILE* f)
         /* Parse values */
         char* token;
         while ((token = strtok(NULL, " \t\r\n")) != NULL) {
-            char** newValueArray = (char**) ALLOC(sizeof(char*) * (def.valueSize + 1));
+            char** newArray = (char**) ALLOC(sizeof(char*) * (def.valueSize + 1));
             for (int i = 0; i < def.valueSize; i++) {
-                newValueArray[i] = def.value[i];
+                newArray[i] = def.value[i];
             }
 
-            newValueArray[def.valueSize] = (char*) ALLOC(strlen(token) + 1);
-            strcpy(newValueArray[def.valueSize], token);
+            newArray[def.valueSize] = (char*) ALLOC(strlen(token) + 1);
+            strcpy(newArray[def.valueSize], token);
             if (def.value) FREE(def.value);
-            def.value = newValueArray;
+            def.value = newArray;
             def.valueSize++;
         }
 
-        /* Grow global definitions array */
-        Definition* newDefs = (Definition*) ALLOC(sizeof(Definition) * (count + 1));
-        for (int i = 0; i < count; i++) {
-            newDefs[i] = defs[i];
-        }
-        newDefs[count] = def;
-        if (defs) FREE(defs);
-        defs = newDefs;
-        count++;
+        /* Assign parsed definition */
+        seq->definitionsLibrary[defIndex++] = def;
     }
-
-    seq->definitionsLibrary = defs;
-    seq->numDefinitions = count;
 
     seq->isDefinitionsLibraryParsed = 1;
 }
@@ -90,7 +90,7 @@ void readRfLibrary(SeqFile* seq, FILE* f)
     if (seq->isRfLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&(seq->offsets).rf, seq, f, "[RF]", 1, 0);
+    getSectionOffsets(&(seq->offsets).rf, seq, f, (const char*[]){"[RF]"}, 1, 0);
     if (seq->offsets.rf < 0) {
         return;
     }
@@ -115,10 +115,8 @@ void readRfLibrary(SeqFile* seq, FILE* f)
 void readGradLibrary(SeqFile* seq, FILE* f)
 {
     int ret;
-
     long offsets[2] = { seq->offsets.grad, seq->offsets.trap };
     int numSections = 0;
-
     const char* sections[] = { "[GRADIENTS]", "[TRAP]" };
 
     Scale gradScale = { 
@@ -185,7 +183,7 @@ void readAdcLibrary(SeqFile* seq, FILE* f)
     if (seq->isAdcLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&(seq->offsets).adc, seq, f, "[ADC]", 1, 0);
+    getSectionOffsets(&(seq->offsets).adc, seq, f, (const char*[]){"[ADC]"}, 1, 0);
     if (seq->offsets.adc < 0) {
         return;
     }
@@ -205,4 +203,64 @@ void readAdcLibrary(SeqFile* seq, FILE* f)
     }
 
     seq->isAdcLibraryParsed = 1;
+}
+
+void readShapesLibrary(SeqFile* seq, FILE* f)
+{
+    int ret;
+    char line[MAX_LINE_LENGTH];
+    int shapeIndex;
+    int sampleIndex;
+    long pos;
+
+    /* Check if library was already parsed */
+    if (seq->isShapesLibraryParsed) return;
+
+    /* Go to the correct section */
+    getSectionOffsets(&(seq->offsets).shapes, seq, f, (const char*[]){"[SHAPES]"}, 1, 0);
+    if (seq->offsets.shapes < 0) {
+        return;
+    }
+
+    /* Preallocate shapes array */
+    ret = initShapesLibrary(f, &(seq->offsets).shapes, &seq->shapesLibrary, &seq->shapesLibrarySize);
+    if (ret != 0) {
+        fprintf(stderr, "Error: Failed to initialize shapesLibrary\n");
+        return;
+    }
+
+    /* Second pass: Parse and fill waveform data */
+    pos = seq->offsets.shapes;
+    if (fseek(f, pos, SEEK_SET) != 0) return;
+
+    shapeIndex = -1;
+    sampleIndex = 0;
+
+    while (fgets(line, sizeof(line), f)) {
+        char* p = line;
+        while (*p == ' ' || *p == '\t') p++;
+
+        if (*p == '\0' || *p == '#') continue;
+        if (*p == '[') break;
+
+        if (strncmp(p, "shape_id", 8) == 0) {
+            shapeIndex++;
+            sampleIndex = 0;
+            continue;
+        }
+
+        if (strncmp(p, "num_samples", 11) == 0) {
+            continue;
+        }
+
+        if (shapeIndex >= 0 && shapeIndex < seq->shapesLibrarySize) {
+            float val;
+            if (sscanf(p, "%f", &val) == 1 &&
+                sampleIndex < seq->shapesLibrary[shapeIndex].numSamples) {
+                seq->shapesLibrary[shapeIndex].samples[sampleIndex++] = val;
+            }
+        }
+    }
+
+    seq->isShapesLibraryParsed = 1;
 }

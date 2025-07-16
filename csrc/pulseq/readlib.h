@@ -38,6 +38,38 @@ typedef struct {
 int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** target, int* targetCount, int numEntries);
 
 /**
+ * @brief Initializes the Shapes Library by allocating the required array.
+ *
+ * This function performs a first pass over the [SHAPES] section of the file,
+ * counts how many valid shapes are present, and allocates an array of
+ * ShapeArbitrary structs accordingly.
+ *
+ * @param[in]  f            Opened file handle (text mode)
+ * @param[in]  offset       Offset of the [SHAPES] section
+ * @param[out] target       Pointer to store the allocated array of ShapeArbitrary structs
+ * @param[out] targetCount  Pointer to store the number of shapes found
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int initShapesLibrary(FILE* f, long offset, ShapeArbitrary** target, int* targetCount);
+
+/**
+ * @brief Initializes the Definitions Library by allocating the required array.
+ *
+ * This function performs a first pass over the [DEFINITIONS] section of the file,
+ * counts how many valid definitions are present, and allocates an array of
+ * Definition structs accordingly.
+ *
+ * @param[in]  f            Opened file handle (text mode)
+ * @param[in]  offset       Offset of the [DEFINITIONS] section
+ * @param[out] target       Pointer to store the allocated array of Definition structs
+ * @param[out] targetCount  Pointer to store the number of definitions found
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int initDefinitionsLibrary(FILE* f, long offset, Definition** target, int* targetCount);
+
+/**
  * @brief Initialize rf shim library.
  *
  *

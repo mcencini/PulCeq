@@ -33,7 +33,7 @@ void readExtensionLibrary(SeqFile* seq, FILE* f)
     if (seq->isExtensionsLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&(seq->offsets).extensions, seq, f, "[EXTENSIONS]", 1, 1);
+    getSectionOffsets(&(seq->offsets).extensions, seq, f, (const char*[]){"[EXTENSIONS]"}, 1, 1);
     if (seq->offsets.extensions < 0) {
         return;
     }

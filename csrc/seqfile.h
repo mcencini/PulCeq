@@ -80,7 +80,7 @@ typedef struct {
 
     int isDefinitionsLibraryParsed; /**< @brief Flag indicating if the definitions library was parsed successfully. */
     int numDefinitions;             /**< @brief Number of definitions parsed. */
-    Definition *definitionsLibrary; /**< @brief Array of parsed definitions. */
+    Definition* definitionsLibrary; /**< @brief Array of parsed definitions. */
 
     int isBlockLibraryParsed;       /**< @brief Flag indicating if the block library was parsed. */
     int numBlocks;                  /**< @brief Number of block entries. */
@@ -136,9 +136,9 @@ typedef struct {
     int extensionLUTSize;           /**< @brief Size of look-up table to retrieve from a given extension numerical ID the underlying Enum (type) */
     int *extensionLUT;              /**< @brief Look-up table to retrieve from a given extension numerical ID the underlying Enum (type) */
 
-    int isShapeLibraryParsed;       /**< @brief Flag indicating if the shape library was parsed. */
-    int shapeLibrarySize;           /**< @brief Number of shape entries. */
-    ShapeArbitrary** shapeLibrary;  /**< @brief Array of pointers to arbitrary shape structures. */
+    int isShapesLibraryParsed;      /**< @brief Flag indicating if the shape library was parsed. */
+    int shapesLibrarySize;          /**< @brief Number of shape entries. */
+    ShapeArbitrary* shapesLibrary;  /**< @brief Array of pointers to arbitrary shape structures. */
 
 } SeqFile;
 

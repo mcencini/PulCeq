@@ -73,11 +73,16 @@ void seqFileReset(SeqFile* seq) {
 
 void readDefinitions(SeqFile* seq)
 {
+    int ret;
     FILE* f = fopen(seq->filePath, "r");
+    
     if (!f) return;
-    readDefinitionsLibrary(seq, f);
+    readDefinitionsLibrary(seq, f);    
     fclose(f);
+    
+    return;
 }
+
 
 /*************************  Local utils  ****************************************/
 #define INIT_LIBRARY(seq, fieldPtr, sizeField, flagField) \
