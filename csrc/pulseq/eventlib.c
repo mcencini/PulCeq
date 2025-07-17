@@ -275,9 +275,7 @@ void readShapesLibrary(SeqFile* seq, FILE* f)
     pos = seq->offsets.shapes;
     if (fseek(f, pos, SEEK_SET) != 0) return;
 
-    shapeIndex = -1;
-    sampleIndex = 0;
-
+    /* Actual parsing */
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (*p == ' ' || *p == '\t') p++;
@@ -285,20 +283,22 @@ void readShapesLibrary(SeqFile* seq, FILE* f)
         if (*p == '\0' || *p == '#') continue;
         if (*p == '[') break;
 
+        /* Beginning of waveform: parse shape ID */
         if (strncmp(p, "shape_id", 8) == 0) {
-            shapeIndex++;
-            sampleIndex = 0;
-            continue;
+            if (sscanf(p + 8, "%d", &shapeIndex) == 1) sampleIndex = 0;
         }
 
+        /* Number of uncompressed samples: skip (already stored) */
         if (strncmp(p, "num_samples", 11) == 0) {
             continue;
         }
 
-        if (shapeIndex >= 0 && shapeIndex < seq->shapesLibrarySize) {
-            if (sscanf(p, "%f", &val) == 1 &&
-                sampleIndex < seq->shapesLibrary[shapeIndex].numSamples) {
-                seq->shapesLibrary[shapeIndex].samples[sampleIndex++] = val;
+        /* Parse waveform sample value */
+        if (shapeIndex > 0 && shapeIndex <= seq->shapesLibrarySize) {
+            if (sscanf(p, "%f", &val) == 1){
+                if(sampleIndex < seq->shapesLibrary[shapeIndex - 1].numSamples) {
+                    seq->shapesLibrary[shapeIndex - 1].samples[sampleIndex++] = val;
+                }
             }
         }
     }
