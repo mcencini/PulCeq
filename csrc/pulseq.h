@@ -5,8 +5,9 @@
 #ifndef PULSEQ_H
 #define PULSEQ_H
 
-#include "pulseq/block.h"
 #include "pulseq/seqfile.h"
+
+#include "pulseq/block.h"
 
 /* Public API */
 SeqFile* seqFile(char* filePath);

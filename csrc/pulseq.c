@@ -2,9 +2,8 @@
  * @file pulseq.c
  * @brief Implementation of public Pulseq API.
  */
+
 #include "pulseq.h"
-#include "pulseq/block.h" 
-#include "pulseq/seqfile.h" 
 
 SeqFile* seqFile(char* filePath) { return __seqFile(filePath); }
 void seqFileFree(SeqFile* seq) { __seqFileFree(seq); }

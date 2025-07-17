@@ -6,9 +6,10 @@
 
 #include <stddef.h>
 
+#include "seqfile.h"
+
 #include "alloc.h"
 #include "block.h"
-#include "seqfile.h"
 
 /*********************************************************  local utils  *********************************************************/
 #define MAX_EXTENSIONS_PER_BLOCK 64

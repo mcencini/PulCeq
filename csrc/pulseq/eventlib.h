@@ -10,7 +10,9 @@
 #include "readlib.h"
 #include "scanfile.h"
 
+#ifndef SEQFILE_H
 typedef struct SeqFile SeqFile;  /* Forward declaration */
+#endif /* SEQFILE_H */
 
 /**
  * @brief Read the Definitions library from sequence file.

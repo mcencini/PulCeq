@@ -9,100 +9,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "seqfile.h"
+
 #include "alloc.h"
 #include "eventlib.h"
 #include "extlib.h"
-#include "seqfile.h"
 
-SeqFile* __seqFile(char* filePath){
-    SeqFile *seq = (SeqFile*) ALLOC(sizeof(SeqFile));
-    seqFileInit(seq);
-    seq->filePath = (char*) ALLOC(strlen(filePath) + 1);
-    strcpy(seq->filePath, filePath);
-    return seq;
-}
-
-void __seqFileFree(SeqFile *seq){
-    seqFileReset(seq);
-    FREE(seq->filePath);
-    FREE(seq);
-}
-
-void __seqFileReset(SeqFile* seq) {
-    int i, j;
-    if (!seq) return;
-    if (seq->isDefinitionsLibraryParsed && seq->definitionsLibrary) {
-        for (i = 0; i < seq->numDefinitions; i++) {
-            FREE(seq->definitionsLibrary[i].value);
-        }
-        FREE(seq->definitionsLibrary);
-    }
-    if (seq->isBlockLibraryParsed)      FREE(seq->blockLibrary);
-    if (seq->isRfLibraryParsed)         FREE(seq->rfLibrary);
-    if (seq->isGradLibraryParsed)       FREE(seq->gradLibrary);
-    if (seq->isAdcLibraryParsed)        FREE(seq->adcLibrary);
-    if (seq->isExtensionsLibraryParsed) {
-        FREE(seq->extensionsLibrary);
-        FREE(seq->triggerLibrary);
-        FREE(seq->rotationLibrary);
-        FREE(seq->labelsetLibrary);
-        FREE(seq->labelincLibrary);
-        FREE(seq->softDelayLibrary);
-        for (i = 0; i < seq->rfShimLibrarySize; i++) {
-            FREE(seq->rfShimLibrary[i].values);
-        }
-        FREE(seq->rfShimLibrary);
-    }
-    if (seq->isShapesLibraryParsed && seq->shapesLibrary) {
-        for (i = 0; i < seq->shapesLibrarySize; i++) {
-            FREE(seq->shapesLibrary[i].samples);
-            seq->shapesLibrary[i].numUncompressedSamples = 0;
-            seq->shapesLibrary[i].numSamples = 0;
-            FREE(seq->shapesLibrary[i]);
-        }
-        FREE(seq->shapesLibrary);
-    }
-    FREE(seq->extensionLUT);
-
-    seqFileInit(seq);
-}
-
-void __readDefinitions(SeqFile* seq)
-{
-    FILE* f = fopen(seq->filePath, "r");
-    
-    if (!f) return;
-    readDefinitionsLibrary(seq, f);    
-    fclose(f);
-    
-    return;
-}
-
-void __readLibraries(SeqFile* seq, int readBlocks)
-{
-    FILE* f = fopen(seq->filePath, "r");
-    
-    if (!f) return;
-    readDefinitionsLibrary(seq, f); 
-    if (readBlocks) {
-        readBlockLibrary(seq, f);
-    }
-    readRfLibrary(seq, f);
-    readGradLibrary(seq, f);
-    readAdcLibrary(seq, f);
-    readShapesLibrary(seq, f);
-    readExtensionsLibrary(seq, f);      
-    fclose(f);
-    
-    return;
-}
-
-void __readSeq(SeqFile *seq)
-{
-    __readLibraries(seq, 1);
-}
-
-/*************************  Local utils  ****************************************/
+/*********************************************************  local utils  *********************************************************/
 #define INIT_LIBRARY(seq, fieldPtr, sizeField, flagField) \
     do { \
         (seq)->fieldPtr = NULL; \
@@ -155,4 +68,92 @@ void seqFileInit(SeqFile* seq){
     seq->extensionLUTSize = 0;
     seq->extensionLUT = NULL;
     INIT_LIBRARY(seq, shapesLibrary, shapesLibrarySize, isShapesLibraryParsed);
+}
+/****************************************************  end local utils  ****************************************************/
+
+SeqFile* __seqFile(char* filePath){
+    SeqFile *seq = (SeqFile*) ALLOC(sizeof(SeqFile));
+    seqFileInit(seq);
+    seq->filePath = (char*) ALLOC(strlen(filePath) + 1);
+    strcpy(seq->filePath, filePath);
+    return seq;
+}
+
+void __seqFileFree(SeqFile *seq){
+    seqFileReset(seq);
+    FREE(seq->filePath);
+    FREE(seq);
+}
+
+void __seqFileReset(SeqFile* seq) {
+    int i, j;
+    if (!seq) return;
+    if (seq->isDefinitionsLibraryParsed && seq->definitionsLibrary) {
+        for (i = 0; i < seq->numDefinitions; i++) {
+            FREE(seq->definitionsLibrary[i].value);
+        }
+        FREE(seq->definitionsLibrary);
+    }
+    if (seq->isBlockLibraryParsed)      FREE(seq->blockLibrary);
+    if (seq->isRfLibraryParsed)         FREE(seq->rfLibrary);
+    if (seq->isGradLibraryParsed)       FREE(seq->gradLibrary);
+    if (seq->isAdcLibraryParsed)        FREE(seq->adcLibrary);
+    if (seq->isExtensionsLibraryParsed) {
+        FREE(seq->extensionsLibrary);
+        FREE(seq->triggerLibrary);
+        FREE(seq->rotationLibrary);
+        FREE(seq->labelsetLibrary);
+        FREE(seq->labelincLibrary);
+        FREE(seq->softDelayLibrary);
+        for (i = 0; i < seq->rfShimLibrarySize; i++) {
+            FREE(seq->rfShimLibrary[i].values);
+        }
+        FREE(seq->rfShimLibrary);
+    }
+    if (seq->isShapesLibraryParsed && seq->shapesLibrary) {
+        for (i = 0; i < seq->shapesLibrarySize; i++) {
+            FREE(seq->shapesLibrary[i].samples);
+            seq->shapesLibrary[i].numUncompressedSamples = 0;
+            seq->shapesLibrary[i].numSamples = 0;
+        }
+        FREE(seq->shapesLibrary);
+    }
+    FREE(seq->extensionLUT);
+
+    seqFileInit(seq);
+}
+
+void __readDefinitions(SeqFile* seq)
+{
+    FILE* f = fopen(seq->filePath, "r");
+    
+    if (!f) return;
+    readDefinitionsLibrary(seq, f);    
+    fclose(f);
+    
+    return;
+}
+
+void __readLibraries(SeqFile* seq, int readBlocks)
+{
+    FILE* f = fopen(seq->filePath, "r");
+    
+    if (!f) return;
+    readDefinitionsLibrary(seq, f); 
+    if (readBlocks) {
+        readBlockLibrary(seq, f);
+    }
+    readRfLibrary(seq, f);
+    readGradLibrary(seq, f);
+    readAdcLibrary(seq, f);
+    readShapesLibrary(seq, f);
+    readExtensionsLibrary(seq, f);      
+    fclose(f);
+    
+    return;
+}
+
+void __readSeq(SeqFile *seq)
+{
+    __readLibraries(seq, 1);
 }

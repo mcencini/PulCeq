@@ -6,8 +6,9 @@
 
 #include <math.h>
 
-#include "extlib.h"
 #include "seqfile.h"
+
+#include "extlib.h"
 
 void readExtensionLibrary(SeqFile* seq, FILE* f)
 {

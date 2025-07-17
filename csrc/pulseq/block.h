@@ -7,7 +7,10 @@
 #define BLOCK_H
 
 #include "event.h"
-#include "seqfile.h"
+
+#ifndef SEQFILE_H
+typedef struct SeqFile SeqFile; /* Forward declaration to avoid circular dependency */
+#endif /* SEQFILE_H */
 
 /** @struct SeqBlock
  * @brief  Sequence block containing RF, gradient, ADC, and trigger events.

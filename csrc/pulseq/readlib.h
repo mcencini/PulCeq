@@ -8,9 +8,6 @@
 
 #include <stdio.h>
 
-#include "alloc.h"
-#include "constants.h"
-
 /**
  * @struct Scale
  * @brief Scale struct used for multiplying parsed library values.
@@ -19,6 +16,11 @@ typedef struct {
     int size;         /**< Number of values to scale */
     const float* values; /**< Array of scaling factors */
 } Scale;
+
+#ifndef SEQFILE_H
+typedef struct Definition Definition;  /* Forward declaration */
+typedef struct RfShimEntry RfShimEntry;  /* Forward declaration */
+#endif /* SEQFILE_H */
 
 /**
  * @brief Initialize a combined library array from multiple section offsets.

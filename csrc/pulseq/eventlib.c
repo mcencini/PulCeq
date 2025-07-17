@@ -4,8 +4,9 @@
  *
  */
 
-#include "eventlib.h"
 #include "seqfile.h"
+
+#include "eventlib.h"
 
 void readDefinitionsLibrary(SeqFile* seq, FILE* f)
 {
@@ -17,6 +18,7 @@ void readDefinitionsLibrary(SeqFile* seq, FILE* f)
     char* token;
     char** newArray;
     int i;
+    Definition def;
 
     /* Check if library was already parsed */
     if (seq->isDefinitionsLibraryParsed) return;
@@ -47,7 +49,6 @@ void readDefinitionsLibrary(SeqFile* seq, FILE* f)
         if (*p == '\0' || *p == '#') continue;
         if (*p == '[') break;  /* Next section begins */
 
-        Definition def;
         def.valueSize = 0;
         def.value = NULL;
 

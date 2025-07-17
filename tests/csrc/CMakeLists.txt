@@ -29,4 +29,3 @@ target_include_directories(run_tests PRIVATE ../../csrc)
 
 # Enable warnings and enforce ANSI C89 compliance
 target_compile_options(run_tests PRIVATE -Wall -Wextra -std=c89 -pedantic -Werror)
-

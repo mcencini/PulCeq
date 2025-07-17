@@ -11,7 +11,9 @@
 
 #include "constants.h"
 
+#ifndef SEQFILE_H
 typedef struct SeqFile SeqFile;  /* Forward declaration */
+#endif /* SEQFILE_H */
 
 /**
  * @brief Scan for the offset of a target section and update SectionOffsets cache.

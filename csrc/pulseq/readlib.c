@@ -4,8 +4,74 @@
  *
  */
 
-#include "readlib.h"
 #include "seqfile.h"
+
+#include "alloc.h"
+#include "constants.h"
+#include "readlib.h"
+
+/****************************************************  local utils  ****************************************************/
+typedef struct {
+    const char *name;
+    int value;
+} TableEntry;
+
+static const TableEntry label_table[] = {
+    { "SLC", SLC }, 
+    { "SEG", SEG }, 
+    { "REP", REP }, 
+    { "AVG", AVG },
+    { "SET", SET }, 
+    { "ECO", ECO }, 
+    { "PHS", PHS }, 
+    { "LIN", LIN },
+    { "PAR", PAR }, 
+    { "ACQ", ACQ }, 
+    { "TRID", TRID },
+    { "NAV", NAV },
+    { "REV", REV }, 
+    { "SMS", SMS }, 
+    { "REF", REF }, 
+    { "IMA", IMA },
+    { "NOISE", NOISE }, 
+    { "PMC", PMC }, 
+    { "NOROT", NOROT },
+    { "NOPOS", NOPOS }, 
+    { "NOSCL", NOSCL }, 
+    { "ONCE", ONCE },
+    { NULL, -1 }
+};
+
+int label2enum(const char *label) {
+    int i;
+    if (!label) return -1;
+    for (i = 0; label_table[i].name != NULL; i++) {
+        if (strcmp(label, label_table[i].name) == 0) return label_table[i].value;
+    }
+    return -1;
+}
+
+static const TableEntry hint_table[] = {
+    { "TE", HINT_TE }, 
+    { "TR", HINT_TR },
+    { "TI", HINT_TI }, 
+    { "ESP", HINT_ESP },
+    { "RECTIME", HINT_RECTIME },
+    { "T2PREP", HINT_T2PREP }, 
+    { "TE2", HINT_TE2 },
+    { "TR2", HINT_TR2 },
+    { NULL, -1 }
+};
+
+int hint2enum(const char *hint) {
+    int i;
+    if (!hint) return -1;
+    for (i = 0; hint_table[i].name != NULL; i++) {
+        if (strcmp(hint, hint_table[i].name) == 0) return hint_table[i].value;
+    }
+    return -1;
+}
+/****************************************************  end local utils  ****************************************************/
 
 int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** target, int* targetCount, int numEntries)
 {
@@ -250,7 +316,6 @@ int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCou
 int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, Scale scale, int flag)
 {
     char line[MAX_LINE_LENGTH];
-    char line[MAX_LINE_LENGTH];
     int idx, parsed, consumed, n, offsetCol;                        
     float vals[MAX_SCALE_SIZE];
     char* scanPtr;
@@ -417,66 +482,4 @@ int readRfShimLibrary(FILE* f, long offset, RfShimEntry* target, int targetCount
     }
 
     return 0;
-}
-
-/**************************************************** local utils /****************************************************/
-typedef struct {
-    const char *name;
-    int value;
-} TableEntry;
-
-static const TableEntry label_table[] = {
-    { "SLC", SLC }, 
-    { "SEG", SEG }, 
-    { "REP", REP }, 
-    { "AVG", AVG },
-    { "SET", SET }, 
-    { "ECO", ECO }, 
-    { "PHS", PHS }, 
-    { "LIN", LIN },
-    { "PAR", PAR }, 
-    { "ACQ", ACQ }, 
-    { "TRID", TRID },
-    { "NAV", NAV },
-    { "REV", REV }, 
-    { "SMS", SMS }, 
-    { "REF", REF }, 
-    { "IMA", IMA },
-    { "NOISE", NOISE }, 
-    { "PMC", PMC }, 
-    { "NOROT", NOROT },
-    { "NOPOS", NOPOS }, 
-    { "NOSCL", NOSCL }, 
-    { "ONCE", ONCE },
-    { NULL, -1 }
-};
-
-int label2enum(const char *label) {
-    int i;
-    if (!label) return -1;
-    for (i = 0; label_table[i].name != NULL; i++) {
-        if (strcmp(label, label_table[i].name) == 0) return label_table[i].value;
-    }
-    return -1;
-}
-
-static const TableEntry hint_table[] = {
-    { "TE", HINT_TE }, 
-    { "TR", HINT_TR },
-    { "TI", HINT_TI }, 
-    { "ESP", HINT_ESP },
-    { "RECTIME", HINT_RECTIME },
-    { "T2PREP", HINT_T2PREP }, 
-    { "TE2", HINT_TE2 },
-    { "TR2", HINT_TR2 },
-    { NULL, -1 }
-};
-
-int hint2enum(const char *hint) {
-    int i;
-    if (!hint) return -1;
-    for (i = 0; hint_table[i].name != NULL; i++) {
-        if (strcmp(hint, hint_table[i].name) == 0) return hint_table[i].value;
-    }
-    return -1;
 }
