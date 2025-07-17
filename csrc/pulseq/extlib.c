@@ -31,6 +31,7 @@ void readExtensionsLibrary(SeqFile* seq, FILE* f)
     /* Go to the correct section */
     getSectionOffsets(&(seq->offsets).extensions, seq, f, ext_section, 1, 1);
     if (seq->offsets.extensions < 0) {
+        seq->isExtensionsLibraryParsed = 1;
         return;
     }
 

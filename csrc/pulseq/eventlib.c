@@ -26,6 +26,7 @@ void readDefinitionsLibrary(SeqFile* seq, FILE* f)
     /* Go to the correct section */
     getSectionOffsets(&((seq->offsets).definitions), seq, f, (const char*[]){"[DEFINITIONS]"}, 1, 0);
     if (seq->offsets.definitions < 0) {
+        seq->isDefinitionsLibraryParsed = 1;
         return;
     }
 
@@ -94,6 +95,7 @@ void readBlockLibrary(SeqFile* seq, FILE* f)
     /* Go to the correct section */
     getSectionOffsets(&((seq->offsets).blocks), seq, f, block_section, 1, 0);
     if (seq->offsets.blocks < 0) {
+        seq->isBlockLibraryParsed = 1;
         return;
     }
 
@@ -129,6 +131,7 @@ void readRfLibrary(SeqFile* seq, FILE* f)
     /* Go to the correct section */
     getSectionOffsets(&((seq->offsets).rf), seq, f, rf_section, 1, 0);
     if (seq->offsets.rf < 0) {
+        seq->isRfLibraryParsed = 1;
         return;
     }
 
@@ -173,6 +176,7 @@ void readGradLibrary(SeqFile* seq, FILE* f)
     if ((seq->offsets).grad >= 0) numSections++;
     if ((seq->offsets).trap >= 0) numSections++;
     if (numSections == 0) {
+        seq->isGradLibraryParsed = 1;
         return;
     }
 
@@ -218,6 +222,7 @@ void readAdcLibrary(SeqFile* seq, FILE* f)
     /* Go to the correct section */
     getSectionOffsets(&((seq->offsets).adc), seq, f, adc_section, 1, 0);
     if (seq->offsets.adc < 0) {
+        seq->isAdcLibraryParsed = 1;
         return;
     }
 
@@ -255,6 +260,7 @@ void readShapesLibrary(SeqFile* seq, FILE* f)
     /* Go to the correct section */
     getSectionOffsets(&((seq->offsets).shapes), seq, f, shape_section, 1, 0);
     if (seq->offsets.shapes < 0) {
+        seq->isShapesLibraryParsed = 1;
         return;
     }
 
