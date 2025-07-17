@@ -6,8 +6,6 @@
 
 #include "seqfile.h"
 
-#include "alloc.h"
-#include "constants.h"
 #include "readlib.h"
 
 /****************************************************  local utils  ****************************************************/
@@ -73,13 +71,13 @@ int hint2enum(const char *hint) {
 }
 /****************************************************  end local utils  ****************************************************/
 
-int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** target, int* targetCount, int numEntries)
+int initStandardLibrary(FILE* f, const long* offsets, int numSections, void** target, int* targetCount, int N)
 {
     char line[MAX_LINE_LENGTH];
     int maxIndex = -1;
     int sec, i, j, idx;
     char* p;
-    float** array;
+    float *array_raw;
 
     if (!f) return 1;
     for (sec = 0; sec < numSections; sec++) {
@@ -114,22 +112,13 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** 
         return 1; /* No entries found */
     }
 
-    /* Allocate zero-filled 2D array */
-    array = (float**) ALLOC(sizeof(float*) * (maxIndex + 1));
-    if (!array) return 1;
-    for (i = 0; i <= maxIndex; i++) {
-        array[i] = (float*) ALLOC(sizeof(float) * numEntries);
-        if (!array[i]) {
-            for (j = 0; j < i; j++) FREE(array[j]);
-            FREE(array);
-            return 1;
-        }
-        for (j = 0; j < numEntries; j++) {
-            array[i][j] = 0.0f;
-        }
+    /* Allocate zero-filled 2D array as a single block */
+    array_raw = (float*) ALLOC(sizeof(float) * N * (maxIndex + 1));
+    if (!array_raw) return 1;
+    for (i = 0; i < (maxIndex + 1) * N; i++) {
+        array_raw[i] = 0.0f;
     }
-
-    *target = array;
+    *target = (void*)array_raw;
     *targetCount = maxIndex + 1;
     return 0;
 }
@@ -313,7 +302,7 @@ int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCou
     return 0;
 }
 
-int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, Scale scale, int flag)
+int readStandardLibrary(FILE* f, long offset, void* target, int targetCount, int N, Scale scale, int flag)
 {
     char line[MAX_LINE_LENGTH];
     int idx, parsed, consumed, n, offsetCol;                        
@@ -322,6 +311,7 @@ int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, S
     char* p;
     float v;
 
+    float *array_raw = (float*)target;
     if (!f) return 1;
     if (scale.size > MAX_SCALE_SIZE) return 1;
     if (fseek(f, offset, SEEK_SET) != 0) {
@@ -362,23 +352,24 @@ int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, S
 
         offsetCol = (flag >= 0) ? 1 : 0;
         for (n = 0; n < scale.size; n++) {
-            target[idx][n + offsetCol] = vals[n] * scale.values[n];
+            array_raw[idx * N + n + offsetCol] = vals[n] * scale.values[n];
         }
         if (flag >= 0) {
-            target[idx][0] = (float)flag;
+            array_raw[idx * N + 0] = (float)flag;
         }
     }
 
     return 0;
 }
 
-int readLabelLibrary(FILE* f, long offset, float** target, int targetCount, int* isLabelDefined) {
+int readLabelLibrary(FILE* f, long offset, void* target, int targetCount, int N, int* isLabelDefined) {
     char line[MAX_LINE_LENGTH];
     char* p;
     int idx, labelCode;
     float val;
     char label[LABEL_NAME_LENGTH];
 
+    float *array_raw = (float*)target;
     if (!f || offset < 0) return 1;
     if (fseek(f, offset, SEEK_SET) != 0) return 1;
 
@@ -399,21 +390,22 @@ int readLabelLibrary(FILE* f, long offset, float** target, int targetCount, int*
                 isLabelDefined[labelCode] = 1;
             }
 
-            target[idx][0] = val;
-            target[idx][1] = (float)labelCode;
+            array_raw[idx * N + 0] = val;
+            array_raw[idx * N + 1] = (float)labelCode;
         }
     }
 
     return 0;
 }
 
-int readDelayLibrary(FILE* f, long offset, float** target, int targetCount) {
+int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N) {
     char line[MAX_LINE_LENGTH];
     char* p;
     int idx, hintCode;
     float offsetVal, scaleVal;
     char hint[SOFT_DELAY_HINT_LENGTH];
 
+    float *array_raw = (float*)target;
     if (!f || offset < 0) return 1;
     if (fseek(f, offset, SEEK_SET) != 0) return 1;
     
@@ -429,9 +421,9 @@ int readDelayLibrary(FILE* f, long offset, float** target, int targetCount) {
 
             hintCode = hint2enum(hint);
 
-            target[idx][0] = offsetVal;
-            target[idx][1] = scaleVal;
-            target[idx][2] = (float)hintCode;
+            array_raw[idx * N + 0] = offsetVal;
+            array_raw[idx * N + 1] = scaleVal;
+            array_raw[idx * N + 2] = (float)hintCode;
         }
     }
 

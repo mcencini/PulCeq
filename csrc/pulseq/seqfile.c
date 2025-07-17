@@ -80,7 +80,7 @@ SeqFile* __seqFile(char* filePath){
 }
 
 void __seqFileFree(SeqFile *seq){
-    seqFileReset(seq);
+    __seqFileReset(seq);
     FREE(seq->filePath);
     FREE(seq);
 }

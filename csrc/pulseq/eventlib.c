@@ -24,13 +24,13 @@ void readDefinitionsLibrary(SeqFile* seq, FILE* f)
     if (seq->isDefinitionsLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&(seq->offsets).definitions, seq, f, (const char*[]){"[DEFINITIONS]"}, 1, 0);
+    getSectionOffsets(&((seq->offsets).definitions), seq, f, (const char*[]){"[DEFINITIONS]"}, 1, 0);
     if (seq->offsets.definitions < 0) {
         return;
     }
 
     /* Preallocate definitions array */
-    ret = initDefinitionsLibrary(f, &(seq->offsets).definitions, &seq->definitionsLibrary, &seq->numDefinitions);
+    ret = initDefinitionsLibrary(f, (seq->offsets).definitions, &seq->definitionsLibrary, &seq->numDefinitions);
     if (ret != 0) {
         fprintf(stderr, "Error: Failed to initialize definitionsLibrary\n");
         return;
@@ -92,20 +92,20 @@ void readBlockLibrary(SeqFile* seq, FILE* f)
     if (seq->isBlockLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&(seq->offsets).blocks, seq, f, block_section, 1, 0);
+    getSectionOffsets(&((seq->offsets).blocks), seq, f, block_section, 1, 0);
     if (seq->offsets.blocks < 0) {
         return;
     }
 
     /* Preallocate library */
-    ret = initStandardLibrary(f,  &(seq->offsets).blocks, 1, &seq->blockLibrary, &seq->numBlocks, blockScale.size);
+    ret = initStandardLibrary(f,  &((seq->offsets).blocks), 1, (void**)&seq->blockLibrary, &seq->numBlocks, blockScale.size);
     if (ret != 0) {
         fprintf(stderr, "Error: Failed to initialize rfLibrary\n");
         return;
     }
 
     /* Parse Block library */
-    ret = readStandardLibrary(f, seq->offsets.blocks, seq->blockLibrary, seq->numBlocks, blockScale, -1);
+    ret = readStandardLibrary(f, seq->offsets.blocks, seq->blockLibrary, seq->numBlocks, blockScale.size, blockScale, -1);
     if (ret != 0) {
         fprintf(stderr, "Error: Failed to read blockLibrary from file %s\n", seq->filePath);
         return;
@@ -127,20 +127,20 @@ void readRfLibrary(SeqFile* seq, FILE* f)
     if (seq->isRfLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&(seq->offsets).rf, seq, f, rf_section, 1, 0);
+    getSectionOffsets(&((seq->offsets).rf), seq, f, rf_section, 1, 0);
     if (seq->offsets.rf < 0) {
         return;
     }
 
     /* Preallocate library */
-    ret = initStandardLibrary(f,  &(seq->offsets).rf, 1, &seq->rfLibrary, &seq->rfLibrarySize, rfScale.size);
+    ret = initStandardLibrary(f,  &((seq->offsets).rf), 1, (void**)&seq->rfLibrary, &seq->rfLibrarySize, rfScale.size);
     if (ret != 0) {
         fprintf(stderr, "Error: Failed to initialize rfLibrary\n");
         return;
     }
 
     /* Parse RF library */
-    ret = readStandardLibrary(f, seq->offsets.rf, seq->rfLibrary, seq->rfLibrarySize, rfScale, -1);
+    ret = readStandardLibrary(f, seq->offsets.rf, seq->rfLibrary, seq->rfLibrarySize, rfScale.size, rfScale, -1);
     if (ret != 0) {
         fprintf(stderr, "Error: Failed to read rfLibrary from file %s\n", seq->filePath);
         return;
@@ -165,7 +165,7 @@ void readGradLibrary(SeqFile* seq, FILE* f)
     if (seq->isGradLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&offsets, seq, f, sections, 2, 0);
+    getSectionOffsets(offsets, seq, f, sections, 2, 0);
     (seq->offsets).grad = offsets[0];
     (seq->offsets).trap = offsets[1];
 
@@ -177,7 +177,7 @@ void readGradLibrary(SeqFile* seq, FILE* f)
     }
 
     /* Preallocate library */
-    ret = initStandardLibrary(f, offsets, 2, &seq->gradLibrary, &seq->gradLibrarySize, gradScale.size + 1);
+    ret = initStandardLibrary(f, offsets, 2, (void**)&seq->gradLibrary, &seq->gradLibrarySize, gradScale.size + 1);
     if (ret != 0) {
         fprintf(stderr, "Error: Failed to initialize gradLibrary\n");
         return;
@@ -185,7 +185,7 @@ void readGradLibrary(SeqFile* seq, FILE* f)
 
     /* Parse GRADIENTS library */
     if ((seq->offsets).grad >= 0){
-        ret = readStandardLibrary(f, offsets[0], seq->gradLibrary, seq->gradLibrarySize, gradScale, 1);
+        ret = readStandardLibrary(f, offsets[0], seq->gradLibrary, seq->gradLibrarySize, gradScale.size + 1, gradScale, 1);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to read gradLibrary ([GRADIENTS] section) from file %s\n", seq->filePath);
             return;
@@ -194,7 +194,7 @@ void readGradLibrary(SeqFile* seq, FILE* f)
 
     /* Parse TRAP library */
     if ((seq->offsets).trap >= 0){
-        ret = readStandardLibrary(f, offsets[1], seq->gradLibrary, seq->gradLibrarySize, trapScale, 0);
+        ret = readStandardLibrary(f, offsets[1], seq->gradLibrary, seq->gradLibrarySize, gradScale.size + 1, trapScale, 0);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to read gradLibrary ([TRAP] section) from file %s\n", seq->filePath);
             return;
@@ -216,20 +216,20 @@ void readAdcLibrary(SeqFile* seq, FILE* f)
     if (seq->isAdcLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&(seq->offsets).adc, seq, f, adc_section, 1, 0);
+    getSectionOffsets(&((seq->offsets).adc), seq, f, adc_section, 1, 0);
     if (seq->offsets.adc < 0) {
         return;
     }
 
     /* Preallocate library */
-    ret = initStandardLibrary(f,  &(seq->offsets).adc, 1, &seq->adcLibrary, &seq->adcLibrarySize, adcScale.size);
+    ret = initStandardLibrary(f,  &((seq->offsets).adc), 1, (void**)&seq->adcLibrary, &seq->adcLibrarySize, adcScale.size);
     if (ret != 0) {
         fprintf(stderr, "Error: Failed to initialize adcLibrary\n");
         return;
     }
 
     /* Parse ADC library */
-    ret = readStandardLibrary(f, seq->offsets.adc, seq->adcLibrary, seq->adcLibrarySize, adcScale, -1);
+    ret = readStandardLibrary(f, seq->offsets.adc, seq->adcLibrary, seq->adcLibrarySize, adcScale.size, adcScale, -1);
     if (ret != 0) {
         fprintf(stderr, "Error: Failed to read adcLibrary from file %s\n", seq->filePath);
         return;
@@ -253,13 +253,13 @@ void readShapesLibrary(SeqFile* seq, FILE* f)
     if (seq->isShapesLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&(seq->offsets).shapes, seq, f, shape_section, 1, 0);
+    getSectionOffsets(&((seq->offsets).shapes), seq, f, shape_section, 1, 0);
     if (seq->offsets.shapes < 0) {
         return;
     }
 
     /* Preallocate shapes array */
-    ret = initShapesLibrary(f, &(seq->offsets).shapes, &seq->shapesLibrary, &seq->shapesLibrarySize);
+    ret = initShapesLibrary(f, (seq->offsets).shapes, &seq->shapesLibrary, &seq->shapesLibrarySize);
     if (ret != 0) {
         fprintf(stderr, "Error: Failed to initialize shapesLibrary\n");
         return;

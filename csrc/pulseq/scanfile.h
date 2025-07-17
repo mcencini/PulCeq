@@ -8,7 +8,9 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
+#include "alloc.h"
 #include "constants.h"
 
 #ifndef SEQFILE_H

@@ -6,7 +6,12 @@
 #ifndef READLIB_H
 #define READLIB_H
 
+#include<ctype.h>
 #include <stdio.h>
+#include <string.h>
+
+#include "alloc.h"
+#include "constants.h"
 
 /**
  * @struct Scale
@@ -26,18 +31,18 @@ typedef struct RfShimEntry RfShimEntry;  /* Forward declaration */
  * @brief Initialize a combined library array from multiple section offsets.
  *
  * For each section offset, seeks and reads lines to find the maximum index in first column.
- * Allocates and zero-fills a float** array with (maxIndex + 1) rows and numEntries columns.
+ * Allocates and zero-fills a dynamic array of static arrays: float (*array)[N], with (maxIndex + 1) rows and N columns.
  *
  * @param[in] f              Opened file handle (text mode)
  * @param[in] offsets        Array of file offsets for sections.
  * @param[in] numSections    Number of sections.
- * @param[out] target        Pointer to float** pointer to store allocated 2D array.
+ * @param[out] target        Pointer to void* to store allocated 2D array (cast to float (*)[N] by caller).
  * @param[out] targetCount   Pointer to int to store allocated row count.
- * @param[in] numEntries     Number of columns (entries) per row.
+ * @param[in] N              Number of columns (entries) per row.
  *
  * @return 0 on success, non-zero on failure.
  */
-int initStandardLibrary(FILE* f, const long* offsets, int numSections, float*** target, int* targetCount, int numEntries);
+int initStandardLibrary(FILE* f, const long* offsets, int numSections, void** target, int* targetCount, int N);
 
 /**
  * @brief Initializes the Shapes Library by allocating the required array.
@@ -93,14 +98,15 @@ int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCou
  *
  * @param[in] f              Opened file handle (text mode)
  * @param[in] offset         File offset where section starts.
- * @param[in,out] target     Pre-allocated 2D float array.
+ * @param[in,out] target     Pre-allocated dynamic array of static arrays (e.g., float (*target)[N]), passed as void*.
  * @param[in] targetCount    Number of rows in target.
+ * @param[in] N              Number of columns per row.
  * @param[in] scale          Scale struct with size and values.
  * @param[in] flag           Flag to store at target[index][0], or -1 to ignore.
  *
  * @return 0 on success, non-zero on failure.
  */
-int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, Scale scale, int flag);
+int readStandardLibrary(FILE* f, long offset, void* target, int targetCount, int N, Scale scale, int flag);
 
 /**
  * @brief Read and parse labelset/labelinc library section from file at given offset.
@@ -110,13 +116,14 @@ int readStandardLibrary(FILE* f, long offset, float** target, int targetCount, S
  *
  * @param[in] f              Opened file handle (text mode)
  * @param[in] offset         File offset where section starts.
- * @param[in,out] target     Pre-allocated 2D float array.
+ * @param[in,out] target     Pre-allocated dynamic array of static arrays (e.g., int (*target)[N]), passed as void*.
  * @param[in] targetCount    Number of rows in target.
+ * @param[in] N              Number of columns per row.
  * @param[in] isLabelDefined Table to store whether a given label/flag is present or not in SeqFile.
  *
  * @return 0 on success, non-zero on failure.
  */
-int readLabelLibrary(FILE* f, long offset, float** target, int targetCount, int* isLabelDefined);
+int readLabelLibrary(FILE* f, long offset, void* target, int targetCount, int N, int* isLabelDefined);
 
 /**
  * @brief Read and parse soft delay library section from file at given offset.
@@ -126,12 +133,13 @@ int readLabelLibrary(FILE* f, long offset, float** target, int targetCount, int*
  *
  * @param[in] f              Opened file handle (text mode)
  * @param[in] offset         File offset where section starts.
- * @param[in,out] target     Pre-allocated 2D float array.
+ * @param[in,out] target     Pre-allocated dynamic array of static arrays (e.g., int (*target)[N]), passed as void*.
  * @param[in] targetCount    Number of rows in target.
+ * @param[in] N              Number of columns per row.
  *
  * @return 0 on success, non-zero on failure.
  */
-int readDelayLibrary(FILE* f, long offset, float** target, int targetCount);
+int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N);
 
 /**
  * @brief Read and parse rf shim library section from file at given offset.
