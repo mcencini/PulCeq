@@ -6,8 +6,10 @@ project(PulCeqLib C)
 
 # Minimal ANSI C89 Pulseq reader library
 file(GLOB PULSEQ_INTERNAL "pulseq/*.c" "pulseq/*.h")
+
 add_library(pulseq pulseq.c ${PULSEQ_INTERNAL})
 target_include_directories(pulseq PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(pulseq m)
 
 # Higher abstraction library (future, placeholder)
 # file(GLOB PULSEG_INTERNAL "pulseg/*.c" "pulseg/*.h")
