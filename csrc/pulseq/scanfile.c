@@ -29,6 +29,24 @@ void getSectionOffsets(long* sectionOffsets, SeqFile* seq, FILE* f, const char**
     char* p;
     long pos;
 
+    /* Hardcoded table of all known section names and pointers to their offsets in seq->offsets */
+    static const char* knownSections[] = {
+        "[VERSION]", "[DEFINITIONS]", "[BLOCKS]", "[RF]", "[GRADIENTS]", "[TRAP]", "[ADC]", "[SHAPES]", "[SIGNATURE]", "[EXTENSIONS]"
+    };
+    long* knownOffsets[] = {
+        &seq->offsets.version,
+        &seq->offsets.definitions,
+        &seq->offsets.blocks,
+        &seq->offsets.rf,
+        &seq->offsets.grad,
+        &seq->offsets.trap,
+        &seq->offsets.adc,
+        &seq->offsets.shapes,
+        &seq->offsets.signature,
+        &seq->offsets.extensions
+    };
+    int numKnownSections = sizeof(knownSections) / sizeof(knownSections[0]);
+
     /* Allocate dynamic arrays */
     sectionFound = (int*) ALLOC(sizeof(int) * numSections);
     if (!sectionFound) return;
@@ -63,13 +81,20 @@ void getSectionOffsets(long* sectionOffsets, SeqFile* seq, FILE* f, const char**
         p = line;
         while (*p == ' ' || *p == '\t') p++;
 
-        /* Check for SECTION line */
+        /* Check for SECTION line: store offset for all known sections and requested sections */
         if (*p == '[') {
+            /* Store offset for all requested sections */
             for (i = 0; i < numSections; i++) {
                 if (!sectionFound[i] && strncmp(p, sectionNames[i], strlen(sectionNames[i])) == 0) {
                     sectionOffsets[i] = pos - strlen(line);  /* store offset of section line */
                     sectionFound[i] = 1;
                     foundSections++;
+                }
+            }
+            /* Store offset for all known sections in seq->offsets */
+            for (i = 0; i < numKnownSections; i++) {
+                if (*(knownOffsets[i]) < 0 && strncmp(p, knownSections[i], strlen(knownSections[i])) == 0) {
+                    *(knownOffsets[i]) = pos - strlen(line);
                 }
             }
         }
@@ -92,11 +117,13 @@ void getSectionOffsets(long* sectionOffsets, SeqFile* seq, FILE* f, const char**
             }
         }
 
-        /* Early exit if all requested sections and extensions found */
+        /* If all target sections found, but parseExtensions==1, keep scanning for extensions until all found or EOF */
         if (foundSections == numSections && (!parseExtensions || foundExtensions == totalExtensions)) {
             (seq->offsets).scan_cursor = ftell(f);
             break;
         }
+        /* If all target sections found but parseExtensions==1 and not all extensions found, keep scanning */
+        /* Otherwise, keep scanning until EOF */
     }
 
     /* Full file scanned or early exit */

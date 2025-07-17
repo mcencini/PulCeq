@@ -46,6 +46,7 @@ void seqFileInit(SeqFile* seq){
     seq->offsets.delays = -1;
     seq->offsets.rotations = -1;
     seq->offsets.shapes = -1;
+    seq->offsets.signature = -1;
 
     INIT_LIBRARY(seq, definitionsLibrary, numDefinitions, isDefinitionsLibraryParsed);
     INIT_LIBRARY(seq, blockLibrary, numBlocks, isBlockLibraryParsed);
@@ -152,7 +153,7 @@ void __readLibraries(SeqFile* seq, int readBlocks)
     readRfLibrary(seq, f);
     readGradLibrary(seq, f);
     readAdcLibrary(seq, f);
-    /*readShapesLibrary(seq, f);*/
+    readShapesLibrary(seq, f);
     readExtensionsLibrary(seq, f);      
     fclose(f);
     

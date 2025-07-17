@@ -31,6 +31,7 @@ typedef struct {
     long delays;
     long rfshim;
     long shapes;
+    long signature;
 } SectionOffsets;
 
 /**
