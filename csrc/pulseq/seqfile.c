@@ -30,7 +30,7 @@
  */
 void seqFileInit(SeqFile* seq){
     int i;
-    seq->offsets.scan_cursor = -1;
+    seq->offsets.scan_cursor = 0;
     seq->offsets.version = -1;
     seq->offsets.definitions = -1;
     seq->offsets.blocks = -1;

@@ -1,13 +1,21 @@
-
 #include "minunit.h"
+
 #include "pulseq.h"
 
 MU_TEST(test_seqFile_getBlock_valid) {
     SeqFile* seq;
     SeqBlock* block;
-    printf("[DEBUG] Entering test_seqFile_getBlock_valid\n");
-    printf("[DEBUG] Calling seqFile...\n");
-    seq = seqFile("../../tests/expected_output/seq6.seq");
+    char cwd[1024];
+    char seq_path[1024];
+    printf("[DEBUG] Entering test_seqFile_block_values\n");
+    if (getcwd(cwd, sizeof(cwd)) != NULL){
+        printf("[DEBUG] Current working directory: %s\n", cwd);
+        snprintf(seq_path, sizeof(seq_path), "%s/%s", cwd, "tests/expected_output/seq1.seq");
+    }
+    printf("[DEBUG] Initializing seqFile...\n");
+    seq = seqFile(seq_path);
+    printf("[DEBUG] Trying to read seqfile: %s\n", seq->filePath);
+    readSeq(seq);
     printf("[DEBUG] seq pointer: %p\n", (void*)seq);
     mu_assert(seq != NULL, "Failed to open seq6.seq");
     printf("[DEBUG] Calling getBlock(seq, 1, 0)...\n");
@@ -22,9 +30,14 @@ MU_TEST(test_seqFile_getBlock_valid) {
 MU_TEST(test_seqFile_block_values) {
     SeqFile* seq;
     SeqBlock* block;
+    char cwd[1024];
     printf("[DEBUG] Entering test_seqFile_block_values\n");
-    printf("[DEBUG] Calling seqFile...\n");
-    seq = seqFile("../../tests/expected_output/seq6.seq");
+    if (getcwd(cwd, sizeof(cwd)) != NULL)
+        printf("[DEBUG] Current working directory: %s\n", cwd);
+    printf("[DEBUG] Initializing seqFile...\n");
+    seq = seqFile("../../../expected_output/seq6.seq");
+    printf("[DEBUG] Trying to read seqfile: %s\n", seq->filePath);
+    readSeq(seq);
     printf("[DEBUG] seq pointer: %p\n", (void*)seq);
     mu_assert(seq != NULL, "Failed to open seq6.seq");
     printf("[DEBUG] Calling getBlock(seq, 1, 0)...\n");

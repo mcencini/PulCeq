@@ -29,9 +29,6 @@ void getSectionOffsets(long* sectionOffsets, SeqFile* seq, FILE* f, const char**
     char* p;
     long pos;
 
-    /* Validate input */
-    if (!f || !(seq->offsets).scan_cursor || !seq) return;
-
     /* Allocate dynamic arrays */
     sectionFound = (int*) ALLOC(sizeof(int) * numSections);
     if (!sectionFound) return;
