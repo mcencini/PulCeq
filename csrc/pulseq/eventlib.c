@@ -119,7 +119,7 @@ void readBlockLibrary(SeqFile* seq, FILE* f)
 void readRfLibrary(SeqFile* seq, FILE* f)
 {
     int ret;
-    float rf_values[10] = {1, 1, 1, 1, 1e-6f, 1e-6f, 1, 1, 1, 1};
+    float rf_values[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     Scale rfScale;
     rfScale.size = 10;
     rfScale.values = rf_values;
@@ -159,10 +159,10 @@ void readGradLibrary(SeqFile* seq, FILE* f)
     int numSections = 0;
     Scale gradScale;
     gradScale.size = 6;
-    gradScale.values = (float[]){ 1, 1, 1, 1, 1, 1e-6f };
+    gradScale.values = (float[]){ 1, 1, 1, 1, 1, 1 };
     Scale trapScale;
     trapScale.size = 5;
-    trapScale.values = (float[]){ 1, 1e-6f, 1e-6f, 1e-6f, 1e-6f };
+    trapScale.values = (float[]){ 1, 1, 1, 1, 1 };
     const char* sections[] = { "[GRADIENTS]", "[TRAP]" };
 
     if (seq->isGradLibraryParsed) return;
@@ -213,7 +213,7 @@ void readAdcLibrary(SeqFile* seq, FILE* f)
     int ret;
     Scale adcScale;
     adcScale.size = 8;
-    adcScale.values = (float[]){1, 1e-9f, 1e-6f, 1, 1, 1, 1, 1};
+    adcScale.values = (float[]){1, 1, 1, 1, 1, 1, 1, 1};
     const char* adc_section[] = {"[ADC]"};
 
     /* Check if library was already parsed */

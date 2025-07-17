@@ -65,12 +65,12 @@ RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExte
     eventFloat = seq->blockLibrary[blockIndex];
 
     int duration = (int)(eventFloat[0]);
-    int rfID = (int)(eventFloat[1]);
-    int gxID = (int)(eventFloat[2]);
-    int gyID = (int)(eventFloat[3]);
-    int gzID = (int)(eventFloat[4]);
-    int adcID  = (int)(eventFloat[5]);
-    int extID = (int)(eventFloat[6]);
+    int rfID = (int)(eventFloat[1]) - 1;
+    int gxID = (int)(eventFloat[2]) - 1;
+    int gyID = (int)(eventFloat[3]) - 1;
+    int gzID = (int)(eventFloat[4]) - 1;
+    int adcID  = (int)(eventFloat[5]) - 1;
+    int extID = (int)(eventFloat[6]) - 1;
 
     block.block_duration = duration;
     block.rf = rfID;
@@ -80,19 +80,19 @@ RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExte
     block.adc = adcID;
 
     /* Handle extensions if present */
-    if (parseExtensions && extID > 0 && seq->isExtensionsLibraryParsed) {
+    if (parseExtensions && extID >= 0 && seq->isExtensionsLibraryParsed) {
         nextExtID = extID;
         extCount = 0;
 
         while (
-            nextExtID > 0 &&
+            nextExtID >= 0 &&
             nextExtID < seq->extensionsLibrarySize &&
             extCount < MAX_EXTENSIONS_PER_BLOCK
         ) {
             extData = seq->extensionsLibrary[nextExtID]; /* [type, ref, next_id] */
-            block.ext[extCount][0] = extData[0];  /* type */
-            block.ext[extCount][1] = extData[1];  /* ref */
-            nextExtID = extData[2];              /* next in chain */
+            block.ext[extCount][0] = (int)extData[0];  /* type */
+            block.ext[extCount][1] = (int)extData[1];  /* ref */
+            nextExtID = (int)extData[2] - 1; /* next in chain */
             extCount++;
         }
 
@@ -200,63 +200,75 @@ void __seqBlockFree(SeqBlock* block)
     if (block == 0) return;
 
     /* RF waveforms */
-    if (block->rf.magShape.samples) {
-        FREE(block->rf.magShape.samples);
-        block->rf.magShape.samples = NULL;
-    }
-    if (block->rf.phaseShape.samples) {
-        FREE(block->rf.phaseShape.samples);
-        block->rf.phaseShape.samples = NULL;
-    }
-    if (block->rf.timeShape.samples) {
-        FREE(block->rf.timeShape.samples);
-        block->rf.timeShape.samples = NULL;
+    if (block->rf.type > 0){
+        if (block->rf.magShape.samples) {
+            FREE(block->rf.magShape.samples);
+            block->rf.magShape.samples = NULL;
+        }
+        if (block->rf.phaseShape.samples) {
+            FREE(block->rf.phaseShape.samples);
+            block->rf.phaseShape.samples = NULL;
+        }
+        if (block->rf.timeShape.samples) {
+            FREE(block->rf.timeShape.samples);
+            block->rf.timeShape.samples = NULL;
+        }
     }
 
     /* GX waveforms */
-    if (block->gx.waveShape.samples) {
-        FREE(block->gx.waveShape.samples);
-        block->gx.waveShape.samples = NULL;
-    }
-    if (block->gx.timeShape.samples) {
-        FREE(block->gx.timeShape.samples);
-        block->gx.timeShape.samples = NULL;
+    if (block->gx.type > 1){
+        if (block->gx.waveShape.samples) {
+            FREE(block->gx.waveShape.samples);
+            block->gx.waveShape.samples = NULL;
+        }
+        if (block->gx.timeShape.samples) {
+            FREE(block->gx.timeShape.samples);
+            block->gx.timeShape.samples = NULL;
+        }
     }
 
     /* GY waveforms */
-    if (block->gy.waveShape.samples) {
-        FREE(block->gy.waveShape.samples);
-        block->gy.waveShape.samples = NULL;
-    }
-    if (block->gy.timeShape.samples) {
-        FREE(block->gy.timeShape.samples);
-        block->gy.timeShape.samples = NULL;
+    if (block->gy.type > 1){
+        if (block->gy.waveShape.samples) {
+            FREE(block->gy.waveShape.samples);
+            block->gy.waveShape.samples = NULL;
+        }
+        if (block->gy.timeShape.samples) {
+            FREE(block->gy.timeShape.samples);
+            block->gy.timeShape.samples = NULL;
+        }
     }
 
     /* GZ waveforms */
-    if (block->gz.waveShape.samples) {
-        FREE(block->gz.waveShape.samples);
-        block->gz.waveShape.samples = NULL;
-    }
-    if (block->gz.timeShape.samples) {
-        FREE(block->gz.timeShape.samples);
-        block->gz.timeShape.samples = NULL;
+    if (block->gz.type > 1){
+        if (block->gz.waveShape.samples) {
+            FREE(block->gz.waveShape.samples);
+            block->gz.waveShape.samples = NULL;
+        }
+        if (block->gz.timeShape.samples) {
+            FREE(block->gz.timeShape.samples);
+            block->gz.timeShape.samples = NULL;
+        }
     }
 
     /* ADC waveform */
-    if (block->adc.phaseModulationShape.samples) {
-        FREE(block->adc.phaseModulationShape.samples);
-        block->adc.phaseModulationShape.samples = NULL;
+    if (block->adc.type > 0){
+        if (block->adc.phaseModulationShape.samples) {
+            FREE(block->adc.phaseModulationShape.samples);
+            block->adc.phaseModulationShape.samples = NULL;
+        }
     }
 
     /* RF shimming arrays */
-    if (block->rfShimming.amplitudes) {
-        FREE(block->rfShimming.amplitudes);
-        block->rfShimming.amplitudes = NULL;
-    }
-    if (block->rfShimming.phases) {
-        FREE(block->rfShimming.phases);
-        block->rfShimming.phases = NULL;
+    if (block->rfShimming.type > 0){
+        if (block->rfShimming.amplitudes) {
+            FREE(block->rfShimming.amplitudes);
+            block->rfShimming.amplitudes = NULL;
+        }
+        if (block->rfShimming.phases) {
+            FREE(block->rfShimming.phases);
+            block->rfShimming.phases = NULL;
+        }
     }
 }
 
@@ -272,6 +284,9 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
     int* delay;
     RfShimEntry rfshim;
     RawBlock rawBlock = getRawBlockContentIDs(seq, blockIndex, parseExtensions);
+
+    /* Set the duration */
+    block->duration = rawBlock.block_duration;
 
     /* ------------------ RF Event ------------------ */
     if (rawBlock.rf >= 0) {
@@ -307,6 +322,8 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             block->gx.trap.flatTime = (long)farray[3];
             block->gx.trap.fallTime = (long)farray[4];
             block->gx.delay = (int)farray[5];
+            block->gx.first = 0;
+            block->gx.last = 0;
         } else if ((int)farray[0] == 1) {
             block->gx.type = 2;
             block->gx.first = farray[2];
@@ -333,6 +350,8 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             block->gy.trap.flatTime = (long)farray[3];
             block->gy.trap.fallTime = (long)farray[4];
             block->gy.delay = (int)farray[5];
+            block->gy.first = 0;
+            block->gy.last = 0;
         } else if ((int)farray[0] == 1) {
             block->gy.type = 2;
             block->gy.first = farray[2];
@@ -359,6 +378,8 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             block->gz.trap.flatTime = (long)farray[3];
             block->gz.trap.fallTime = (long)farray[4];
             block->gz.delay = (int)farray[5];
+            block->gz.first = 0;
+            block->gz.last = 0;
         } else if ((int)farray[0] == 1) {
             block->gz.type = 2;
             block->gz.first = farray[2];

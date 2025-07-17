@@ -125,7 +125,7 @@ typedef struct {
     float (*labelincLibrary)[2];    /**< @brief Label increment data with columns:
                                          increment, labelstring index. */
 
-    int isDelayDefined[8];          /**< For each type of Delay in constants.h, flags whether it was defined or not in the given SeqFile */
+    int isDelayDefined[8];          /**< @brief For each type of Delay in constants.h, flags whether it was defined or not in the given SeqFile */
     int softDelayLibrarySize;       /**< @brief Number of soft delay entries. */
     float (*softDelayLibrary)[4];   /**< @brief Soft delay data with columns:  numID, offset, factor. */
 

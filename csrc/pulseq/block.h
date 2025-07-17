@@ -15,6 +15,8 @@ typedef struct SeqFile SeqFile; /* Forward declaration to avoid circular depende
 /** @struct SeqBlock
  * @brief  Sequence block containing RF, gradient, ADC, and trigger events.
  *
+ *  @var SeqBlock::duration
+ *    Duration of the block in microseconds.
  *  @var SeqBlock::rf
  *    RF event.
  *  @var SeqBlock::gx
@@ -39,17 +41,18 @@ typedef struct SeqFile SeqFile; /* Forward declaration to avoid circular depende
  *    RF shimming event.
  */
 typedef struct {
-    RFEvent rf;                 /**< RF event */
-    GradEvent gx;               /**< Gradient event on X channel */
-    GradEvent gy;               /**< Gradient event on Y channel */
-    GradEvent gz;               /**< Gradient event on Z channel */
-    ADCEvent adc;               /**< ADC event */
-    TriggerEvent trigger;       /**< Trigger event */
-    RotationEvent rotation;     /**< Rotation event */
-    LabelEvent labelset;        /**< Label set event */
-    LabelEvent labelinc;        /**< Label increment event */
-    SoftDelayEvent delay;       /**< Soft delay event */
-    RfShimmingEvent rfShimming; /**< RF shimming event */
+    int duration;               /**< @brief Duration of the block (us) */
+    RFEvent rf;                 /**< @brief RF event */
+    GradEvent gx;               /**< @brief Gradient event on X channel */
+    GradEvent gy;               /**< @brief Gradient event on Y channel */
+    GradEvent gz;               /**< @brief Gradient event on Z channel */
+    ADCEvent adc;               /**< @brief ADC event */
+    TriggerEvent trigger;       /**< @brief Trigger event */
+    RotationEvent rotation;     /**< @brief Rotation event */
+    LabelEvent labelset;        /**< @brief Label set event */
+    LabelEvent labelinc;        /**< @brief Label increment event */
+    SoftDelayEvent delay;       /**< @brief Soft delay event */
+    RfShimmingEvent rfShimming; /**< @brief RF shimming event */
 } SeqBlock; /* Mirrors Pulseq SeqBlock */
 
 /**
