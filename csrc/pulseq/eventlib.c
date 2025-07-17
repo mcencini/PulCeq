@@ -8,6 +8,52 @@
 
 #include "eventlib.h"
 
+void readVersion(SeqFile* seq, FILE* f)
+{
+    char line[MAX_LINE_LENGTH];
+    int major = 0, minor = 0, revision = 0;
+    char key[32];
+    int value;
+    char* p;
+
+    /* Check if library was already parsed */
+    if (seq->isVersionParsed) return;
+
+    /* Go to the correct section */
+    getSectionOffsets(&((seq->offsets).version), seq, f, (const char*[]){"[VERSION]"}, 1, 0);
+    if (seq->offsets.version < 0) {
+        seq->isVersionParsed = 1;
+        return;
+    }
+
+    if (fseek(f, seq->offsets.version, SEEK_SET) != 0) {
+        return;
+    }
+
+    /* Skip section header */
+    if (!fgets(line, sizeof(line), f)) {
+        return;
+    }
+
+    while (fgets(line, sizeof(line), f)) {
+        p = line;
+        while (*p == ' ' || *p == '\t') p++;
+        if (*p == '\0' || *p == '#') continue;
+        if (*p == '[') break;
+        if (sscanf(p, "%31s %d", key, &value) == 2) {
+            if (strcmp(key, "major") == 0) major = value;
+            else if (strcmp(key, "minor") == 0) minor = value;
+            else if (strcmp(key, "revision") == 0) revision = value;
+        }
+    }
+
+    seq->versionMajor = major;
+    seq->versionMinor = minor;
+    seq->versionRevision = revision;
+    seq->versionCombined = major * 1000000 + minor * 1000 + revision;
+    seq->isVersionParsed = 1;
+}
+
 void readDefinitionsLibrary(SeqFile* seq, FILE* f)
 {
     int ret;

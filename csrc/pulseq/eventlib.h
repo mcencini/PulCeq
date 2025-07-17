@@ -15,6 +15,17 @@ typedef struct SeqFile SeqFile;  /* Forward declaration */
 #endif /* SEQFILE_H */
 
 /**
+ * @brief Read the Version from sequence file.
+ *
+ * Initializes and reads the [VERSION] section.
+ * Sets seq.isVersionParsed to 1 after successful load.
+ *
+ * @param[in,out] seq Sequence struct containing filePath and version info
+ * @param[in] f Pointer to SeqFile handle.
+ */
+void readVersion(SeqFile* seq, FILE* f);
+
+/**
  * @brief Read the Definitions library from sequence file.
  *
  * Initializes and reads the [DEFINITIONS] section.

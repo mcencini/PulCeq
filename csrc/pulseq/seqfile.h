@@ -72,6 +72,7 @@ typedef struct {
     char* filePath;                 /**< @brief Path to the sequence (.seq) file. */
     SectionOffsets offsets;         /**< @brief Line position of each section. */
 
+    int isVersionParsed;            /**< @brief Flag indicating if the version was parsed successfully. */
     int versionCombined;            /**< @brief Combined version number calculated as:
                                          1000000 * versionMajor + 1000 * versionMinor + versionRevision. */
     int versionMajor;               /**< @brief Major version number. */

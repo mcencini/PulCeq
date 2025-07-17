@@ -45,7 +45,7 @@ RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExte
     RawBlock block;
     int i, nextExtID, extCount;
     float* eventFloat;
-    int* extData;
+    float* extData;
 
     /* Initialize */
     block.block_duration = 0;
@@ -281,7 +281,7 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
     int i, labelID, labelValue, extType, extIdx;
     float* trig;
     float* rot;
-    int* delay;
+    float* delay;
     RfShimEntry rfshim;
     RawBlock rawBlock = getRawBlockContentIDs(seq, blockIndex, parseExtensions);
 

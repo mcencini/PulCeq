@@ -139,6 +139,12 @@ void __readLibraries(SeqFile* seq, int readBlocks)
     FILE* f = fopen(seq->filePath, "r");
     
     if (!f) return;
+    readVersion(seq, f);
+    if (seq->versionCombined < 1005000) {
+        fprintf(stderr, "Error: Unsupported sequence file version %d.%d.%d\n", seq->versionMajor, seq->versionMinor, seq->versionRevision);
+        fclose(f);
+        return;
+    }
     readDefinitionsLibrary(seq, f); 
     if (readBlocks) {
         readBlockLibrary(seq, f);
@@ -146,7 +152,7 @@ void __readLibraries(SeqFile* seq, int readBlocks)
     readRfLibrary(seq, f);
     readGradLibrary(seq, f);
     readAdcLibrary(seq, f);
-    readShapesLibrary(seq, f);
+    /*readShapesLibrary(seq, f);*/
     readExtensionsLibrary(seq, f);      
     fclose(f);
     
