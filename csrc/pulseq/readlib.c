@@ -98,15 +98,13 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, void** ta
             while (*p == ' ' || *p == '\t') p++;
             if (*p == '[') break; /* Next section starts */
             if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
-
-            idx = -1;
             if (sscanf(p, "%d", &idx) == 1) {
                 if (idx > maxIndex) maxIndex = idx;
             }
         }
     }
 
-    if (maxIndex < 0) {
+    if (maxIndex <= 0) {
         *target = NULL;
         *targetCount = 0;
         return 1; /* No entries found */
@@ -281,12 +279,16 @@ int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCou
         p = line;
         while (*p == ' ' || *p == '\t') p++;
         if (*p == '[' || *p == '\0' || *p == '#') continue;
-        if (sscanf(p, "%d", &idx) == 1 && idx > maxIndex) {
-            maxIndex = idx;
+        if (sscanf(p, "%d", &idx) == 1) {
+            if (idx > maxIndex) maxIndex = idx;
         }
     }
 
-    if (maxIndex < 0) return 1;
+    if (maxIndex <= 0) {
+        *target = NULL;
+        *targetCount = 0;
+        return 1; /* No entries found */
+    }
 
     /* Allocate array of RfShimEntry */
     array = (RfShimEntry*) ALLOC(sizeof(RfShimEntry) * (maxIndex + 1));
