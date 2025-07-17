@@ -138,7 +138,7 @@ void readExtensionsLibrary(SeqFile* seq, FILE* f)
     }
 
     if (seq->offsets.delays >= 0){
-        ret = readDelayLibrary(f, seq->offsets.delays, seq->softDelayLibrary, seq->softDelayLibrarySize, 3);
+        ret = readDelayLibrary(f, seq->offsets.delays, seq->softDelayLibrary, seq->softDelayLibrarySize, 3, seq->isDelayDefined);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize delays library\n");
             return;

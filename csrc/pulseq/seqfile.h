@@ -105,7 +105,7 @@ typedef struct {
 
     int isExtensionsLibraryParsed;  /**< @brief Flag indicating if the extensions library was parsed. */
     int extensionsLibrarySize;      /**< @brief Number of extension entries. */
-    int (*extensionsLibrary)[3];    /**< @brief Extensions library data with columns:
+    float (*extensionsLibrary)[3];  /**< @brief Extensions library data with columns:
                                           type, ref, next_id. */
 
     int triggerLibrarySize;         /**< @brief Number of trigger entries. */
@@ -118,15 +118,16 @@ typedef struct {
 
     int isLabelDefined[22];         /**< For each type of Label in constants.h, flags whether it was defined or not in the given SeqFile */
     int labelsetLibrarySize;        /**< @brief Number of label set entries. */
-    int (*labelsetLibrary)[2];      /**< @brief Label set data with columns:
+    float (*labelsetLibrary)[2];    /**< @brief Label set data with columns:
                                          set, labelstring index. */
 
     int labelincLibrarySize;        /**< @brief Number of label increment entries. */
-    int (*labelincLibrary)[2];      /**< @brief Label increment data with columns:
+    float (*labelincLibrary)[2];    /**< @brief Label increment data with columns:
                                          increment, labelstring index. */
 
+    int isDelayDefined[8];          /**< For each type of Delay in constants.h, flags whether it was defined or not in the given SeqFile */
     int softDelayLibrarySize;       /**< @brief Number of soft delay entries. */
-    int (*softDelayLibrary)[4];     /**< @brief Soft delay data with columns:  numID, offset, factor. */
+    float (*softDelayLibrary)[4];   /**< @brief Soft delay data with columns:  numID, offset, factor. */
 
     int rfShimLibrarySize;          /**< @brief Number of RF shim entries. */
     RfShimEntry* rfShimLibrary;     /**< @brief RF shim data; per-channel magnitude and phase arrays:

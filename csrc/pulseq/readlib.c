@@ -111,13 +111,13 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, void** ta
     }
 
     /* Allocate zero-filled 2D array as a single block */
-    array_raw = (float*) ALLOC(sizeof(float) * N * (maxIndex + 1));
+    array_raw = (float*) ALLOC(sizeof(float) * N * maxIndex);
     if (!array_raw) return 1;
-    for (i = 0; i < (maxIndex + 1) * N; i++) {
+    for (i = 0; i < maxIndex * N; i++) {
         array_raw[i] = 0.0f;
     }
     *target = (void*)array_raw;
-    *targetCount = maxIndex + 1;
+    *targetCount = maxIndex;
     return 0;
 }
 
@@ -171,9 +171,10 @@ int initDefinitionsLibrary(FILE* f, long offset, Definition** target, int* targe
 int initShapesLibrary(FILE* f, long offset, ShapeArbitrary** target, int* targetCount)
 {
     char line[MAX_LINE_LENGTH];
-    int count, currentIndex, num, n, i;
-    ShapeArbitrary* shapes;
+    int maxIndex = -1;
+    int n, i, idx;
     char* p;
+    ShapeArbitrary* shapes = NULL;
 
     if (!f || !offset || !target || !targetCount) {
         return 1;  /* Invalid arguments */
@@ -183,80 +184,80 @@ int initShapesLibrary(FILE* f, long offset, ShapeArbitrary** target, int* target
         return 1;  /* Seek failed */
     }
 
-    count = 0;
-    currentIndex = -1;
-
-    /* First pass: count number of shapes and collect sizes */
+    /* First pass: find max shape_id and count shapes */
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (*p == ' ' || *p == '\t') p++;
-
         if (*p == '\0' || *p == '#') continue;
         if (*p == '[') break;
-
         if (strncmp(p, "shape_id", 8) == 0) {
-            count++;
+            if (sscanf(p + 8, "%d", &idx) == 1) {
+                if (idx > maxIndex) maxIndex = idx;
+            }
         }
     }
 
-    if (count == 0) {
+    if (maxIndex <= 0) {
         *target = NULL;
         *targetCount = 0;
         return 0;
     }
 
-    /* Allocate array of shapes */
-    shapes = (ShapeArbitrary*) ALLOC(sizeof(ShapeArbitrary) * count);
+    shapes = (ShapeArbitrary*) ALLOC(sizeof(ShapeArbitrary) * maxIndex);
     if (!shapes) return 1;
+    for (i = 0; i < maxIndex; i++) {
+        shapes[i].numSamples = 0;
+        shapes[i].numUncompressedSamples = 0;
+        shapes[i].samples = NULL;
+    }
 
-    /* Reset file pointer for second part of init (still first pass) */
+    /* Reset file pointer for second pass */
     if (fseek(f, offset, SEEK_SET) != 0) {
         FREE(shapes);
         return 1;
     }
 
-    currentIndex = -1;
-
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (*p == ' ' || *p == '\t') p++;
-
         if (*p == '\0' || *p == '#') continue;
         if (*p == '[') break;
-
         if (strncmp(p, "shape_id", 8) == 0) {
-            currentIndex++;
-            if (currentIndex >= count) break;
-
-            shapes[currentIndex].numSamples = 0;
-            shapes[currentIndex].numUncompressedSamples = 0;
-            shapes[currentIndex].samples = NULL;
+            if (sscanf(p + 8, "%d", &idx) == 1) {
+                shapes[idx - 1].numSamples = 0;
+                shapes[idx - 1].numUncompressedSamples = 0;
+                shapes[idx - 1].samples = NULL;
+            } 
         }
-        else if (strncmp(p, "num_samples", 11) == 0 && currentIndex >= 0) {
+        else if (strncmp(p, "num_samples", 11) == 0) {
             if (sscanf(p + 11, "%d", &n) == 1) {
-                shapes[currentIndex].numUncompressedSamples = n;
+                shapes[idx - 1].numUncompressedSamples = n;
             }
         }
-        else if (currentIndex >= 0) {
-            shapes[currentIndex].numSamples++;
+        else {
+            shapes[idx - 1].numSamples++;
         }
     }
 
     /* Allocate sample arrays */
-    for (currentIndex = 0; currentIndex < count; currentIndex++) {
-        num = shapes[currentIndex].numSamples;
-        shapes[currentIndex].samples = (float*) ALLOC(sizeof(float) * num);
-        if (!shapes[currentIndex].samples) {
-            for (i = 0; i < currentIndex; i++) {
-                if (shapes[i].samples) FREE(shapes[i].samples);
+    for (i = 0; i < maxIndex; i++) {
+        n = shapes[i].numSamples;
+        if (n > 0) {
+            shapes[i].samples = (float*) ALLOC(sizeof(float) * n);
+            if (!shapes[i].samples) {
+                for (int j = 0; j < i; j++) {
+                    if (shapes[j].samples) FREE(shapes[j].samples);
+                }
+                FREE(shapes);
+                return 1;
             }
-            FREE(shapes);
-            return 1;
+        } else {
+            shapes[i].samples = NULL;
         }
     }
 
     *target = shapes;
-    *targetCount = count;
+    *targetCount = maxIndex;
     return 0;
 }
 
@@ -291,7 +292,7 @@ int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCou
     }
 
     /* Allocate array of RfShimEntry */
-    array = (RfShimEntry*) ALLOC(sizeof(RfShimEntry) * (maxIndex + 1));
+    array = (RfShimEntry*) ALLOC(sizeof(RfShimEntry) * maxIndex);
     if (!array) return 1;
 
     for (i = 0; i <= maxIndex; i++) {
@@ -300,7 +301,7 @@ int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCou
     }
 
     *target = array;
-    *targetCount = maxIndex + 1;
+    *targetCount = maxIndex;
     return 0;
 }
 
@@ -332,7 +333,7 @@ int readStandardLibrary(FILE* f, long offset, void* target, int targetCount, int
 
         if (*p == '\0' || *p == '#') continue;
         if (sscanf(p, "%d", &idx) != 1) continue;
-        if (idx < 0 || idx >= targetCount) continue;
+        if (idx <= 0 || idx > targetCount) continue;
 
         /* Move pointer past index */
         while (*p && *p != ' ' && *p != '\t') p++;
@@ -354,10 +355,10 @@ int readStandardLibrary(FILE* f, long offset, void* target, int targetCount, int
 
         offsetCol = (flag >= 0) ? 1 : 0;
         for (n = 0; n < scale.size; n++) {
-            array_raw[idx * N + n + offsetCol] = vals[n] * scale.values[n];
+            array_raw[(idx - 1) * N + n + offsetCol] = vals[n] * scale.values[n];
         }
         if (flag >= 0) {
-            array_raw[idx * N + 0] = (float)flag;
+            array_raw[(idx - 1) * N + 0] = (float)flag;
         }
     }
 
@@ -382,25 +383,20 @@ int readLabelLibrary(FILE* f, long offset, void* target, int targetCount, int N,
         p = line;
         while (*p == ' ' || *p == '\t') p++;
         if (*p == '[' || *p == '\0' || *p == '#') continue;
-        if (sscanf(p, "%d %f %31s", &idx, &val, label) == 3 &&
-            idx >= 0 && idx < targetCount) {
-
-            labelCode = label2enum(label);
-            
-            /* bookkeep found labels and flags */
-            if (labelCode > 0){
-                isLabelDefined[labelCode] = 1;
-            }
-
-            array_raw[idx * N + 0] = val;
-            array_raw[idx * N + 1] = (float)labelCode;
+        if (sscanf(p, "%d %f %31s", &idx, &val, label) != 3) continue;
+        if (idx <= 0 || idx > targetCount) continue;
+        labelCode = label2enum(label); 
+        if (labelCode > 0){ /* bookkeep found labels and flags */
+            isLabelDefined[labelCode - 1] = 1;
         }
+        array_raw[(idx - 1) * N + 0] = val;
+        array_raw[(idx - 1) * N + 1] = (float)labelCode;
     }
-
+    
     return 0;
 }
 
-int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N) {
+int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N, int* isDelayDefined) {
     char line[MAX_LINE_LENGTH];
     char* p;
     int idx, hintCode;
@@ -418,15 +414,15 @@ int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N)
         p = line;
         while (*p == ' ' || *p == '\t') p++;
         if (*p == '[' || *p == '\0' || *p == '#') continue;
-        if (sscanf(p, "%d %f %f %31s", &idx, &offsetVal, &scaleVal, hint) == 4 &&
-            idx >= 0 && idx < targetCount) {
-
-            hintCode = hint2enum(hint);
-
-            array_raw[idx * N + 0] = offsetVal;
-            array_raw[idx * N + 1] = scaleVal;
-            array_raw[idx * N + 2] = (float)hintCode;
+        if (sscanf(p, "%d %f %f %31s", &idx, &offsetVal, &scaleVal, hint) != 4) continue;
+        if (idx <= 0 || idx > targetCount) continue;
+        hintCode = hint2enum(hint);
+        if (hintCode > 0){ /* bookkeep found hint for UI */
+            isDelayDefined[hintCode - 1] = 1;
         }
+        array_raw[(idx - 1) * N + 0] = offsetVal;
+        array_raw[(idx - 1) * N + 1] = scaleVal;
+        array_raw[(idx - 1) * N + 2] = (float)hintCode;
     }
 
     return 0;
@@ -451,7 +447,7 @@ int readRfShimLibrary(FILE* f, long offset, RfShimEntry* target, int targetCount
         while (*p == ' ' || *p == '\t') p++;
         if (*p == '[' || *p == '\0' || *p == '#') continue;
         if (sscanf(p, "%d %d", &idx, &nCh) != 2) continue;
-        if (idx < 0 || idx >= targetCount || nCh <= 0) continue;
+        if (idx <= 0 || idx > targetCount || nCh <= 0) continue;
 
         /* Skip past the index and nCh */
         while (*p && *p != ' ') p++; while (*p == ' ') p++;
@@ -471,8 +467,8 @@ int readRfShimLibrary(FILE* f, long offset, RfShimEntry* target, int targetCount
             while (*p == ' ' || *p == '\t') p++;
         }
 
-        target[idx].nChannels = nCh;
-        target[idx].values = values;
+        target[idx - 1].nChannels = nCh;
+        target[idx - 1].values = values;
     }
 
     return 0;

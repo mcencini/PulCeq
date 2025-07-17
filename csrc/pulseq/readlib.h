@@ -136,10 +136,11 @@ int readLabelLibrary(FILE* f, long offset, void* target, int targetCount, int N,
  * @param[in,out] target     Pre-allocated dynamic array of static arrays (e.g., int (*target)[N]), passed as void*.
  * @param[in] targetCount    Number of rows in target.
  * @param[in] N              Number of columns per row.
+ * @param[in] isDelayDefined Table to store whether a given delay is present or not in SeqFile.
  *
  * @return 0 on success, non-zero on failure.
  */
-int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N);
+int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N, int* isDelayDefined);
 
 /**
  * @brief Read and parse rf shim library section from file at given offset.
