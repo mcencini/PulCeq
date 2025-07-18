@@ -14,13 +14,26 @@ typedef struct {
     long*       field;
 } SectionTagMap;
 
+static const char* knownSections[] = {
+    "[VERSION]", 
+    "[DEFINITIONS]", 
+    "[BLOCKS]", 
+    "[RF]", 
+    "[GRADIENTS]", 
+    "[TRAP]", 
+    "[ADC]", 
+    "[EXTENSIONS]",
+    "[SHAPES]", 
+    "[SIGNATURE]"
+};
+
 void getSectionOffsets(long* sectionOffsets, SeqFile* seq, FILE* f, const char** sectionNames, int numSections, int parseExtensions)
 {
     char line[MAX_LINE_LENGTH];
     int foundSections = 0;
     int foundExtensions = 0;
     int totalExtensions = EXT_UNKNOWN;
-    int i;
+    int i, j;
     int* sectionFound = NULL;
     int* extensionFound = NULL;
     char extName[EXT_NAME_LENGTH];
@@ -30,9 +43,6 @@ void getSectionOffsets(long* sectionOffsets, SeqFile* seq, FILE* f, const char**
     long pos;
 
     /* Hardcoded table of all known section names and pointers to their offsets in seq->offsets */
-    static const char* knownSections[] = {
-        "[VERSION]", "[DEFINITIONS]", "[BLOCKS]", "[RF]", "[GRADIENTS]", "[TRAP]", "[ADC]", "[SHAPES]", "[SIGNATURE]", "[EXTENSIONS]"
-    };
     long* knownOffsets[] = {
         &seq->offsets.version,
         &seq->offsets.definitions,
@@ -41,9 +51,9 @@ void getSectionOffsets(long* sectionOffsets, SeqFile* seq, FILE* f, const char**
         &seq->offsets.grad,
         &seq->offsets.trap,
         &seq->offsets.adc,
+        &seq->offsets.extensions,
         &seq->offsets.shapes,
-        &seq->offsets.signature,
-        &seq->offsets.extensions
+        &seq->offsets.signature
     };
     int numKnownSections = sizeof(knownSections) / sizeof(knownSections[0]);
 
@@ -54,6 +64,25 @@ void getSectionOffsets(long* sectionOffsets, SeqFile* seq, FILE* f, const char**
     extensionFound = (int*) ALLOC(sizeof(int) * totalExtensions);
     if (!extensionFound) {
         FREE(sectionFound);
+        return;
+    }
+
+    /* Check if requested sections were alredy parsed */
+    for (i = 0; i < numKnownSections; i++) {
+        if (*(knownOffsets[i]) >= 0) {
+            for (j = 0; j < numSections; j++) {
+                if (strcmp(sectionNames[j], knownSections[i]) == 0) {
+                    sectionOffsets[j] = *(knownOffsets[i]);
+                    sectionFound[j] = 1;
+                    foundSections++;
+                }
+            }
+        }
+    }
+
+    /* If all requested sections already found, return early */
+    if (foundSections == numSections && (!parseExtensions || foundExtensions == totalExtensions)) {
+        (seq->offsets).scan_cursor = ftell(f);
         return;
     }
 

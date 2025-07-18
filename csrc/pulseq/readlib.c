@@ -125,31 +125,25 @@ int initDefinitionsLibrary(FILE* f, long offset, Definition** target, int* targe
 {
     char line[MAX_LINE_LENGTH];
     int count = 0;
-    int inSection = 0;
     char* p;
     char* nameToken;
     Definition* defs;
 
     if (!f || offset < 0 || !target || !targetCount) return 1;
 
-    if (fseek(f, offset, SEEK_SET) != 0) return 2;
+    if (fseek(f, offset, SEEK_SET) != 0) return 1;
 
+    /* Skip section header line */
+    if (!fgets(line, sizeof(line), f)) {
+        return 1;
+    }
+
+    /* Count valid definition lines */
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (isspace((unsigned char)*p)) p++;
-
         if (*p == '\0' || *p == '#') continue;
-
-        if (!inSection) {
-            if (strncmp(p, "[DEFINITIONS]", 13) == 0) {
-                inSection = 1;
-            }
-            continue;
-        }
-
         if (*p == '[') break;  /* Reached next section */
-
-        /* Count valid definition lines */
         nameToken = strtok(p, " \t\r\n");
         if (nameToken) count++;
     }
@@ -157,7 +151,7 @@ int initDefinitionsLibrary(FILE* f, long offset, Definition** target, int* targe
     if (count == 0) {
         *target = NULL;
         *targetCount = 0;
-        return 1;  /* no definitions found */
+        return 1;  /* No Definitions found */
     }
 
     defs = (Definition*) ALLOC(sizeof(Definition) * count);
@@ -182,6 +176,11 @@ int initShapesLibrary(FILE* f, long offset, ShapeArbitrary** target, int* target
 
     if (fseek(f, offset, SEEK_SET) != 0) {
         return 1;  /* Seek failed */
+    }
+
+    /* Skip the section header line */
+    if (!fgets(line, sizeof(line), f)) {
+        return 1;
     }
 
     /* First pass: find max shape_id and count shapes */
@@ -214,6 +213,11 @@ int initShapesLibrary(FILE* f, long offset, ShapeArbitrary** target, int* target
     /* Reset file pointer for second pass */
     if (fseek(f, offset, SEEK_SET) != 0) {
         FREE(shapes);
+        return 1;
+    }
+
+    /* Skip the section header line */
+    if (!fgets(line, sizeof(line), f)) {
         return 1;
     }
 
@@ -272,8 +276,10 @@ int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCou
     if (!f || !target || !targetCount) return 1;
     if (fseek(f, offset, SEEK_SET) != 0) return 1;
 
-    /* Skip the section header line */
-    if (!fgets(line, sizeof(line), f)) return 1;
+    /* Skip section header line */
+    if (!fgets(line, sizeof(line), f)) {
+        return 1;
+    }
 
     /* First pass: determine max index */
     while (fgets(line, sizeof(line), f)) {
@@ -377,7 +383,9 @@ int readLabelLibrary(FILE* f, long offset, void* target, int targetCount, int N,
     if (fseek(f, offset, SEEK_SET) != 0) return 1;
 
     /* Skip section header line */
-    fgets(line, sizeof(line), f);
+    if (!fgets(line, sizeof(line), f)) {
+        return 1;
+    }
 
     while (fgets(line, sizeof(line), f)) {
         p = line;
@@ -408,7 +416,9 @@ int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N,
     if (fseek(f, offset, SEEK_SET) != 0) return 1;
     
     /* Skip section header line */
-    fgets(line, sizeof(line), f);
+    if (!fgets(line, sizeof(line), f)) {
+        return 1;
+    }
 
     while (fgets(line, sizeof(line), f)) {
         p = line;
@@ -440,7 +450,9 @@ int readRfShimLibrary(FILE* f, long offset, RfShimEntry* target, int targetCount
     if (fseek(f, offset, SEEK_SET) != 0) return 1;
 
     /* Skip section header line */
-    if (!fgets(line, sizeof(line), f)) return 1;
+    if (!fgets(line, sizeof(line), f)) {
+        return 1;
+    }
 
     while (fgets(line, sizeof(line), f)) {
         p = line;

@@ -87,7 +87,10 @@ void readDefinitionsLibrary(SeqFile* seq, FILE* f)
     if (fseek(f, seq->offsets.definitions, SEEK_SET) != 0) return;
 
     /* Skip section header line */
-    if (!fgets(line, sizeof(line), f)) return;
+    /* Skip section header line */
+    if (!fgets(line, sizeof(line), f)) {
+        return 1;
+    }
 
     while (fgets(line, sizeof(line), f)) {
         p = line;
@@ -320,6 +323,11 @@ void readShapesLibrary(SeqFile* seq, FILE* f)
     /* Second pass: Parse and fill waveform data */
     pos = seq->offsets.shapes;
     if (fseek(f, pos, SEEK_SET) != 0) return;
+
+    /* Skip section header line */
+    if (!fgets(line, sizeof(line), f)) {
+        return 1;
+    }
 
     /* Actual parsing */
     while (fgets(line, sizeof(line), f)) {
