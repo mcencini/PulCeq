@@ -242,6 +242,7 @@ int initShapesLibrary(FILE* f, long offset, ShapeArbitrary** target, int* target
             shapes[idx - 1].numSamples++;
         }
     }
+    shapes[idx - 1].numSamples--;  /* Last shape_id line was not counted */
 
     /* Allocate sample arrays */
     for (i = 0; i < maxIndex; i++) {
