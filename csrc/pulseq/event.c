@@ -14,22 +14,24 @@
 
 ShapeArbitrary* decompressShape(ShapeArbitrary* encoded)
 {
+    int i, rep;
+    const float *packed = encoded->samples;
+    int numPacked = encoded->numSamples;
+    int numSamples = encoded->numUncompressedSamples;
+    int countPack = 1;
+    int countUnpack = 1;
+    float* unpacked;
+    ShapeArbitrary *decoded;
+
     if (encoded->numSamples == encoded->numUncompressedSamples) {
         /* Already uncompressed, return as-is */
         return (ShapeArbitrary*) encoded;
     }
 
-    const float *packed = encoded->samples;
-    int numPacked = encoded->numSamples;
-    int numSamples = encoded->numUncompressedSamples;
-
-    float *unpacked = (float*) ALLOC(sizeof(float) * numSamples);
+    unpacked = (float*) ALLOC(sizeof(float) * numSamples);
     if (unpacked == NULL) {
         return NULL; /* Allocation failed */
     }
-
-    int countPack = 1;
-    int countUnpack = 1;
 
     while (countPack < numPacked) {
         if (packed[countPack - 1] != packed[countPack]) {
@@ -37,13 +39,13 @@ ShapeArbitrary* decompressShape(ShapeArbitrary* encoded)
             countPack++;
             countUnpack++;
         } else {
-            int rep = (int)(packed[countPack + 1]) + 2;
+            rep = (int)(packed[countPack + 1]) + 2;
             if (fabsf(packed[countPack + 1] + 2 - (float)rep) > 1e-6f) {
                 /* Malformed shape compression format */
                 FREE(unpacked);
                 return NULL;
             }
-            for (int i = countUnpack - 1; i <= countUnpack + rep - 2; i++) {
+            for (i = countUnpack - 1; i <= countUnpack + rep - 2; i++) {
                 unpacked[i] = packed[countPack - 1];
             }
             countPack += 3;
@@ -56,11 +58,11 @@ ShapeArbitrary* decompressShape(ShapeArbitrary* encoded)
     }
 
     /* Cumulative sum */
-    for (int i = 1; i < numSamples; i++) {
+    for (i = 1; i < numSamples; i++) {
         unpacked[i] += unpacked[i - 1];
     }
 
-    ShapeArbitrary *decoded = (ShapeArbitrary*) ALLOC(sizeof(ShapeArbitrary));
+    decoded = (ShapeArbitrary*) ALLOC(sizeof(ShapeArbitrary));
     if (decoded == NULL) {
         FREE(unpacked);
         return NULL;
