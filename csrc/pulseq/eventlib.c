@@ -87,9 +87,8 @@ void readDefinitionsLibrary(SeqFile* seq, FILE* f)
     if (fseek(f, seq->offsets.definitions, SEEK_SET) != 0) return;
 
     /* Skip section header line */
-    /* Skip section header line */
     if (!fgets(line, sizeof(line), f)) {
-        return 1;
+        return;
     }
 
     while (fgets(line, sizeof(line), f)) {
@@ -326,7 +325,7 @@ void readShapesLibrary(SeqFile* seq, FILE* f)
 
     /* Skip section header line */
     if (!fgets(line, sizeof(line), f)) {
-        return 1;
+        return;
     }
 
     /* Actual parsing */
