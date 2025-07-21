@@ -23,13 +23,11 @@ void readExtensionsLibrary(SeqFile* seq, FILE* f)
     Scale rotScale;
     rotScale.size = 4;
     rotScale.values = (float[]){ 1, 1, 1, 1 };
-    const char* ext_section[] = {"[EXTENSIONS]"};
 
     /* Check if library was already parsed */
     if (seq->isExtensionsLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&(seq->offsets).extensions, seq, f, ext_section, 1, 1);
     if (seq->offsets.extensions < 0) {
         seq->isExtensionsLibraryParsed = 1;
         return;
@@ -160,9 +158,9 @@ void readExtensionsLibrary(SeqFile* seq, FILE* f)
         }
     }
     if (seq->extensionLUTSize > 0){
-        seq->extensionLUT = ALLOC(sizeof(int) * seq->extensionLUTSize);
+        seq->extensionLUT = ALLOC(sizeof(int) * (seq->extensionLUTSize + 1));
         for (n = 0; n < 8; n++){
-            seq->extensionLUT[seq->extensionMap[n]] = n;
+            if (seq->extensionMap[n] > 0) seq->extensionLUT[seq->extensionMap[n]] = n;
         }
     }
 

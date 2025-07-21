@@ -20,7 +20,6 @@ void readVersion(SeqFile* seq, FILE* f)
     if (seq->isVersionParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&((seq->offsets).version), seq, f, (const char*[]){"[VERSION]"}, 1, 0);
     if (seq->offsets.version < 0) {
         seq->isVersionParsed = 1;
         return;
@@ -70,7 +69,6 @@ void readDefinitionsLibrary(SeqFile* seq, FILE* f)
     if (seq->isDefinitionsLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&((seq->offsets).definitions), seq, f, (const char*[]){"[DEFINITIONS]"}, 1, 0);
     if (seq->offsets.definitions < 0) {
         seq->isDefinitionsLibraryParsed = 1;
         return;
@@ -141,7 +139,6 @@ void readBlockLibrary(SeqFile* seq, FILE* f)
     if (seq->isBlockLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&((seq->offsets).blocks), seq, f, block_section, 1, 0);
     if (seq->offsets.blocks < 0) {
         seq->isBlockLibraryParsed = 1;
         return;
@@ -177,7 +174,6 @@ void readRfLibrary(SeqFile* seq, FILE* f)
     if (seq->isRfLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&((seq->offsets).rf), seq, f, rf_section, 1, 0);
     if (seq->offsets.rf < 0) {
         seq->isRfLibraryParsed = 1;
         return;
@@ -216,7 +212,6 @@ void readGradLibrary(SeqFile* seq, FILE* f)
     if (seq->isGradLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(offsets, seq, f, sections, 2, 0);
     (seq->offsets).grad = offsets[0];
     (seq->offsets).trap = offsets[1];
 
@@ -268,7 +263,6 @@ void readAdcLibrary(SeqFile* seq, FILE* f)
     if (seq->isAdcLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&((seq->offsets).adc), seq, f, adc_section, 1, 0);
     if (seq->offsets.adc < 0) {
         seq->isAdcLibraryParsed = 1;
         return;
@@ -306,7 +300,6 @@ void readShapesLibrary(SeqFile* seq, FILE* f)
     if (seq->isShapesLibraryParsed) return;
 
     /* Go to the correct section */
-    getSectionOffsets(&((seq->offsets).shapes), seq, f, shape_section, 1, 0);
     if (seq->offsets.shapes < 0) {
         seq->isShapesLibraryParsed = 1;
         return;

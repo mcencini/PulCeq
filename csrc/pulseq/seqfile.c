@@ -14,6 +14,7 @@
 #include "alloc.h"
 #include "eventlib.h"
 #include "extlib.h"
+#include "scanfile.h"
 
 /*********************************************************  local utils  *********************************************************/
 #define INIT_LIBRARY(seq, fieldPtr, sizeField, flagField) \
@@ -108,19 +109,22 @@ void __seqFileReset(SeqFile* seq) {
         FREE(seq->softDelayLibrary);
         for (i = 0; i < seq->rfShimLibrarySize; i++) {
             FREE(seq->rfShimLibrary[i].values);
+            seq->rfShimLibrary[i].values = NULL;
         }
         FREE(seq->rfShimLibrary);
     }
     if (seq->isShapesLibraryParsed && seq->shapesLibrary) {
         for (i = 0; i < seq->shapesLibrarySize; i++) {
             FREE(seq->shapesLibrary[i].samples);
+            seq->shapesLibrary[i].samples = NULL;
             seq->shapesLibrary[i].numUncompressedSamples = 0;
             seq->shapesLibrary[i].numSamples = 0;
         }
         FREE(seq->shapesLibrary);
     }
-    FREE(seq->extensionLUT);
 
+    FREE(seq->extensionLUT);
+    
     seqFileInit(seq);
 }
 
@@ -140,6 +144,7 @@ void __readLibraries(SeqFile* seq, int readBlocks)
     FILE* f = fopen(seq->filePath, "r");
     
     if (!f) return;
+    getSectionOffsets(seq, f);
     readVersion(seq, f);
     if (seq->versionCombined < 1005000) {
         fprintf(stderr, "Error: Unsupported sequence file version %d.%d.%d\n", seq->versionMajor, seq->versionMinor, seq->versionRevision);

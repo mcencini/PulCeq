@@ -8,100 +8,16 @@
 
 #include "scanfile.h"
 
-/* Local struct to map section tag to offset field */
-typedef struct {
-    const char* tag;
-    long*       field;
-} SectionTagMap;
-
-static const char* knownSections[] = {
-    "[VERSION]", 
-    "[DEFINITIONS]", 
-    "[BLOCKS]", 
-    "[RF]", 
-    "[GRADIENTS]", 
-    "[TRAP]", 
-    "[ADC]", 
-    "[EXTENSIONS]",
-    "[SHAPES]", 
-    "[SIGNATURE]"
-};
-
-void getSectionOffsets(long* sectionOffsets, SeqFile* seq, FILE* f, const char** sectionNames, int numSections, int parseExtensions)
+void getSectionOffsets(SeqFile* seq, FILE* f)
 {
     char line[MAX_LINE_LENGTH];
-    int foundSections = 0;
-    int foundExtensions = 0;
-    int totalExtensions = EXT_UNKNOWN;
-    int i, j;
-    int* sectionFound = NULL;
-    int* extensionFound = NULL;
-    char extName[EXT_NAME_LENGTH];
-    int extId;
-    int extEnum;
     char* p;
     long pos;
 
-    /* Hardcoded table of all known section names and pointers to their offsets in seq->offsets */
-    long* knownOffsets[] = {
-        &seq->offsets.version,
-        &seq->offsets.definitions,
-        &seq->offsets.blocks,
-        &seq->offsets.rf,
-        &seq->offsets.grad,
-        &seq->offsets.trap,
-        &seq->offsets.adc,
-        &seq->offsets.extensions,
-        &seq->offsets.shapes,
-        &seq->offsets.signature
-    };
-    int numKnownSections = sizeof(knownSections) / sizeof(knownSections[0]);
+    char extName[EXT_NAME_LENGTH];
+    int extId, extEnum;
 
-    /* Allocate dynamic arrays */
-    sectionFound = (int*) ALLOC(sizeof(int) * numSections);
-    if (!sectionFound) return;
-
-    extensionFound = (int*) ALLOC(sizeof(int) * totalExtensions);
-    if (!extensionFound) {
-        FREE(sectionFound);
-        return;
-    }
-
-    /* Check if requested sections were alredy parsed */
-    for (i = 0; i < numKnownSections; i++) {
-        if (*(knownOffsets[i]) >= 0) {
-            for (j = 0; j < numSections; j++) {
-                if (strcmp(sectionNames[j], knownSections[i]) == 0) {
-                    sectionOffsets[j] = *(knownOffsets[i]);
-                    sectionFound[j] = 1;
-                    foundSections++;
-                }
-            }
-        }
-    }
-
-    /* If all requested sections already found, return early */
-    if (foundSections == numSections && (!parseExtensions || foundExtensions == totalExtensions)) {
-        (seq->offsets).scan_cursor = ftell(f);
-        return;
-    }
-
-    /* Initialize arrays */
-    for (i = 0; i < numSections; i++) {
-        sectionOffsets[i] = -1;
-        sectionFound[i] = 0;
-    }
-
-    for (i = 0; i < totalExtensions; i++) {
-        extensionFound[i] = 0;
-    }
-
-    /* Begin scan from cursor */
-    if (fseek(f, (seq->offsets).scan_cursor, SEEK_SET) != 0) {
-        FREE(sectionFound);
-        FREE(extensionFound);
-        return;
-    }
+    if (fseek(f, 0L, SEEK_SET) != 0) return;
 
     while (fgets(line, sizeof(line), f)) {
         pos = ftell(f);
@@ -110,54 +26,67 @@ void getSectionOffsets(long* sectionOffsets, SeqFile* seq, FILE* f, const char**
         p = line;
         while (*p == ' ' || *p == '\t') p++;
 
-        /* Check for SECTION line: store offset for all known sections and requested sections */
         if (*p == '[') {
-            /* Store offset for all requested sections */
-            for (i = 0; i < numSections; i++) {
-                if (!sectionFound[i] && strncmp(p, sectionNames[i], strlen(sectionNames[i])) == 0) {
-                    sectionOffsets[i] = pos - strlen(line);  /* store offset of section line */
-                    sectionFound[i] = 1;
-                    foundSections++;
-                }
-            }
-            /* Store offset for all known sections in seq->offsets */
-            for (i = 0; i < numKnownSections; i++) {
-                if (*(knownOffsets[i]) < 0 && strncmp(p, knownSections[i], strlen(knownSections[i])) == 0) {
-                    *(knownOffsets[i]) = pos - strlen(line);
-                }
-            }
+            if (strncmp(p, "[VERSION]", 9) == 0)
+                seq->offsets.version = pos - strlen(line);
+            else if (strncmp(p, "[DEFINITIONS]", 13) == 0)
+                seq->offsets.definitions = pos - strlen(line);
+            else if (strncmp(p, "[BLOCKS]", 8) == 0)
+                seq->offsets.blocks = pos - strlen(line);
+            else if (strncmp(p, "[RF]", 4) == 0)
+                seq->offsets.rf = pos - strlen(line);
+            else if (strncmp(p, "[GRADIENTS]", 11) == 0)
+                seq->offsets.grad = pos - strlen(line);
+            else if (strncmp(p, "[TRAP]", 6) == 0)
+                seq->offsets.trap = pos - strlen(line);
+            else if (strncmp(p, "[ADC]", 5) == 0)
+                seq->offsets.adc = pos - strlen(line);
+            else if (strncmp(p, "[EXTENSIONS]", 12) == 0)
+                seq->offsets.extensions = pos - strlen(line);
+            else if (strncmp(p, "[SHAPES]", 8) == 0)
+                seq->offsets.shapes = pos - strlen(line);
+            else if (strncmp(p, "[SIGNATURE]", 11) == 0)
+                seq->offsets.signature = pos - strlen(line);
         }
-
-        /* Check for extension line */
         else if (strncmp(p, "extension", 9) == 0 && (*(p + 9) == ' ' || *(p + 9) == '\t')) {
             extId = -1;
             extEnum = EXT_UNKNOWN;
             if (sscanf(p, "extension %31s %d", extName, &extId) == 2) {
-                if (strcmp(extName, "TRIGGER") == 0) extEnum = EXT_TRIGGER;
-                else if (strcmp(extName, "ROTATION") == 0) extEnum = EXT_ROTATION;
+                if (strcmp(extName, "TRIGGERS") == 0) extEnum = EXT_TRIGGER;
+                else if (strcmp(extName, "ROTATIONS") == 0) extEnum = EXT_ROTATION;
                 else if (strcmp(extName, "LABELSET") == 0) extEnum = EXT_LABELSET;
                 else if (strcmp(extName, "LABELINC") == 0) extEnum = EXT_LABELINC;
-                else if (strcmp(extName, "RF_SHIM") == 0) extEnum = EXT_RF_SHIM;
-                else if (strcmp(extName, "DELAY") == 0) extEnum = EXT_DELAY;
-
-                seq->extensionMap[extEnum] = extId;
-                extensionFound[extEnum] = 1;
-                foundExtensions++;
+                else if (strcmp(extName, "RF_SHIMS") == 0) extEnum = EXT_RF_SHIM;
+                else if (strcmp(extName, "DELAYS") == 0) extEnum = EXT_DELAY;
+                switch (extEnum) {
+                    case EXT_TRIGGER:
+                        seq->offsets.triggers = pos - strlen(line);
+                        break;
+                    case EXT_ROTATION:
+                        seq->offsets.rotations = pos - strlen(line);
+                        break;
+                    case EXT_LABELSET:
+                        seq->offsets.labelset = pos - strlen(line);
+                        break;
+                    case EXT_LABELINC:
+                        seq->offsets.labelinc = pos - strlen(line);
+                        break;
+                    case EXT_RF_SHIM:
+                        seq->offsets.rfshim = pos - strlen(line);
+                        break;
+                    case EXT_DELAY:
+                        seq->offsets.delays = pos - strlen(line);
+                        break;
+                    default:
+                        break;
+                }   
+                if (extEnum >= 0 && extEnum < EXT_UNKNOWN) {
+                    seq->extensionMap[extEnum] = extId;
+                }
             }
         }
-
-        /* If all target sections found, but parseExtensions==1, keep scanning for extensions until all found or EOF */
-        if (foundSections == numSections && (!parseExtensions || foundExtensions == totalExtensions)) {
-            (seq->offsets).scan_cursor = ftell(f);
-            break;
-        }
-        /* If all target sections found but parseExtensions==1 and not all extensions found, keep scanning */
-        /* Otherwise, keep scanning until EOF */
     }
 
-    /* Full file scanned or early exit */
-    (seq->offsets).scan_cursor = ftell(f);
-
-    FREE(sectionFound);
-    FREE(extensionFound);
+    /* Set scan_cursor to EOF */
+    seq->offsets.scan_cursor = ftell(f);
 }

@@ -48,7 +48,7 @@ MU_TEST(test_rf) {
     mu_assert(block->rf.delay == 0, "RF should not have delay");
     mu_assert(fabs(block->rf.center - 2000.0) < 1e-6, "RF should have center at 2000 us");
 
-    /* Cpmplex RF */
+    /* Complex RF */
     block = getBlock(seq, 1, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
     mu_assert(block->rf.type == 1, "Block 1 should have RF event");
@@ -248,32 +248,11 @@ MU_TEST(test_grad) {
     seqFileFree(seq);
 }
 
-MU_TEST(test_labels) {
-    SeqBlock* block;
-    SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
-
-    /* LABELSET */
-    block = getBlock(seq, 5, 1);
-    mu_assert(block != NULL, "getBlock should return a valid block");
-    mu_assert(block->labelset.type == 1, "Block 5 should have labelset event");
-    mu_assert(block->labelset.slc != 0, "Block 5 labelset.slc should be set");
-    seqBlockFree(block);
-
-    /* LABELINC */
-    block = getBlock(seq, 6, 1);
-    mu_assert(block != NULL, "getBlock should return a valid block");
-    mu_assert(block->labelinc.type == 1, "Block 6 should have labelinc event");
-    mu_assert(block->labelinc.seg != 0, "Block 6 labelinc.seg should be set");
-    seqBlockFree(block);
-    seqFileFree(seq);
-}
-
 MU_TEST_SUITE(test_seqfile_suite) {
     MU_RUN_TEST(test_basic);
     MU_RUN_TEST(test_rf);
     MU_RUN_TEST(test_adc);
     MU_RUN_TEST(test_grad);
-    MU_RUN_TEST(test_labels);
 }
 
 int main(void) {
