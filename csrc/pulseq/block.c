@@ -4,6 +4,7 @@
  *
  */
 
+#include <math.h>
 #include <stddef.h>
 
 #include "seqfile.h"
