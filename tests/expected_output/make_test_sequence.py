@@ -55,7 +55,9 @@ def make_test_sequence(write=False):
     # All label types (SET, INC)
     for label in pp.get_supported_labels():
         seq.add_block(adc, pp.make_label(label, 'SET', 1))
+    for label in pp.get_supported_labels()[:10]:
         seq.add_block(adc, pp.make_label(label, 'INC', 1))
+    seq.add_block(adc, pp.make_label('TRID', 'INC', 1))
         
     seq.add_block(gx_trap)
     seq.add_block(gy_trap)
