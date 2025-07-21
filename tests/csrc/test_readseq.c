@@ -17,8 +17,6 @@ static SeqFile* load_seq(char* filePath) {
 MU_TEST(test_basic) {
     SeqBlock* block;
     SeqFile* seq = load_seq("tests/expected_output/seq1.seq");
-
-    printf("Entering test_basic\n");
     block = getBlock(seq, 0, 1);
     mu_assert(block != NULL, "getBlock should return a valid block for index 0");
     seqBlockFree(block);
@@ -29,11 +27,36 @@ MU_TEST(test_rf) {
     SeqBlock* block;
     SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
-    printf("Entering test_rf\n");
+    /* Real RF */
     block = getBlock(seq, 0, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
     mu_assert(block->rf.type == 1, "Block 0 should have RF event");
     mu_assert(block->rf.amplitude > 0, "RF amplitude should be positive");
+    mu_assert(block->rf.magShape.numSamples > 0, "RF should have magnitude shape samples");
+    mu_assert(block->rf.timeShape.numSamples == 0, "RF should not have time shape samples");
+    mu_assert(block->rf.phaseShape.numSamples == 0, "RF should not have phase shape samples");
+    mu_assert(fabs(block->rf.phaseOffset) < 1e-6, "RF should not have phase offset");
+    mu_assert(fabs(block->rf.freqOffset) < 1e-6, "RF should not have freq offset");
+    mu_assert(fabs(block->rf.phasePPM) < 1e-6, "RF should not have PPM phase offset");
+    mu_assert(fabs(block->rf.freqPPM) < 1e-6, "RF should not have PPM freq offset");
+    mu_assert(block->rf.delay == 0, "RF should not have delay");
+    mu_assert(fabs(block->rf.center - 2000.0) < 1e-6, "RF should have center at 2000 us");
+
+    /* Cpmplex RF */
+    block = getBlock(seq, 1, 1);
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->rf.type == 1, "Block 1 should have RF event");
+    mu_assert(block->rf.amplitude > 0, "RF amplitude should be positive");
+    mu_assert(block->rf.magShape.numSamples > 0, "RF should have magnitude shape samples");
+    mu_assert(block->rf.timeShape.numSamples == 0, "RF should not have time shape samples");
+    mu_assert(block->rf.phaseShape.numSamples > 0, "RF should have phase shape samples");
+    mu_assert(fabs(block->rf.phaseOffset) < 1e-6, "RF should not have phase offset");
+    mu_assert(fabs(block->rf.freqOffset) < 1e-6, "RF should not have freq offset");
+    mu_assert(fabs(block->rf.phasePPM) < 1e-6, "RF should not have PPM phase offset");
+    mu_assert(fabs(block->rf.freqPPM) < 1e-6, "RF should not have PPM freq offset");
+    mu_assert(block->rf.delay == 0, "RF should not have delay");
+    mu_assert(fabs(block->rf.center - 5000.5) < 1e-6, "RF should have center at 5000.5 us");
+
     seqBlockFree(block);
     seqFileFree(seq);
 }
@@ -41,8 +64,6 @@ MU_TEST(test_rf) {
 MU_TEST(test_adc) {
     SeqBlock* block;
     SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
-
-    printf("Entering test_adc\n");
     block = getBlock(seq, 1, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
     mu_assert(block->adc.type == 1, "Block 1 should have ADC event");
@@ -55,7 +76,6 @@ MU_TEST(test_grad) {
     SeqBlock* block;
     SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
-    printf("Entering test_grad\n");
     /* Gx */
     block = getBlock(seq, 2, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
@@ -80,7 +100,6 @@ MU_TEST(test_labels) {
     SeqBlock* block;
     SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
-    printf("Entering test_labels\n");
     /* LABELSET */
     block = getBlock(seq, 5, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");

@@ -10,6 +10,8 @@
 
 #include "alloc.h"
 #include "block.h"
+#include "config.h"
+#include "constants.h"
 
 /*********************************************************  local utils  *********************************************************/
 #define MAX_EXTENSIONS_PER_BLOCK 64
@@ -279,9 +281,11 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
     float* farray;
     int idx;
     int i, labelID, labelValue, extType, extIdx;
+    int numRealSamples = 0;
     float* trig;
     float* rot;
     float* delay;
+    int* isRealSample;
     RfShimEntry rfshim;
     RawBlock rawBlock = getRawBlockContentIDs(seq, blockIndex, parseExtensions);
 
@@ -298,10 +302,49 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
         if (idx > 0) block->rf.magShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
 
         idx = (int)farray[2];
-        if (idx > 0) block->rf.phaseShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+        if (idx > 0) {
+            block->rf.phaseShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            for (i = 0; i < block->rf.phaseShape.numSamples; i++) {
+                block->rf.phaseShape.samples[i] *= TWO_PI; /* Rescale phase shape to radians */
+            }
+        } else {
+            block->rf.phaseShape.numSamples = 0; /* Set phase shape to 0 samples */
+            block->rf.phaseShape.numUncompressedSamples = 0; /* Set phase shape to 0 samples */
+            block->rf.phaseShape.samples = NULL; /* Free phase shape samples */
+        }
+
+        /* Attempt to detect real-valued RF waveform */
+        if (DETECT_REAL_RF && block->rf.magShape.numSamples > 0 && block->rf.phaseShape.numSamples > 0) {
+            isRealSample = (int*)ALLOC(block->rf.magShape.numSamples * sizeof(int));
+
+            /* Check if the phase shape is real-valued */
+            for (i = 0; i < block->rf.magShape.numSamples; i++) {
+                isRealSample[i] = fabs(block->rf.phaseShape.samples[i]) < 1e-6 || fabs(block->rf.phaseShape.samples[i] - M_PI) < 1e-6;  
+            }
+            for (i = 0; i < block->rf.magShape.numSamples; i++) {
+                if (isRealSample[i]) {
+                    numRealSamples++;
+                }
+            }
+
+            /* If all samples are real, set the phase shape to 0 samples and free it */
+            if (numRealSamples == block->rf.magShape.numSamples) {
+                block->rf.phaseShape.numSamples = 0; /* Set phase shape to 0 samples */
+                block->rf.phaseShape.numUncompressedSamples = 0; /* Set phase shape to 0 samples */
+                FREE(block->rf.phaseShape.samples); /* Free phase shape samples */
+                block->rf.phaseShape.samples = NULL; /* Free phase shape samples */
+            }
+            FREE(isRealSample);
+        }
 
         idx = (int)farray[3];
-        if (idx > 0) block->rf.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+        if (idx > 0) {
+            block->rf.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+        } else {
+            block->rf.timeShape.numSamples = 0; /* Set time shape to 0 samples */
+            block->rf.timeShape.numUncompressedSamples = 0; /* Set time shape to 0 samples */
+            block->rf.timeShape.samples = NULL; /* Free time shape samples */
+        }
 
         block->rf.center = farray[4];
         block->rf.delay = (int)farray[5];
@@ -333,7 +376,13 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             if (idx > 0) block->gx.waveShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
 
             idx = (int)farray[5];
-            if (idx > 0) block->gx.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            if (idx > 0) {
+                block->gx.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            } else {
+                block->gx.timeShape.numSamples = 0; /* Set time shape to 0 samples */
+                block->gx.timeShape.numUncompressedSamples = 0; /* Set time shape to 0 samples */
+                block->gx.timeShape.samples = NULL; /* Free time shape samples */
+            }
 
             block->gx.delay = (int)farray[6];
         }
@@ -361,7 +410,13 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             if (idx > 0) block->gy.waveShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
 
             idx = (int)farray[5];
-            if (idx > 0) block->gy.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            if (idx > 0) {
+                block->gy.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            } else {
+                block->gy.timeShape.numSamples = 0; /* Set time shape to 0 samples */
+                block->gy.timeShape.numUncompressedSamples = 0; /* Set time shape to 0 samples */
+                block->gy.timeShape.samples = NULL; /* Free time shape samples */
+            }
 
             block->gy.delay = (int)farray[6];
         }
@@ -389,7 +444,13 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             if (idx > 0) block->gz.waveShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
 
             idx = (int)farray[5];
-            if (idx > 0) block->gz.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            if (idx > 0) {
+                block->gz.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            } else {
+                block->gz.timeShape.numSamples = 0; /* Set time shape to 0 samples */
+                block->gz.timeShape.numUncompressedSamples = 0; /* Set time shape to 0 samples */
+                block->gz.timeShape.samples = NULL; /* Free time shape samples */
+            }
 
             block->gz.delay = (int)farray[6];
         }
@@ -408,7 +469,13 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
         block->adc.phaseOffset = farray[6];
 
         idx = (int)farray[7];
-        if (idx > 0) block->adc.phaseModulationShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+        if (idx > 0) {
+            block->adc.phaseModulationShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+        } else {
+            block->adc.phaseModulationShape.numSamples = 0; /* Set phase modulation shape to 0 samples */
+            block->adc.phaseModulationShape.numUncompressedSamples = 0; /* Set phase modulation shape to 0 samples */
+            block->adc.phaseModulationShape.samples = NULL; /* Free phase modulation shape samples */
+        }
     }
 
      /* ------------------ Extensions ------------------ */
