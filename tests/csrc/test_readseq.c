@@ -127,5 +127,5 @@ MU_TEST_SUITE(test_seqfile_suite) {
 int main(void) {
     MU_RUN_SUITE(test_seqfile_suite);
     MU_REPORT();
-    return 0;
+    return MU_EXIT_CODE;
 }
