@@ -31,6 +31,10 @@ MU_TEST(test_rf) {
     block = getBlock(seq, 0, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
     mu_assert(block->rf.type == 1, "Block 0 should have RF event");
+    mu_assert(block->gx.type == 0, "Block 0 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 0 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 0 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 0 should not have ADC event");
     mu_assert(block->rf.amplitude > 0, "RF amplitude should be positive");
     mu_assert(block->rf.magShape.numSamples > 0, "RF should have magnitude shape samples");
     mu_assert(block->rf.timeShape.numSamples == 0, "RF should not have time shape samples");
@@ -46,6 +50,10 @@ MU_TEST(test_rf) {
     block = getBlock(seq, 1, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
     mu_assert(block->rf.type == 1, "Block 1 should have RF event");
+    mu_assert(block->gx.type == 0, "Block 1 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 1 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 1 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 1 should not have ADC event");
     mu_assert(block->rf.amplitude > 0, "RF amplitude should be positive");
     mu_assert(block->rf.magShape.numSamples > 0, "RF should have magnitude shape samples");
     mu_assert(block->rf.timeShape.numSamples == 0, "RF should not have time shape samples");
@@ -64,10 +72,41 @@ MU_TEST(test_rf) {
 MU_TEST(test_adc) {
     SeqBlock* block;
     SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
-    block = getBlock(seq, 1, 1);
+
+    /* phase modulated ADC */
+    block = getBlock(seq, 2, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
-    mu_assert(block->adc.type == 1, "Block 1 should have ADC event");
-    mu_assert(block->adc.numSamples > 0, "ADC should have samples");
+    mu_assert(block->rf.type == 0, "Block 2 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 2 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 2 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 2 should not have Gz event");
+    mu_assert(block->adc.type == 1, "Block 2 should have ADC event");
+    mu_assert(block->adc.numSamples == 128, "ADC should have 128 samples");
+    mu_assert(block->adc.dwellTime == 10000, "ADC should have 10us dwell time");
+    mu_assert(fabs(block->adc.phaseOffset) < 1e-6, "ADC should not have phase offset");
+    mu_assert(fabs(block->adc.freqOffset) < 1e-6, "ADC should not have freq offset");
+    mu_assert(fabs(block->adc.phasePPM) < 1e-6, "ADC should not have PPM phase offset");
+    mu_assert(fabs(block->adc.freqPPM) < 1e-6, "ADC should not have PPM freq offset");
+    mu_assert(block->adc.delay == 0, "ADC should not have delay");
+    mu_assert(block->adc.phaseModulationShape.numSamples > 0, "ADC should have phase modulation");
+
+    /* standard ADC */
+    block = getBlock(seq, 3, 0); /* do not parse extensions here */
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->rf.type == 0, "Block 3 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 3 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 3 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 3 should not have Gz event");
+    mu_assert(block->adc.type == 1, "Block 3 should have ADC event");
+    mu_assert(block->adc.numSamples == 128, "ADC should have 128 samples");
+    mu_assert(block->adc.dwellTime == 10000, "ADC should have 10us dwell time");
+    mu_assert(fabs(block->adc.phaseOffset) < 1e-6, "ADC should not have phase offset");
+    mu_assert(fabs(block->adc.freqOffset) < 1e-6, "ADC should not have freq offset");
+    mu_assert(fabs(block->adc.phasePPM) < 1e-6, "ADC should not have PPM phase offset");
+    mu_assert(fabs(block->adc.freqPPM) < 1e-6, "ADC should not have PPM freq offset");
+    mu_assert(block->adc.delay == 0, "ADC should not have delay");
+    mu_assert(block->adc.phaseModulationShape.numSamples == 0, "ADC should not have phase modulation");
+
     seqBlockFree(block);
     seqFileFree(seq);
 }
@@ -76,22 +115,53 @@ MU_TEST(test_grad) {
     SeqBlock* block;
     SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
+    /**** TRAPEZOIDS ****/
     /* Gx */
-    block = getBlock(seq, 2, 1);
+    block = getBlock(seq, 36, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
-    mu_assert(block->gx.type != 0, "Block 2 should have GX event");
-    seqBlockFree(block);
+    mu_assert(block->rf.type == 0, "Block 36 should not have RF event");
+    mu_assert(block->gx.type == 1, "Block 36 should have trapezoidal Gx event");
+    mu_assert(block->gy.type == 0, "Block 36 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 36 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 36 should not have ADC event");
+
+    mu_assert(fabs(block->gx.amplitude - 10) < 1e-6, "Gx amplitude should be 10 Hz/m");
+    mu_assert(block->gx.trap.riseTime == 10, "Gx rise time should be 10 us");
+    mu_assert(block->gx.trap.flatTime == 980, "Gx flat time should be 980 us");
+    mu_assert(block->gx.trap.fallTime == 10, "Gx fall time should be  10 us");
+    mu_assert(block->gx.delay == 0, "Gx should not have delay");
 
     /* Gy */
-    block = getBlock(seq, 3, 1);
+    block = getBlock(seq, 37, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
-    mu_assert(block->gy.type != 0, "Block 3 should have GY event");
-    seqBlockFree(block);
+    mu_assert(block->rf.type == 0, "Block 37 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 37 should not have Gx event");
+    mu_assert(block->gy.type == 1, "Block 37 should have trapezoidal Gy event");
+    mu_assert(block->gz.type == 0, "Block 37 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 37 should not have ADC event");
+
+    mu_assert(fabs(block->gy.amplitude - 5154.64014) < 1e-5, "Gy amplitude should be 5154.64 Hz/m");
+    mu_assert(block->gy.trap.riseTime == 30, "Gy rise time should be 30 us");
+    mu_assert(block->gy.trap.flatTime == 940, "Gy flat time should be 940 us");
+    mu_assert(block->gy.trap.fallTime == 30, "Gy fall time should be  30 us");
+    mu_assert(block->gy.delay == 0, "Gy should not have delay");
 
     /* Gz */
-    block = getBlock(seq, 4, 1);
+    block = getBlock(seq, 38, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
-    mu_assert(block->gz.type != 0, "Block 4 should have GZ event");
+    mu_assert(block->rf.type == 0, "Block 38 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 38 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 38 should not have Gy event");
+    mu_assert(block->gz.type == 1, "Block 38 should have trapezoidal Gz event");
+    mu_assert(block->adc.type == 0, "Block 38 should not have ADC event");
+
+    mu_assert(fabs(block->gz.amplitude - 5154.64014) < 1e-5, "Gz amplitude should be 5154.64 Hz/m");
+    mu_assert(block->gz.trap.riseTime == 30, "Gz rise time should be 30 us");
+    mu_assert(block->gz.trap.flatTime == 940, "Gz flat time should be 940 us");
+    mu_assert(block->gz.trap.fallTime == 30, "Gz fall time should be  30 us");
+    mu_assert(block->gz.delay == 0, "Gz should not have delay");
+    /**** END TRAPEZOIDS ****/
+
     seqBlockFree(block);
     seqFileFree(seq);
 }
