@@ -23,9 +23,19 @@ ShapeArbitrary* decompressShape(ShapeArbitrary* encoded)
     float* unpacked;
     ShapeArbitrary *decoded;
 
+    /* Input shape is uncompressed - copy it */
     if (encoded->numSamples == encoded->numUncompressedSamples) {
-        /* Already uncompressed, return as-is */
-        return (ShapeArbitrary*) encoded;
+        decoded = (ShapeArbitrary*)ALLOC(sizeof(ShapeArbitrary));
+        if (!decoded) return NULL;
+        decoded->numSamples = encoded->numSamples;
+        decoded->numUncompressedSamples = encoded->numUncompressedSamples;
+        decoded->samples = (float*)ALLOC(sizeof(float) * encoded->numSamples);
+        if (!decoded->samples) {
+            FREE(decoded);
+            return NULL;
+        }
+        memcpy(decoded->samples, encoded->samples, sizeof(float) * encoded->numSamples);
+        return decoded;
     }
 
     unpacked = (float*) ALLOC(sizeof(float) * numSamples);
