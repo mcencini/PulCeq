@@ -482,7 +482,7 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
      /* ------------------ Extensions ------------------ */
     for (i = 0; i < rawBlock.extCount; i++) {
         extType = seq->extensionLUT[rawBlock.ext[i][0]];
-        extIdx = rawBlock.ext[i][1];
+        extIdx = rawBlock.ext[i][1] - 1;
 
         switch (extType) {
             case EXT_TRIGGER:   
