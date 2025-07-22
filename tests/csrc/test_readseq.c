@@ -96,7 +96,12 @@ MU_TEST(test_rf) {
     mu_assert(block->gy.type == 0, "Block 0 should not have Gy event");
     mu_assert(block->gz.type == 0, "Block 0 should not have Gz event");
     mu_assert(block->adc.type == 0, "Block 0 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 0 should not have trigger event");
     mu_assert(block->rotation.type == 0, "Block 0 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 0 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 0 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 0 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 0 should not have RF shimming event");
 
     mu_assert(block->rf.amplitude > 0, "RF amplitude should be positive");
     mu_assert(block->rf.magShape.numSamples > 0, "RF should have magnitude shape samples");
@@ -117,7 +122,12 @@ MU_TEST(test_rf) {
     mu_assert(block->gy.type == 0, "Block 1 should not have Gy event");
     mu_assert(block->gz.type == 0, "Block 1 should not have Gz event");
     mu_assert(block->adc.type == 0, "Block 1 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 1 should not have trigger event");
     mu_assert(block->rotation.type == 0, "Block 1 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 1 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 1 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 1 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 1 should not have RF shimming event");
 
     mu_assert(block->rf.amplitude > 0, "RF amplitude should be positive");
     mu_assert(block->rf.magShape.numSamples > 0, "RF should have magnitude shape samples");
@@ -146,7 +156,12 @@ MU_TEST(test_adc) {
     mu_assert(block->gy.type == 0, "Block 2 should not have Gy event");
     mu_assert(block->gz.type == 0, "Block 2 should not have Gz event");
     mu_assert(block->adc.type == 1, "Block 2 should have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 2 should not have trigger event");
     mu_assert(block->rotation.type == 0, "Block 2 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 2 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 2 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 2 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 2 should not have RF shimming event");
 
     mu_assert(block->adc.numSamples == 128, "ADC should have 128 samples");
     mu_assert(block->adc.dwellTime == 10000, "ADC should have 10us dwell time");
@@ -165,7 +180,12 @@ MU_TEST(test_adc) {
     mu_assert(block->gy.type == 0, "Block 3 should not have Gy event");
     mu_assert(block->gz.type == 0, "Block 3 should not have Gz event");
     mu_assert(block->adc.type == 1, "Block 3 should have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 3 should not have trigger event");
     mu_assert(block->rotation.type == 0, "Block 3 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 3 should not have labelset event when parseExtensions is false");
+    mu_assert(block->labelinc.type == 0, "Block 3 should not have labelinc event when parseExtensions is false");
+    mu_assert(block->delay.type == 0, "Block 3 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 3 should not have RF shimming event");
 
     mu_assert(block->adc.numSamples == 128, "ADC should have 128 samples");
     mu_assert(block->adc.dwellTime == 10000, "ADC should have 10us dwell time");
@@ -193,7 +213,12 @@ MU_TEST(test_grad) {
     mu_assert(block->gy.type == 0, "Block 36 should not have Gy event");
     mu_assert(block->gz.type == 0, "Block 36 should not have Gz event");
     mu_assert(block->adc.type == 0, "Block 36 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 36 should not have trigger event");
     mu_assert(block->rotation.type == 0, "Block 36 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 36 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 36 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 36 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 36 should not have RF shimming event");
 
     mu_assert(fabs(block->gx.amplitude - 10) < 1e-6, "Gx amplitude should be 10 Hz/m");
     mu_assert(block->gx.delay == 0, "Gx should not have delay");
@@ -211,7 +236,12 @@ MU_TEST(test_grad) {
     mu_assert(block->gy.type == 1, "Block 37 should have trapezoidal Gy event");
     mu_assert(block->gz.type == 0, "Block 37 should not have Gz event");
     mu_assert(block->adc.type == 0, "Block 37 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 37 should not have trigger event");
     mu_assert(block->rotation.type == 0, "Block 37 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 37 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 37 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 37 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 37 should not have RF shimming event");
 
     mu_assert(fabs(block->gy.amplitude - 5154.64014) < 1e-5, "Gy amplitude should be 5154.64 Hz/m");
     mu_assert(block->gy.delay == 0, "Gy should not have delay");
@@ -229,7 +259,12 @@ MU_TEST(test_grad) {
     mu_assert(block->gy.type == 0, "Block 38 should not have Gy event");
     mu_assert(block->gz.type == 1, "Block 38 should have trapezoidal Gz event");
     mu_assert(block->adc.type == 0, "Block 38 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 38 should not have trigger event");
     mu_assert(block->rotation.type == 0, "Block 38 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 38 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 38 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 38 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 38 should not have RF shimming event");
 
     mu_assert(fabs(block->gz.amplitude - 5154.64014) < 1e-5, "Gz amplitude should be 5154.64 Hz/m");
     mu_assert(block->gz.delay == 0, "Gz should not have delay");
@@ -249,7 +284,12 @@ MU_TEST(test_grad) {
     mu_assert(block->gy.type == 0, "Block 39 should not have Gy event");
     mu_assert(block->gz.type == 0, "Block 39 should not have Gz event");
     mu_assert(block->adc.type == 0, "Block 39 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 39 should not have trigger event");
     mu_assert(block->rotation.type == 1, "Block 39 should have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 39 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 39 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 39 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 39 should not have RF shimming event");
 
     mu_assert(fabs(block->gx.amplitude - 1) < 1e-6, "Gx amplitude should be 1 Hz/m");
     mu_assert(block->gx.delay == 0, "Gx should not have delay");
@@ -270,7 +310,12 @@ MU_TEST(test_grad) {
     mu_assert(block->gy.type == 2, "Block 40 should have arbitrary Gy event");
     mu_assert(block->gz.type == 0, "Block 40 should not have Gz event");
     mu_assert(block->adc.type == 0, "Block 40 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 40 should not have trigger event");
     mu_assert(block->rotation.type == 1, "Block 40 should have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 40 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 40 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 40 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 40 should not have RF shimming event");
 
     mu_assert(fabs(block->gy.amplitude - 1) < 1e-6, "Gy amplitude should be 1 Hz/m");
     mu_assert(block->gy.delay == 0, "Gy should not have delay");
@@ -291,7 +336,12 @@ MU_TEST(test_grad) {
     mu_assert(block->gy.type == 0, "Block 41 should not have Gy event");
     mu_assert(block->gz.type == 2, "Block 41 should have arbitrary Gz event");
     mu_assert(block->adc.type == 0, "Block 41 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 41 should not have trigger event");
     mu_assert(block->rotation.type == 1, "Block 41 should have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 41 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 41 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 41 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 41 should not have RF shimming event");
 
     mu_assert(fabs(block->gz.amplitude - 1) < 1e-6, "Gz amplitude should be 1 Hz/m");
     mu_assert(block->gz.delay == 0, "Gz should not have delay");
@@ -318,7 +368,13 @@ MU_TEST(test_labelset) {
     for (i = 3; i < 25; i++) {
         block = getBlock(seq, i, 1);
         mu_assert(block != NULL, "getBlock should return a valid block");
+        mu_assert(block->trigger.type == 0, "Block should not have trigger event");
+        mu_assert(block->rotation.type == 0, "Block should not have rotation event");
+        mu_assert(block->labelset.type == 1, "Block should have labelset event");
         mu_assert(block->labelinc.type == 0, "Block should not have labelinc event");
+        mu_assert(block->delay.type == 0, "Block should not have delay event");
+        mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
+
         assert_labelset_event(&block->labelset, n, 1);
         n += 1;
     }
@@ -335,7 +391,13 @@ MU_TEST(test_labelinc) {
     for (i = 25; i < 35; i++) {
         block = getBlock(seq, i, 1);
         mu_assert(block != NULL, "getBlock should return a valid block");
-        mu_assert(block->labelset.type == 0, "Block should not have labeset event");
+        mu_assert(block->trigger.type == 0, "Block should not have trigger event");
+        mu_assert(block->rotation.type == 0, "Block should not have rotation event");
+        mu_assert(block->labelset.type == 0, "Block should not have labelset event");
+        mu_assert(block->labelinc.type == 1, "Block should have labelinc event");
+        mu_assert(block->delay.type == 0, "Block should not have delay event");
+        mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
+
         assert_labelinc_event(&block->labelinc, n, 1);
         n += 1;
     }
