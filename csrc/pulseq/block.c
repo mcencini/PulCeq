@@ -73,7 +73,7 @@ RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExte
     int gyID = (int)(eventFloat[3]) - 1;
     int gzID = (int)(eventFloat[4]) - 1;
     int adcID  = (int)(eventFloat[5]) - 1;
-    int extID = (int)(eventFloat[6]) - 1;
+    int extID = (int)(eventFloat[6]);
 
     block.block_duration = duration;
     block.rf = rfID;
@@ -83,12 +83,12 @@ RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExte
     block.adc = adcID;
 
     /* Handle extensions if present */
-    if (parseExtensions && extID >= 0 && seq->isExtensionsLibraryParsed) {
+    if (parseExtensions && extID > 0 && seq->isExtensionsLibraryParsed) {
         nextExtID = extID;
         extCount = 0;
 
-        while (nextExtID > 0 && nextExtID < seq->extensionsLibrarySize) {
-            extData = seq->extensionsLibrary[nextExtID]; /* [type, ref, next_id] */
+        while (nextExtID > 0 && nextExtID <= seq->extensionsLibrarySize) {
+            extData = seq->extensionsLibrary[nextExtID - 1]; /* [type, ref, next_id] */
             block.ext[extCount][0] = (int)extData[0];      /* type */
             block.ext[extCount][1] = (int)extData[1] - 1;  /* ref */
             nextExtID = (int)extData[2]; /* next in chain */
@@ -498,8 +498,8 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
                 block->rotation.rotQuaternion[3] = rot[3];
                 break;
             case EXT_LABELSET:
-                labelID = seq->labelsetLibrary[extIdx][0];
-                labelValue = seq->labelsetLibrary[extIdx][1];
+                labelID = seq->labelsetLibrary[extIdx][1];
+                labelValue = seq->labelsetLibrary[extIdx][0];
                 block->labelset.type = 1;
                 switch (labelID) {
                     case SLC: block->labelset.slc = labelValue; break;
@@ -528,8 +528,8 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
                 }
                 break;
             case EXT_LABELINC:
-                labelID = seq->labelincLibrary[extIdx][0];
-                labelValue = seq->labelsetLibrary[extIdx][1];
+                labelID = seq->labelincLibrary[extIdx][1];
+                labelValue = seq->labelincLibrary[extIdx][0];
                 block->labelinc.type = 1;
                 switch (labelID) {
                     case SLC: block->labelinc.slc = labelValue; break;
@@ -543,17 +543,6 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
                     case PAR: block->labelinc.par = labelValue; break;
                     case ACQ: block->labelinc.acq = labelValue; break;
                     case TRID: block->labelinc.trid = labelValue; break;
-                    case NAV: block->labelinc.nav = labelValue; break;
-                    case REV: block->labelinc.rev = labelValue; break;
-                    case SMS: block->labelinc.sms = labelValue; break;
-                    case REF: block->labelinc.ref = labelValue; break;
-                    case IMA: block->labelinc.ima = labelValue; break;
-                    case NOISE: block->labelinc.noise = labelValue; break;
-                    case PMC: block->labelinc.pmc = labelValue; break;
-                    case NOROT: block->labelinc.norot = labelValue; break;
-                    case NOPOS: block->labelinc.nopos = labelValue; break;
-                    case NOSCL: block->labelinc.noscl = labelValue; break;
-                    case ONCE: block->labelinc.once = labelValue; break;
                     default: break;
                 }
                 break;

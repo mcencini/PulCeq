@@ -3,7 +3,7 @@
 #include "pulseq.h"
 
 /* UTILS */
-#define LABEL_FIELD(label, idx) \
+#define LABELSET_FIELD(label, idx) \
     ((idx)==0 ? (label)->slc : \
     (idx)==1 ? (label)->seg : \
     (idx)==2 ? (label)->rep : \
@@ -27,6 +27,19 @@
     (idx)==20 ? (label)->once : \
     (idx)==21 ? (label)->trid : 0)
 
+#define LABELINC_FIELD(label, idx) \
+    ((idx)==0 ? (label)->slc : \
+    (idx)==1 ? (label)->seg : \
+    (idx)==2 ? (label)->rep : \
+    (idx)==3 ? (label)->avg : \
+    (idx)==4 ? (label)->set : \
+    (idx)==5 ? (label)->eco : \
+    (idx)==6 ? (label)->phs : \
+    (idx)==7 ? (label)->lin : \
+    (idx)==8 ? (label)->par : \
+    (idx)==9 ? (label)->acq : \
+    (idx)==10 ? (label)->trid : 0)
+
 static SeqFile* load_seq(char* filePath) {
     char cwd[1024];
     char seq_path[1024];
@@ -39,14 +52,24 @@ static SeqFile* load_seq(char* filePath) {
     return seq;
 }
 
-static void assert_label_event(const LabelEvent* label, int target_idx, int expected) {
+static void assert_labelset_event(const LabelEvent* label, int target_idx, int expected) {
     int i;
-    int n_labels = 22;
-    for (i = 0; i < n_labels; i++) {
+    for (i = 0; i < 22; i++) {
         if (i == target_idx) {
-            mu_assert(LABEL_FIELD(label, i) == expected, "Target label value mismatch");
+            mu_assert(LABELSET_FIELD(label, i) == expected, "Target label value mismatch");
         } else {
-            mu_assert(LABEL_FIELD(label, i) == 0, "Non-target label field should be 0");
+            mu_assert(LABELSET_FIELD(label, i) == 0, "Non-target label field should be 0");
+        }
+    }
+}
+
+static void assert_labelinc_event(const LabelEvent* label, int target_idx, int expected) {
+    int i;
+    for (i = 0; i < 11; i++) {
+        if (i == target_idx) {
+            mu_assert(LABELINC_FIELD(label, i) == expected, "Target label value mismatch");
+        } else {
+            mu_assert(LABELINC_FIELD(label, i) == 0, "Non-target label field should be 0");
         }
     }
 }
@@ -292,10 +315,28 @@ MU_TEST(test_labelset) {
     SeqBlock* block;
     SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
-    for (i = 3; i < 35; i++) {
+    for (i = 3; i < 25; i++) {
         block = getBlock(seq, i, 1);
         mu_assert(block != NULL, "getBlock should return a valid block");
-        assert_label_event(&block->labelset, n, 1);
+        mu_assert(block->labelinc.type == 0, "Block should not have labelinc event");
+        assert_labelset_event(&block->labelset, n, 1);
+        n += 1;
+    }
+    seqBlockFree(block);
+    seqFileFree(seq);
+}
+
+MU_TEST(test_labelinc) {
+    int i;
+    int n = 0; /* label event index */
+    SeqBlock* block;
+    SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
+
+    for (i = 25; i < 35; i++) {
+        block = getBlock(seq, i, 1);
+        mu_assert(block != NULL, "getBlock should return a valid block");
+        mu_assert(block->labelset.type == 0, "Block should not have labeset event");
+        assert_labelinc_event(&block->labelinc, n, 1);
         n += 1;
     }
     seqBlockFree(block);
@@ -308,6 +349,7 @@ MU_TEST_SUITE(test_seqfile_suite) {
     MU_RUN_TEST(test_adc);
     MU_RUN_TEST(test_grad);
     MU_RUN_TEST(test_labelset);
+    MU_RUN_TEST(test_labelinc);
 }
 
 int main(void) {
