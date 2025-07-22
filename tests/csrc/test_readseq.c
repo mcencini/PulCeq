@@ -196,10 +196,15 @@ MU_TEST(test_grad) {
     mu_assert(block->gx.timeShape.numSamples == 0, "Gx should not have time shape samples");
     mu_assert(fabs(block->gx.first + 0.05), "Gx first sample should be -0.05");
     mu_assert(fabs(block->gx.last + 0.05), "Gx last sample should be -0.05");
-    printf("quat0 = %.10f\n", block->rotation.rotQuaternion[0]);
-    printf("quat1 = %.10f\n", block->rotation.rotQuaternion[1]);
-    printf("quat2 = %.10f\n", block->rotation.rotQuaternion[2]);
-    printf("quat3 = %.10f\n", block->rotation.rotQuaternion[3]);
+
+    printf("sizeof(rotation) = %lu\n", (unsigned long)sizeof(block->rotation));
+    printf("sizeof(rotQuaternion[0]) = %lu\n", (unsigned long)sizeof(block->rotation.rotQuaternion[0]));
+    printf("rotation.quaternion = (%.17g, %.17g, %.17g, %.17g)\n",
+        block->rotation.rotQuaternion[0],
+        block->rotation.rotQuaternion[1],
+        block->rotation.rotQuaternion[2],
+        block->rotation.rotQuaternion[3]);
+
     mu_assert(fabs(block->rotation.rotQuaternion[0] - 1.0) < 1e-6, "Rotation quaternion quat0 should be 1.0");
     mu_assert(fabs(block->rotation.rotQuaternion[1]) < 1e-6, "Rotation quaternion quatX should be 0.0");
     mu_assert(fabs(block->rotation.rotQuaternion[2]) < 1e-6, "Rotation quaternion quatY should be 0.0");
