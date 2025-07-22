@@ -78,6 +78,8 @@ static void assert_labelinc_event(const LabelEvent* label, int target_idx, int e
 MU_TEST(test_basic) {
     SeqBlock* block;
     SeqFile* seq = load_seq("tests/expected_output/seq1.seq");
+    mu_assert(seq->numBlocks == 7, "Sequence should have exactly 7 blocks");
+
     block = getBlock(seq, 0, 1);
     mu_assert(block != NULL, "getBlock should return a valid block for index 0");
     seqBlockFree(block);
