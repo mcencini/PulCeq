@@ -295,8 +295,8 @@ MU_TEST(test_grad) {
     mu_assert(block->gx.delay == 0, "Gx should not have delay");
     mu_assert(block->gx.waveShape.numSamples > 0, "Gx should have magnitude shape samples");
     mu_assert(block->gx.timeShape.numSamples == 0, "Gx should not have time shape samples");
-    mu_assert(fabs(block->gx.first + 0.05), "Gx first sample should be -0.05");
-    mu_assert(fabs(block->gx.last + 0.05), "Gx last sample should be -0.05");
+    mu_assert(fabs(block->gx.first + 0.05) < 1e-6, "Gx first sample should be -0.05");
+    mu_assert(fabs(block->gx.last + 0.05) < 1e-6, "Gx last sample should be -0.05");
     mu_assert(fabs(block->rotation.rotQuaternion[0] - 1.0) < 1e-6, "Rotation quaternion quat0 should be 1.0");
     mu_assert(fabs(block->rotation.rotQuaternion[1]) < 1e-6, "Rotation quaternion quatX should be 0.0");
     mu_assert(fabs(block->rotation.rotQuaternion[2]) < 1e-6, "Rotation quaternion quatY should be 0.0");
@@ -321,8 +321,8 @@ MU_TEST(test_grad) {
     mu_assert(block->gy.delay == 0, "Gy should not have delay");
     mu_assert(block->gy.waveShape.numSamples > 0, "Gy should have magnitude shape samples");
     mu_assert(block->gy.timeShape.numSamples == 0, "Gy should not have time shape samples");
-    mu_assert(fabs(block->gy.first + 0.05), "Gy first sample should be -0.05");
-    mu_assert(fabs(block->gy.last + 0.05), "Gy last sample should be -0.05");
+    mu_assert(fabs(block->gy.first + 0.05) < 1e-6, "Gy first sample should be -0.05");
+    mu_assert(fabs(block->gy.last + 0.05) < 1e-6, "Gy last sample should be -0.05");
     mu_assert(fabs(block->rotation.rotQuaternion[0] - 1.0) < 1e-6, "Rotation quaternion quat0 should be 1.0");
     mu_assert(fabs(block->rotation.rotQuaternion[1]) < 1e-6, "Rotation quaternion quatX should be 0.0");
     mu_assert(fabs(block->rotation.rotQuaternion[2]) < 1e-6, "Rotation quaternion quatY should be 0.0");
@@ -347,13 +347,81 @@ MU_TEST(test_grad) {
     mu_assert(block->gz.delay == 0, "Gz should not have delay");
     mu_assert(block->gz.waveShape.numSamples > 0, "Gz should have magnitude shape samples");
     mu_assert(block->gz.timeShape.numSamples == 0, "Gz should not have time shape samples");
-    mu_assert(fabs(block->gz.first + 0.05), "Gz first sample should be -0.05");
-    mu_assert(fabs(block->gz.last + 0.05), "Gz last sample should be -0.05");
+    mu_assert(fabs(block->gz.first + 0.05) < 1e-6, "Gz first sample should be -0.05");
+    mu_assert(fabs(block->gz.last + 0.05) < 1e-6, "Gz last sample should be -0.05");
     mu_assert(fabs(block->rotation.rotQuaternion[0] - 1.0) < 1e-6, "Rotation quaternion quat0 should be 1.0");
     mu_assert(fabs(block->rotation.rotQuaternion[1]) < 1e-6, "Rotation quaternion quatX should be 0.0");
     mu_assert(fabs(block->rotation.rotQuaternion[2]) < 1e-6, "Rotation quaternion quatY should be 0.0");
     mu_assert(fabs(block->rotation.rotQuaternion[3]) < 1e-6, "Rotation quaternion quatZ should be 0.0");
     /**** END ARBITRARY GRAD ****/
+
+    /**** EXTENDED TRAPEZOIDS GRAD ****/
+    /* Gx */
+    block = getBlock(seq, 42, 1);
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->rf.type == 0, "Block 42 should not have RF event");
+    mu_assert(block->gx.type == 2, "Block 42 should have arbitrary Gx event");
+    mu_assert(block->gy.type == 0, "Block 42 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 42 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 42 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 42 should not have trigger event");
+    mu_assert(block->rotation.type == 0, "Block 42 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 42 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 42 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 42 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 42 should not have RF shimming event");
+
+    mu_assert(fabs(block->gx.amplitude - 1) < 1e-6, "Gx amplitude should be 1 Hz/m");
+    mu_assert(block->gx.delay == 0, "Gx should not have delay");
+    mu_assert(block->gx.waveShape.numSamples > 0, "Gx should have magnitude shape samples");
+    mu_assert(block->gx.timeShape.numSamples > 0, "Gx should have time shape samples");
+    mu_assert(fabs(block->gx.first) < 1e-6, "Gx first sample should be 0");
+    mu_assert(fabs(block->gx.last) < 1e-6, "Gx last sample should be 0");
+
+    /* Gy */
+    block = getBlock(seq, 43, 1);
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->rf.type == 0, "Block 43 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 43 should not have Gx event");
+    mu_assert(block->gy.type == 2, "Block 43 should have arbitrary Gy event");
+    mu_assert(block->gz.type == 0, "Block 43 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 43 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 43 should not have trigger event");
+    mu_assert(block->rotation.type == 0, "Block 43 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 43 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 43 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 43 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 43 should not have RF shimming event");
+
+    mu_assert(fabs(block->gy.amplitude - 1) < 1e-6, "Gy amplitude should be 1 Hz/m");
+    mu_assert(block->gy.delay == 0, "Gy should not have delay");
+    mu_assert(block->gy.waveShape.numSamples > 0, "Gy should have magnitude shape samples");
+    mu_assert(block->gy.timeShape.numSamples > 0, "Gy should have time shape samples");
+    mu_assert(fabs(block->gy.first) < 1e-6, "Gy first sample should be 0");
+    mu_assert(fabs(block->gy.last) < 1e-6, "Gy last sample should be 0");
+
+    /* Gz */
+    block = getBlock(seq, 44, 1);
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->rf.type == 0, "Block 44 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 44 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 44 should not have Gy event");
+    mu_assert(block->gz.type == 2, "Block 44 should have arbitrary Gz event");
+    mu_assert(block->adc.type == 0, "Block 44 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 44 should not have trigger event");
+    mu_assert(block->rotation.type == 0, "Block 44 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 44 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 44 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 44 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 44 should not have RF shimming event");
+
+    mu_assert(fabs(block->gz.amplitude - 1) < 1e-6, "Gz amplitude should be 1 Hz/m");
+    mu_assert(block->gz.delay == 0, "Gz should not have delay");
+    mu_assert(block->gz.waveShape.numSamples > 0, "Gz should have magnitude shape samples");
+    mu_assert(block->gz.timeShape.numSamples > 0, "Gz should have time shape samples");
+    mu_assert(fabs(block->gz.first) < 1e-6, "Gz first sample should be 0");
+    mu_assert(fabs(block->gz.last) < 1e-6, "Gz last sample should be 0");
+    /**** END EXTENDED TRAPEZOIDS GRAD ****/
 
     seqBlockFree(block);
     seqFileFree(seq);
