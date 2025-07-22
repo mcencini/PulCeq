@@ -32,6 +32,16 @@
 #define EXT_DELAY     6
 #define EXT_UNKNOWN   7 /* marks the end of the enum, should always be the last */
 
+/*****************************************************************      Trigger types and Channels    *******************************************************************************************/
+#define TRIGGER_TYPE_OUTPUT 1
+#define TRIGGER_TYPE_INPUT  2
+
+#define TRIGGER_CHANNEL_INPUT_PHYSIO_1 1
+#define TRIGGER_CHANNEL_INPUT_PHYSIO_2 2
+#define TRIGGER_CHANNEL_OUTPUT_OSC_0 1
+#define TRIGGER_CHANNEL_OUTPUT_OSC_1 2
+#define TRIGGER_CHANNEL_OUTPUT_EXT_1 3
+
 /*********************************************************************      Time Hints     ******************************************************************************************/
 #define HINT_TE 1
 #define HINT_TR 2

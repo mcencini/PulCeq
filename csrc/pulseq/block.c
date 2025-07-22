@@ -484,10 +484,10 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             case EXT_TRIGGER:   
                 trig = seq->triggerLibrary[extIdx];
                 block->trigger.type = 1;
-                block->trigger.duration = (long)trig[0];
-                block->trigger.delay = (long)trig[1];
-                block->trigger.triggerType = (int)trig[2];
-                block->trigger.triggerChannel = (int)trig[3];
+                block->trigger.duration = (long)trig[3];
+                block->trigger.delay = (long)trig[2];
+                block->trigger.triggerType = (int)trig[0];
+                block->trigger.triggerChannel = (int)trig[1];
                 break;
             case EXT_ROTATION:
                 rot = seq->rotationLibrary[extIdx];

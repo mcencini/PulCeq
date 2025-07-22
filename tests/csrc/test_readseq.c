@@ -490,6 +490,111 @@ MU_TEST(test_labelinc) {
     seqFileFree(seq);
 }
 
+MU_TEST(test_trigger) {
+    SeqBlock* block;
+    SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
+
+    block = getBlock(seq, 45, 1);
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->duration == 1, "Block 45 duration should be 1 block raster units");
+    mu_assert(block->rf.type == 0, "Block 45 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 45 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 45 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 45 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 45 should not have ADC event");
+    mu_assert(block->trigger.type == 1, "Block 45 should have trigger event");
+    mu_assert(block->rotation.type == 0, "Block 45 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 45 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 45 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 45 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 45 should not have RF shimming event");
+
+    mu_assert(block->trigger.duration == 10, "Block 45 trigger duration should be 10 us");
+    mu_assert(block->trigger.delay == 0, "Block 45 trigger delay should be 0");
+    mu_assert(block->trigger.triggerType == TRIGGER_TYPE_INPUT, "Block 45 trigger should be a cardiac trigger");
+    mu_assert(block->trigger.triggerChannel == TRIGGER_CHANNEL_INPUT_PHYSIO_1, "Block 45 channel type should be physio1");
+
+    block = getBlock(seq, 46, 1);
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->duration == 1, "Block 46 duration should be 1 block raster units");
+    mu_assert(block->rf.type == 0, "Block 46 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 46 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 46 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 46 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 46 should not have ADC event");
+    mu_assert(block->trigger.type == 1, "Block 46 should have trigger event");
+    mu_assert(block->rotation.type == 0, "Block 46 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 46 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 46 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 46 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 46 should not have RF shimming event");
+
+    mu_assert(block->trigger.duration == 10, "Block 46 trigger duration should be 10 us");
+    mu_assert(block->trigger.delay == 0, "Block 46 trigger delay should be 0");
+    mu_assert(block->trigger.triggerType == TRIGGER_TYPE_INPUT, "Block 46 trigger should be a cardiac trigger");
+    mu_assert(block->trigger.triggerChannel == TRIGGER_CHANNEL_INPUT_PHYSIO_2, "Block 46 channel type should be physio2");
+
+    block = getBlock(seq, 47, 1);
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->duration == 400, "Block 47 duration should be 400 block raster units");
+    mu_assert(block->rf.type == 0, "Block 47 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 47 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 47 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 47 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 47 should not have ADC event");
+    mu_assert(block->trigger.type == 1, "Block 47 should have trigger event");
+    mu_assert(block->rotation.type == 0, "Block 47 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 47 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 47 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 47 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 47 should not have RF shimming event");
+
+    mu_assert(block->trigger.duration == 4000, "Block 47 trigger duration should be 4000 us");
+    mu_assert(block->trigger.delay == 0, "Block 47 trigger delay should be 0");
+    mu_assert(block->trigger.triggerType == TRIGGER_TYPE_OUTPUT, "Block 47 trigger should be a digital output trigger");
+    mu_assert(block->trigger.triggerChannel == TRIGGER_CHANNEL_OUTPUT_OSC_0, "Block 47 channel type should be osc0");
+
+    block = getBlock(seq, 48, 1);
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->duration == 400, "Block 48 duration should be 400 block raster units");
+    mu_assert(block->rf.type == 0, "Block 48 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 48 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 48 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 48 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 48 should not have ADC event");
+    mu_assert(block->trigger.type == 1, "Block 48 should have trigger event");
+    mu_assert(block->rotation.type == 0, "Block 48 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 48 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 48 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 48 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 48 should not have RF shimming event");
+
+    mu_assert(block->trigger.duration == 4000, "Block 48 trigger duration should be 4000 us");
+    mu_assert(block->trigger.delay == 0, "Block 48 trigger delay should be 0");
+    mu_assert(block->trigger.triggerType == TRIGGER_TYPE_OUTPUT, "Block 48 trigger should be a digital output trigger");
+    mu_assert(block->trigger.triggerChannel == TRIGGER_CHANNEL_OUTPUT_OSC_1, "Block 48 channel type should be osc1");
+
+    block = getBlock(seq, 49, 1);
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->duration == 400, "Block 49 duration should be 400 block raster units");
+    mu_assert(block->rf.type == 0, "Block 49 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 49 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 49 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 49 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 49 should not have ADC event");
+    mu_assert(block->trigger.type == 1, "Block 49 should have trigger event");
+    mu_assert(block->rotation.type == 0, "Block 49 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 49 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 49 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 49 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 49 should not have RF shimming event");
+
+    mu_assert(block->trigger.duration == 4000, "Block 49 trigger duration should be 4000 us");
+    mu_assert(block->trigger.delay == 0, "Block 49 trigger delay should be 0");
+    mu_assert(block->trigger.triggerType == TRIGGER_TYPE_OUTPUT, "Block 49 trigger should be a digital output trigger");
+    mu_assert(block->trigger.triggerChannel == TRIGGER_CHANNEL_OUTPUT_EXT_1, "Block 49 channel type should be ext1");
+}
+
 MU_TEST_SUITE(test_seqfile_suite) {
     MU_RUN_TEST(test_basic);
     MU_RUN_TEST(test_rf);
@@ -497,6 +602,7 @@ MU_TEST_SUITE(test_seqfile_suite) {
     MU_RUN_TEST(test_grad);
     MU_RUN_TEST(test_labelset);
     MU_RUN_TEST(test_labelinc);
+    MU_RUN_TEST(test_trigger);
 }
 
 int main(void) {
