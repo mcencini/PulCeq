@@ -87,15 +87,11 @@ RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExte
         nextExtID = extID;
         extCount = 0;
 
-        while (
-            nextExtID >= 0 &&
-            nextExtID < seq->extensionsLibrarySize &&
-            extCount < MAX_EXTENSIONS_PER_BLOCK
-        ) {
+        while (nextExtID > 0 && nextExtID < seq->extensionsLibrarySize) {
             extData = seq->extensionsLibrary[nextExtID]; /* [type, ref, next_id] */
-            block.ext[extCount][0] = (int)extData[0];  /* type */
-            block.ext[extCount][1] = (int)extData[1];  /* ref */
-            nextExtID = (int)extData[2] - 1; /* next in chain */
+            block.ext[extCount][0] = (int)extData[0];      /* type */
+            block.ext[extCount][1] = (int)extData[1] - 1;  /* ref */
+            nextExtID = (int)extData[2]; /* next in chain */
             extCount += 1;
         }
 
@@ -482,7 +478,7 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
      /* ------------------ Extensions ------------------ */
     for (i = 0; i < rawBlock.extCount; i++) {
         extType = seq->extensionLUT[rawBlock.ext[i][0]];
-        extIdx = rawBlock.ext[i][1] - 1;
+        extIdx = rawBlock.ext[i][1];
 
         switch (extType) {
             case EXT_TRIGGER:   

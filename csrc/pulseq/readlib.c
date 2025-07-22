@@ -96,7 +96,7 @@ int initStandardLibrary(FILE* f, const long* offsets, int numSections, void** ta
         while (fgets(line, sizeof(line), f)) {
             p = line;
             while (*p == ' ' || *p == '\t') p++;
-            if (*p == '[') break; /* Next section starts */
+            if (*p == '[' || *p == 'e') break;     /* Next section */
             if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
             if (sscanf(p, "%d", &idx) == 1) {
                 if (idx > maxIndex) maxIndex = idx;
@@ -142,8 +142,8 @@ int initDefinitionsLibrary(FILE* f, long offset, Definition** target, int* targe
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (isspace((unsigned char)*p)) p++;
-        if (*p == '\0' || *p == '#') continue;
-        if (*p == '[') break;  /* Reached next section */
+        if (*p == '[' || *p == 'e') break;     /* Next section */
+        if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
         nameToken = strtok(p, " \t\r\n");
         if (nameToken) count++;
     }
@@ -187,8 +187,8 @@ int initShapesLibrary(FILE* f, long offset, ShapeArbitrary** target, int* target
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (*p == ' ' || *p == '\t') p++;
-        if (*p == '\0' || *p == '#') continue;
-        if (*p == '[') break;
+        if (*p == '[' || *p == 'e') break;     /* Next section */
+        if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
         if (strncmp(p, "shape_id", 8) == 0) {
             if (sscanf(p + 8, "%d", &idx) == 1) {
                 if (idx > maxIndex) maxIndex = idx;
@@ -224,8 +224,8 @@ int initShapesLibrary(FILE* f, long offset, ShapeArbitrary** target, int* target
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (*p == ' ' || *p == '\t') p++;
-        if (*p == '\0' || *p == '#') continue;
-        if (*p == '[') break;
+        if (*p == '[' || *p == 'e') break;     /* Next section */
+        if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
         if (strncmp(p, "shape_id", 8) == 0) {
             if (sscanf(p + 8, "%d", &idx) == 1) {
                 shapes[idx - 1].numSamples = 0;
@@ -290,7 +290,8 @@ int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCou
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (*p == ' ' || *p == '\t') p++;
-        if (*p == '[' || *p == '\0' || *p == '#') continue;
+        if (*p == '[' || *p == 'e') break;     /* Next section */
+        if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
         if (sscanf(p, "%d", &idx) == 1) {
             if (idx > maxIndex) maxIndex = idx;
         }
@@ -340,9 +341,8 @@ int readStandardLibrary(FILE* f, long offset, void* target, int targetCount, int
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (*p == ' ' || *p == '\t') p++;
-        if (*p == '[') break; /* next section */
-
-        if (*p == '\0' || *p == '#') continue;
+        if (*p == '[' || *p == 'e') break;     /* Next section */
+        if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
         if (sscanf(p, "%d", &idx) != 1) continue;
         if (idx <= 0 || idx > targetCount) continue;
 
@@ -395,7 +395,8 @@ int readLabelLibrary(FILE* f, long offset, void* target, int targetCount, int N,
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (*p == ' ' || *p == '\t') p++;
-        if (*p == '[' || *p == '\0' || *p == '#') continue;
+        if (*p == '[' || *p == 'e') break;     /* Next section */
+        if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
         if (sscanf(p, "%d %f %31s", &idx, &val, label) != 3) continue;
         if (idx <= 0 || idx > targetCount) continue;
         labelCode = label2enum(label); 
@@ -428,7 +429,8 @@ int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N,
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (*p == ' ' || *p == '\t') p++;
-        if (*p == '[' || *p == '\0' || *p == '#') continue;
+        if (*p == '[' || *p == 'e') break;     /* Next section */
+        if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
         if (sscanf(p, "%d %f %f %31s", &idx, &offsetVal, &scaleVal, hint) != 4) continue;
         if (idx <= 0 || idx > targetCount) continue;
         hintCode = hint2enum(hint);
@@ -462,7 +464,8 @@ int readRfShimLibrary(FILE* f, long offset, RfShimEntry* target, int targetCount
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (*p == ' ' || *p == '\t') p++;
-        if (*p == '[' || *p == '\0' || *p == '#') continue;
+        if (*p == '[' || *p == 'e') break;     /* Next section */
+        if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
         if (sscanf(p, "%d %d", &idx, &nCh) != 2) continue;
         if (idx <= 0 || idx > targetCount || nCh <= 0) continue;
 
