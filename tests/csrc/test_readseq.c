@@ -133,7 +133,6 @@ MU_TEST(test_rf) {
         mu_assert(block->labelset.type == 0, "Block should not have labelset event");
         mu_assert(block->labelinc.type == 0, "Block should not have labelinc event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
-        mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
         
         mu_assert(block->rf.magShape.numSamples > 0, "RF should have magnitude shape samples");
         mu_assert(block->rf.timeShape.numSamples == 0, "RF should not have time shape samples");
@@ -149,12 +148,14 @@ MU_TEST(test_rf) {
     mu_assert(block->duration == 400, "Block 0 duration should be 400 block raster units");
     mu_assert(block->rf.phaseShape.numSamples == 0, "Block 0 RF should not have phase shape samples");
     mu_assert(fabs(block->rf.center - 2000.0) < 1e-6, "Block 0 RF should have center at 2000 us");
+    mu_assert(block->rfShimming.type == 1, "Block 0 should have RF shimming event");
 
     /* Complex RF */
     block = getBlock(seq, 1, 1);
     mu_assert(block->duration == 1000, "Block 1 duration should be 1000 block raster units");
     mu_assert(block->rf.phaseShape.numSamples > 0, "Block 1 RF should have phase shape samples");
     mu_assert(fabs(block->rf.center - 5000.5) < 1e-6, "Block 1 RF should have center at 5000.5 us");
+    mu_assert(block->rfShimming.type == 0, "Block 1 should not have RF shimming event");
 
     seqBlockFree(block);
     seqFileFree(seq);

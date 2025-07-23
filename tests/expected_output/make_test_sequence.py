@@ -1,5 +1,7 @@
 """Generate a dummy test sequence with all kinds of the events."""
 
+from types import SimpleNamespace
+
 import numpy as np
 
 import pypulseq as pp
@@ -9,6 +11,7 @@ def make_test_sequence(write: bool = False) -> pp.Sequence:
     seq = pp.Sequence()
 
     # real valued RF event
+    rf_shim = SimpleNamespace(type="rf_shim", shim_vector=np.ones(8, dtype=complex)) #t rivial rf shim
     rf_real = pp.make_sinc_pulse(flip_angle=0.5 * np.pi)
 
     # complex valued RF event
@@ -61,7 +64,7 @@ def make_test_sequence(write: bool = False) -> pp.Sequence:
     )
 
     # Add all events to sequence
-    seq.add_block(rf_real)
+    seq.add_block(rf_real, rf_shim)
     seq.add_block(rf_cplx)
     seq.add_block(adc_phase)
 
@@ -92,6 +95,9 @@ def make_test_sequence(write: bool = False) -> pp.Sequence:
     # Soft delays (TE, TR, TI, ESP, RECTIME, T2PREP, TE2, TR2)
     for hint in ("TE", "TR", "TI", "ESP", "RECTIME", "T2PREP", "TE2", "TR2"):
         seq.add_block(pp.make_soft_delay(hint=hint))
+        
+    # Pure (hard) delay
+    seq.add_block(pp.make_delay(1.0))
 
     # Write to file
     if write:

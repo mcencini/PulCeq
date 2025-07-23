@@ -11,69 +11,70 @@ AdcRasterTime 1e-07
 BlockDurationRaster 1e-05 
 GradientRasterTime 1e-05 
 RadiofrequencyRasterTime 1e-06 
-TotalDuration 0.07886 
+TotalDuration 1.07886 
 
 # Format of blocks:
 # NUM DUR RF  GX  GY  GZ  ADC  EXT
 [BLOCKS]
- 1 400   1   0   0   0  0  0
+ 1 400   1   0   0   0  0  1
  2 1000   2   0   0   0  0  0
  3 128   0   0   0   0  1  0
- 4 128   0   0   0   0  2  1
- 5 128   0   0   0   0  2  2
- 6 128   0   0   0   0  2  3
- 7 128   0   0   0   0  2  4
- 8 128   0   0   0   0  2  5
- 9 128   0   0   0   0  2  6
-10 128   0   0   0   0  2  7
-11 128   0   0   0   0  2  8
-12 128   0   0   0   0  2  9
-13 128   0   0   0   0  2 10
-14 128   0   0   0   0  2 11
-15 128   0   0   0   0  2 12
-16 128   0   0   0   0  2 13
-17 128   0   0   0   0  2 14
-18 128   0   0   0   0  2 15
-19 128   0   0   0   0  2 16
-20 128   0   0   0   0  2 17
-21 128   0   0   0   0  2 18
-22 128   0   0   0   0  2 19
-23 128   0   0   0   0  2 20
-24 128   0   0   0   0  2 21
-25 128   0   0   0   0  2 22
-26 128   0   0   0   0  2 23
-27 128   0   0   0   0  2 24
-28 128   0   0   0   0  2 25
-29 128   0   0   0   0  2 26
-30 128   0   0   0   0  2 27
-31 128   0   0   0   0  2 28
-32 128   0   0   0   0  2 29
-33 128   0   0   0   0  2 30
-34 128   0   0   0   0  2 31
-35 128   0   0   0   0  2 32
-36 128   0   0   0   0  2 33
+ 4 128   0   0   0   0  2  2
+ 5 128   0   0   0   0  2  3
+ 6 128   0   0   0   0  2  4
+ 7 128   0   0   0   0  2  5
+ 8 128   0   0   0   0  2  6
+ 9 128   0   0   0   0  2  7
+10 128   0   0   0   0  2  8
+11 128   0   0   0   0  2  9
+12 128   0   0   0   0  2 10
+13 128   0   0   0   0  2 11
+14 128   0   0   0   0  2 12
+15 128   0   0   0   0  2 13
+16 128   0   0   0   0  2 14
+17 128   0   0   0   0  2 15
+18 128   0   0   0   0  2 16
+19 128   0   0   0   0  2 17
+20 128   0   0   0   0  2 18
+21 128   0   0   0   0  2 19
+22 128   0   0   0   0  2 20
+23 128   0   0   0   0  2 21
+24 128   0   0   0   0  2 22
+25 128   0   0   0   0  2 23
+26 128   0   0   0   0  2 24
+27 128   0   0   0   0  2 25
+28 128   0   0   0   0  2 26
+29 128   0   0   0   0  2 27
+30 128   0   0   0   0  2 28
+31 128   0   0   0   0  2 29
+32 128   0   0   0   0  2 30
+33 128   0   0   0   0  2 31
+34 128   0   0   0   0  2 32
+35 128   0   0   0   0  2 33
+36 128   0   0   0   0  2 34
 37 100   0   1   0   0  0  0
 38 100   0   0   2   0  0  0
 39 100   0   0   0   2  0  0
-40   5   0   3   0   0  0 34
-41   5   0   0   3   0  0 34
-42   5   0   0   0   3  0 34
+40   5   0   3   0   0  0 35
+41   5   0   0   3   0  0 35
+42   5   0   0   0   3  0 35
 43 203   0   4   0   0  0  0
 44 203   0   0   4   0  0  0
 45 203   0   0   0   4  0  0
-46   1   0   0   0   0  0 35
-47   1   0   0   0   0  0 36
-48 400   0   0   0   0  0 37
-49 400   0   0   0   0  0 38
-50 400   0   0   0   0  0 39
-51   1   0   0   0   0  0 40
-52   1   0   0   0   0  0 41
-53   1   0   0   0   0  0 42
-54   1   0   0   0   0  0 43
-55   1   0   0   0   0  0 44
-56   1   0   0   0   0  0 45
-57   1   0   0   0   0  0 46
-58   1   0   0   0   0  0 47
+46   1   0   0   0   0  0 36
+47   1   0   0   0   0  0 37
+48 400   0   0   0   0  0 38
+49 400   0   0   0   0  0 39
+50 400   0   0   0   0  0 40
+51   1   0   0   0   0  0 41
+52   1   0   0   0   0  0 42
+53   1   0   0   0   0  0 43
+54   1   0   0   0   0  0 44
+55   1   0   0   0   0  0 45
+56   1   0   0   0   0  0 46
+57   1   0   0   0   0  0 47
+58   1   0   0   0   0  0 48
+59 100000   0   0   0   0  0  0
 
 # Format of RF events:
 # id ampl. mag_id phase_id time_shape_id center delay freqPPm phasePPM freq phase use
@@ -111,56 +112,57 @@ TotalDuration 0.07886
 # Extension list is followed by extension specifications
 [EXTENSIONS]
 1 1 1 0
-2 1 2 0
-3 1 3 0
-4 1 4 0
-5 1 5 0
-6 1 6 0
-7 1 7 0
-8 1 8 0
-9 1 9 0
-10 1 10 0
-11 1 11 0
-12 1 12 0
-13 1 13 0
-14 1 14 0
-15 1 15 0
-16 1 16 0
-17 1 17 0
-18 1 18 0
-19 1 19 0
-20 1 20 0
-21 1 21 0
-22 1 22 0
-23 2 1 0
-24 2 2 0
-25 2 3 0
-26 2 4 0
-27 2 5 0
-28 2 6 0
-29 2 7 0
-30 2 8 0
-31 2 9 0
-32 2 10 0
-33 2 11 0
-34 3 1 0
+2 2 1 0
+3 2 2 0
+4 2 3 0
+5 2 4 0
+6 2 5 0
+7 2 6 0
+8 2 7 0
+9 2 8 0
+10 2 9 0
+11 2 10 0
+12 2 11 0
+13 2 12 0
+14 2 13 0
+15 2 14 0
+16 2 15 0
+17 2 16 0
+18 2 17 0
+19 2 18 0
+20 2 19 0
+21 2 20 0
+22 2 21 0
+23 2 22 0
+24 3 1 0
+25 3 2 0
+26 3 3 0
+27 3 4 0
+28 3 5 0
+29 3 6 0
+30 3 7 0
+31 3 8 0
+32 3 9 0
+33 3 10 0
+34 3 11 0
 35 4 1 0
-36 4 2 0
-37 4 3 0
-38 4 4 0
-39 4 5 0
-40 5 1 0
-41 5 2 0
-42 5 3 0
-43 5 4 0
-44 5 5 0
-45 5 6 0
-46 5 7 0
-47 5 8 0
+36 5 1 0
+37 5 2 0
+38 5 3 0
+39 5 4 0
+40 5 5 0
+41 6 1 0
+42 6 2 0
+43 6 3 0
+44 6 4 0
+45 6 5 0
+46 6 6 0
+47 6 7 0
+48 6 8 0
 
 # Extension specification for digital output and input triggers:
 # id type channel delay (us) duration (us)
-extension TRIGGERS 4
+extension TRIGGERS 5
 1 2 1 0 10
 2 2 2 0 10
 3 1 1 0 4000
@@ -169,7 +171,7 @@ extension TRIGGERS 4
 
 # Extension specification for setting labels:
 # id set labelstring
-extension LABELSET 1
+extension LABELSET 2
 1 1 SLC
 2 1 SEG
 3 1 REP
@@ -195,7 +197,7 @@ extension LABELSET 1
 
 # Extension specification for setting labels:
 # id set labelstring
-extension LABELINC 2
+extension LABELINC 3
 1 1 SLC
 2 1 SEG
 3 1 REP
@@ -211,7 +213,7 @@ extension LABELINC 2
 # Extension specification for soft delays:
 # id num offset factor hint
 # ..  ..     us     ..   ..
-extension DELAYS 5
+extension DELAYS 6
 1 0 0 1 TE
 2 1 0 1 TR
 3 2 0 1 TI
@@ -221,9 +223,14 @@ extension DELAYS 5
 7 6 0 1 TE2
 8 7 0 1 TR2
 
+# Extension specification for RF shimming:
+# id num_chan factor magn_c1 phase_c1 magn_c2 phase_c2 ...
+extension RF_SHIMS 1
+1 8           1           0           1           0           1           0           1           0           1           0           1           0           1           0           1           0
+
 # Extension specification for rotation events:
 # id RotQuat0 RotQuatX RotQuatY RotQuatZ
-extension ROTATIONS 3
+extension ROTATIONS 4
 1            1            0            0            0
 
 # Sequence Shapes
@@ -23971,4 +23978,4 @@ num_samples 5
 # It can be reproduced/verified with md5sum if the file trimmed to the position right above [SIGNATURE]
 # The new line character preceding [SIGNATURE] BELONGS to the signature (and needs to be stripped away for recalculating/verification)
 Type md5
-Hash a0245d5133a43b16d555d872f1a9af67
+Hash b115ff1260eb485e936aba648a7e2511
