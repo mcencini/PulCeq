@@ -491,6 +491,9 @@ MU_TEST(test_trigger) {
     mu_assert(block->trigger.delay == 0, "Block 49 trigger delay should be 0");
     mu_assert(block->trigger.triggerType == TRIGGER_TYPE_OUTPUT, "Block 49 trigger should be a digital output trigger");
     mu_assert(block->trigger.triggerChannel == TRIGGER_CHANNEL_OUTPUT_EXT_1, "Block 49 channel type should be ext1");
+
+    seqBlockFree(block);
+    seqFileFree(seq);
 }
 
 MU_TEST(test_delay) {
@@ -549,6 +552,32 @@ MU_TEST(test_delay) {
     block = getBlock(seq, 57, 1);
     mu_assert(block->delay.numID == 7, "Block 57 delay should have numID 7");
     mu_assert(block->delay.hintID == HINT_TR2, "Block 57 delay type should be 'TR2'");
+
+    seqBlockFree(block);
+    seqFileFree(seq);
+}
+
+MU_TEST(test_pure_delay) {
+    SeqBlock* block;
+    SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
+
+    block = getBlock(seq, 58, 1);
+    mu_assert(block != NULL, "getBlock should return a valid block");
+    mu_assert(block->duration == 100000, "Block 58 duration should be 100000");
+    mu_assert(block->rf.type == 0, "Block 58 should not have RF event");
+    mu_assert(block->gx.type == 0, "Block 58 should not have Gx event");
+    mu_assert(block->gy.type == 0, "Block 58 should not have Gy event");
+    mu_assert(block->gz.type == 0, "Block 58 should not have Gz event");
+    mu_assert(block->adc.type == 0, "Block 58 should not have ADC event");
+    mu_assert(block->trigger.type == 0, "Block 58 should not have trigger event");
+    mu_assert(block->rotation.type == 0, "Block 58 should not have rotation event");
+    mu_assert(block->labelset.type == 0, "Block 58 should not have labelset event");
+    mu_assert(block->labelinc.type == 0, "Block 58 should not have labelinc event");
+    mu_assert(block->delay.type == 0, "Block 58 should not have delay event");
+    mu_assert(block->rfShimming.type == 0, "Block 58 should not have RF shimming event");
+
+    seqBlockFree(block);
+    seqFileFree(seq);
 }
 
 MU_TEST_SUITE(test_seqfile_suite) {
@@ -561,6 +590,7 @@ MU_TEST_SUITE(test_seqfile_suite) {
     MU_RUN_TEST(test_labelinc);
     MU_RUN_TEST(test_trigger);
     MU_RUN_TEST(test_delay);
+    MU_RUN_TEST(test_pure_delay);
 }
 
 int main(void) {
