@@ -414,7 +414,7 @@ int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N,
     char line[MAX_LINE_LENGTH];
     char* p;
     int idx, hintCode;
-    float offsetVal, scaleVal;
+    float numID, offsetVal, scaleVal;
     char hint[SOFT_DELAY_HINT_LENGTH];
 
     float *array_raw = (float*)target;
@@ -431,15 +431,16 @@ int readDelayLibrary(FILE* f, long offset, void* target, int targetCount, int N,
         while (*p == ' ' || *p == '\t') p++;
         if (*p == '[' || *p == 'e') break;     /* Next section */
         if (*p == '\0' || *p == '#') continue; /* Skip blank/comment */
-        if (sscanf(p, "%d %f %f %31s", &idx, &offsetVal, &scaleVal, hint) != 4) continue;
+        if (sscanf(p, "%d %f %f %f %31s", &idx, &numID, &offsetVal, &scaleVal, hint) != 5) continue;
         if (idx <= 0 || idx > targetCount) continue;
         hintCode = hint2enum(hint);
         if (hintCode > 0){ /* bookkeep found hint for UI */
             isDelayDefined[hintCode - 1] = 1;
         }
-        array_raw[(idx - 1) * N + 0] = offsetVal;
-        array_raw[(idx - 1) * N + 1] = scaleVal;
-        array_raw[(idx - 1) * N + 2] = (float)hintCode;
+        array_raw[(idx - 1) * N + 0] = numID;
+        array_raw[(idx - 1) * N + 1] = offsetVal;
+        array_raw[(idx - 1) * N + 2] = scaleVal;
+        array_raw[(idx - 1) * N + 3] = (float)hintCode;
     }
 
     return 0;

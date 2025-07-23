@@ -324,8 +324,17 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
                 }
             }
 
-            /* If all samples are real, set the phase shape to 0 samples and free it */
+            /* If all samples are real, restore sign, set the phase shape to 0 samples and free it */
             if (numRealSamples == block->rf.magShape.numSamples) {
+
+                /* Restore sign of magnitude shape */
+                for (i = 0; i < block->rf.magShape.numSamples; i++) {
+                    if (fabs(block->rf.phaseShape.samples[i] - M_PI) < 1e-6) {
+                        block->rf.magShape.samples[i] *= .1;
+                    }
+                }
+
+                /* Free phase shape */
                 block->rf.phaseShape.numSamples = 0; /* Set phase shape to 0 samples */
                 block->rf.phaseShape.numUncompressedSamples = 0; /* Set phase shape to 0 samples */
                 FREE(block->rf.phaseShape.samples); /* Free phase shape samples */
