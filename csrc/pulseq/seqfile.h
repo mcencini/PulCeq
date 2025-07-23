@@ -53,8 +53,8 @@ typedef struct {
  * 
  */
 typedef struct {
-    int nChannels;   /**< Number of channels */
-    float* values;   /**< Pointer to array of size 2 * nChannels (mag1, phase1, mag2, phase2, ...) */
+    int nChannels;                          /**< Number of channels */
+    float values[2 * MAX_RF_SHIM_CHANNELS]; /**< Pointer to array of size 2 * nChannels (mag1, phase1, mag2, phase2, ...) */
 } RfShimEntry;
 
 

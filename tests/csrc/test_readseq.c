@@ -150,6 +150,12 @@ MU_TEST(test_rf) {
     mu_assert(fabs(block->rf.center - 2000.0) < 1e-6, "Block 0 RF should have center at 2000 us");
     mu_assert(block->rfShimming.type == 1, "Block 0 should have RF shimming event");
 
+    mu_assert(block->rfShimming.nChan == 8, "Block 0 RF shimming should have 8 channels");
+    for (i = 0; i < block->rfShimming.nChan; i++) {
+        mu_assert(fabs(block->rfShimming.amplitudes[i] - 1) < 1e-6, "Block 0 RF shimming channel amplitudes should be 1");
+        mu_assert(fabs(block->rfShimming.phases[i]) < 1e-6, "Block 0 RF shimming channel phases should be 0");
+    }
+
     /* Complex RF */
     block = getBlock(seq, 1, 1);
     mu_assert(block->duration == 1000, "Block 1 duration should be 1000 block raster units");

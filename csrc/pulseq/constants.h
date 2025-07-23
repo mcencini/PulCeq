@@ -17,6 +17,7 @@
 #define SOFT_DELAY_HINT_LENGTH 32
 #define MAX_LINE_LENGTH 256
 #define MAX_SCALE_SIZE 16
+#define MAX_RF_SHIM_CHANNELS 64
 
 /********************************************************************      Gradient types     *******************************************************************************************/
 #define TRAP 1

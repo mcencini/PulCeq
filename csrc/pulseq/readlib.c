@@ -307,9 +307,8 @@ int initRfShimLibrary(FILE* f, long offset, RfShimEntry** target, int* targetCou
     array = (RfShimEntry*) ALLOC(sizeof(RfShimEntry) * maxIndex);
     if (!array) return 1;
 
-    for (i = 0; i <= maxIndex; i++) {
+    for (i = 0; i < maxIndex; i++) {
         array[i].nChannels = 0;
-        array[i].values = NULL;
     }
 
     *target = array;
@@ -451,7 +450,6 @@ int readRfShimLibrary(FILE* f, long offset, RfShimEntry* target, int targetCount
     char line[MAX_LINE_LENGTH];
     char* p;
     int idx, nCh, i, consumed;
-    float* values;
     float val;
 
     if (!f || !target) return 1;
@@ -474,22 +472,16 @@ int readRfShimLibrary(FILE* f, long offset, RfShimEntry* target, int targetCount
         while (*p && *p != ' ') p++; while (*p == ' ') p++;
         while (*p && *p != ' ') p++; while (*p == ' ') p++;
 
-        values = (float*) ALLOC(sizeof(float) * 2 * nCh);
-        if (!values) return 1;
-
+        if (nCh > MAX_RF_SHIM_CHANNELS) return 1; /* Too many channels */
+        target[idx - 1].nChannels = nCh;
         for (i = 0; i < 2 * nCh; i++) {
             consumed = 0;
-            if (sscanf(p, "%f%n", &val, &consumed) != 1) {
-                FREE(values);
-                break;
-            }
-            values[i] = val;
+            if (sscanf(p, "%f%n", &val, &consumed) != 1) break;
+            target[idx - 1].values[i] = val;
             p += consumed;
             while (*p == ' ' || *p == '\t') p++;
         }
 
-        target[idx - 1].nChannels = nCh;
-        target[idx - 1].values = values;
     }
 
     return 0;

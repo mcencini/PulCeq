@@ -107,10 +107,6 @@ void __seqFileReset(SeqFile* seq) {
         FREE(seq->labelsetLibrary);
         FREE(seq->labelincLibrary);
         FREE(seq->softDelayLibrary);
-        for (i = 0; i < seq->rfShimLibrarySize; i++) {
-            FREE(seq->rfShimLibrary[i].values);
-            seq->rfShimLibrary[i].values = NULL;
-        }
         FREE(seq->rfShimLibrary);
     }
     if (seq->isShapesLibraryParsed && seq->shapesLibrary) {
