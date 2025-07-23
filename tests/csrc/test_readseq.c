@@ -76,13 +76,42 @@ static void assert_labelinc_event(const LabelEvent* label, int target_idx, int e
 /* END UTILS */
 
 MU_TEST(test_basic) {
-    SeqBlock* block;
     SeqFile* seq = load_seq("tests/expected_output/seq1.seq");
+    mu_assert(seq != NULL, "Failed to load sequence file");
+    mu_assert(seq->versionMajor == 1, "Sequence version major should be 1 (Pulseq v1.x.x)");
+    mu_assert(seq->versionMinor == 5, "Sequence version minor should be 5 (Pulseq vx.5.x)");
+    mu_assert(seq->versionRevision == 0, "Sequence version revision should be 0 (Pulseq vx.x.0)");
+    mu_assert(seq->versionCombined == 1005000, "Sequence combined version should be 1005000 (Pulseq v1.5.0)");
     mu_assert(seq->numBlocks == 7, "Sequence should have exactly 7 blocks");
+    seqFileFree(seq);
+}
 
-    block = getBlock(seq, 0, 1);
-    mu_assert(block != NULL, "getBlock should return a valid block for index 0");
-    seqBlockFree(block);
+MU_TEST(test_definitions) {
+    SeqFile* seq = load_seq("tests/expected_output/seq1.seq");
+    mu_assert(seq != NULL, "Failed to load sequence file");
+    mu_assert(seq->numDefinitions == 5, "Sequence should have exactly 5 definitions");
+    mu_assert(seq->definitionsLibrary != NULL, "Definitions library should not be NULL");
+    
+    mu_assert(strcmp(seq->definitionsLibrary[0].name, "AdcRasterTime") == 0, "First definition name should be 'AdcRasterTime'");
+    mu_assert(seq->definitionsLibrary[0].valueSize == 1, "First definition value size should be 1");
+    mu_assert(strcmp(seq->definitionsLibrary[0].value[0], "1e-07") == 0, "First definition value should be '1e-07'");
+
+    mu_assert(strcmp(seq->definitionsLibrary[1].name, "BlockDurationRaster") == 0, "Second definition name should be 'BlockDurationRaster'");
+    mu_assert(seq->definitionsLibrary[1].valueSize == 1, "Second definition value size should be 1");
+    mu_assert(strcmp(seq->definitionsLibrary[1].value[0], "1e-05") == 0, "Second definition value should be '1e-05'");
+
+    mu_assert(strcmp(seq->definitionsLibrary[2].name, "GradientRasterTime") == 0, "Third definition name should be 'GradientRasterTime'");
+    mu_assert(seq->definitionsLibrary[2].valueSize == 1, "Third definition value size should be 1");
+    mu_assert(strcmp(seq->definitionsLibrary[2].value[0], "1e-05") == 0, "Third definition value should be '1e-05'");
+
+    mu_assert(strcmp(seq->definitionsLibrary[3].name, "RadiofrequencyRasterTime") == 0, "Fourth definition name should be 'RadiofrequencyRasterTime'");
+    mu_assert(seq->definitionsLibrary[3].valueSize == 1, "Fourth definition value size should be 1");
+    mu_assert(strcmp(seq->definitionsLibrary[3].value[0], "1e-06") == 0, "Fourth definition value should be '1e-06'");
+
+    mu_assert(strcmp(seq->definitionsLibrary[4].name, "TotalDuration") == 0, "Last definition name should be 'TotalDuration'");
+    mu_assert(seq->definitionsLibrary[4].valueSize == 1, "Last definition value size should be 1");
+    mu_assert(strcmp(seq->definitionsLibrary[4].value[0], "0.0051") == 0, "Last definition value should be '0.0051'");
+    
     seqFileFree(seq);
 }
 
@@ -517,6 +546,7 @@ MU_TEST(test_delay) {
 
 MU_TEST_SUITE(test_seqfile_suite) {
     MU_RUN_TEST(test_basic);
+    MU_RUN_TEST(test_definitions);
     MU_RUN_TEST(test_rf);
     MU_RUN_TEST(test_adc);
     MU_RUN_TEST(test_grad);
