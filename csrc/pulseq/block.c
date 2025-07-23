@@ -316,7 +316,7 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
 
             /* Check if the phase shape is real-valued */
             for (i = 0; i < block->rf.magShape.numSamples; i++) {
-                isRealSample[i] = fabs(block->rf.phaseShape.samples[i]) < 1e-6 || fabs(block->rf.phaseShape.samples[i] - M_PI) < 1e-6;  
+                isRealSample[i] = fabs(block->rf.phaseShape.samples[i]) < 1e-6 || fabs(block->rf.phaseShape.samples[i] - M_PI) < 1e-6;
             }
             for (i = 0; i < block->rf.magShape.numSamples; i++) {
                 if (isRealSample[i]) {
@@ -330,7 +330,7 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
                 /* Restore sign of magnitude shape */
                 for (i = 0; i < block->rf.magShape.numSamples; i++) {
                     if (fabs(block->rf.phaseShape.samples[i] - M_PI) < 1e-6) {
-                        block->rf.magShape.samples[i] *= .1;
+                        block->rf.magShape.samples[i] *= -1;
                     }
                 }
 
