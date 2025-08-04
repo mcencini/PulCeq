@@ -59,7 +59,7 @@ typedef struct {
 
 
 /**
- * @struct SeqFile
+ * @struct pulseq_SeqFile
  * @brief Represents a parsed sequence file containing various libraries and metadata.
  * 
  * This structure stores the data parsed from a sequence (.seq) file, including version
@@ -135,15 +135,16 @@ typedef struct {
     RfShimEntry* rfShimLibrary;     /**< @brief RF shim data; per-channel magnitude and phase arrays:
                                          magn_c1, phase_c1, magn_c2, phase_c2, ... */
 
-    int extensionMap[8];            /**< @brief Map assigning to each EXT Enum its actual numerical ID written in SeqFile */
-    int extensionLUTSize;           /**< @brief Size of look-up table to retrieve from a given extension numerical ID the underlying Enum (type) */
-    int *extensionLUT;              /**< @brief Look-up table to retrieve from a given extension numerical ID the underlying Enum (type) */
+    int extensionMap[8];            /**< @brief Maps extension types to numeric IDs. */
+    int extensionLUTSize;           /**< @brief Size of extension lookup table. */
+    int* extensionLUT;              /**< @brief Extension lookup table. */
 
-    int isShapesLibraryParsed;      /**< @brief Flag indicating if the shape library was parsed. */
+    int isShapesLibraryParsed;      /**< @brief Flag indicating if the shapes library was parsed. */
     int shapesLibrarySize;          /**< @brief Number of shape entries. */
-    ShapeArbitrary* shapesLibrary;  /**< @brief Array of pointers to arbitrary shape structures. */
+    ShapeArbitrary* shapesLibrary;  /**< @brief Array of arbitrary shape definitions. */
+} pulseq_SeqFile; /* Mirrors Pulseq SeqFile */
 
-} SeqFile;
+typedef pulseq_SeqFile SeqFile;
 
 /**
  * @brief Initialize SeqFile struct.

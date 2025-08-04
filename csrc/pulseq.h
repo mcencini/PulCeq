@@ -6,19 +6,18 @@
 #define PULSEQ_H
 
 #include "pulseq/seqfile.h"
-
 #include "pulseq/block.h"
 
 /* Public API */
-SeqFile* seqFile(char* filePath);
-void seqFileFree(SeqFile* seq);
-void seqFileReset(SeqFile* seq);
-void readDefinitions(SeqFile* seq);
-void readLibraries(SeqFile* seq, int readBlocks);
-void readSeq(SeqFile* seq);
+pulseq_SeqFile* pulseq_seqFile(char* filePath);
+void pulseq_seqFileFree(pulseq_SeqFile* seq);
+void pulseq_seqFileReset(pulseq_SeqFile* seq);
+void pulseq_readDefinitions(pulseq_SeqFile* seq);
+void pulseq_readLibraries(pulseq_SeqFile* seq, int readBlocks);
+void pulseq_readSeq(pulseq_SeqFile* seq);
 
-SeqBlock* seqBlock(void);
-void seqBlockFree(SeqBlock* block);
-SeqBlock* getBlock(const SeqFile* seq, int blockIndex, int parseExtensions);
+pulseq_SeqBlock* pulseq_seqBlock(void);
+void pulseq_seqBlockFree(pulseq_SeqBlock* block);
+pulseq_SeqBlock* pulseq_getBlock(const pulseq_SeqFile* seq, int blockIndex, int parseExtensions);
 
 #endif /* PULSEQ_H */

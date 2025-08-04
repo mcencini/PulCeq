@@ -12,32 +12,32 @@
 typedef struct SeqFile SeqFile; /* Forward declaration to avoid circular dependency */
 #endif /* SEQFILE_H */
 
-/** @struct SeqBlock
+/** @struct pulseq_SeqBlock
  * @brief  Sequence block containing RF, gradient, ADC, and trigger events.
  *
- *  @var SeqBlock::duration
+ *  @var pulseq_SeqBlock::duration
  *    Duration of the block in microseconds.
- *  @var SeqBlock::rf
+ *  @var pulseq_SeqBlock::rf
  *    RF event.
- *  @var SeqBlock::gx
+ *  @var pulseq_SeqBlock::gx
  *    Gradient event on X channel.
-  *  @var SeqBlock::gy
+  *  @var pulseq_SeqBlock::gy
  *    Gradient event on Y channel.
-  *  @var SeqBlock::gz
+  *  @var pulseq_SeqBlock::gz
  *    Gradient event on Z channel.
- *  @var SeqBlock::adc
+ *  @var pulseq_SeqBlock::adc
  *    ADC event.
- *  @var SeqBlock::trigger
+ *  @var pulseq_SeqBlock::trigger
  *    Trigger event.
- *  @var SeqBlock::rotation
+ *  @var pulseq_SeqBlock::rotation
  *    Rotation event.
- *  @var SeqBlock::labelset
+ *  @var pulseq_SeqBlock::labelset
  *    Label set event.
- *  @var SeqBlock::labelinc
+ *  @var pulseq_SeqBlock::labelinc
  *    Label increment event.
- *  @var SeqBlock::delay
+ *  @var pulseq_SeqBlock::delay
  *    Soft delay event.
- *  @var SeqBlock::rfShimming
+ *  @var pulseq_SeqBlock::rfShimming
  *    RF shimming event.
  */
 typedef struct {
@@ -53,7 +53,9 @@ typedef struct {
     LabelEvent labelinc;        /**< @brief Label increment event */
     SoftDelayEvent delay;       /**< @brief Soft delay event */
     RfShimmingEvent rfShimming; /**< @brief RF shimming event */
-} SeqBlock; /* Mirrors Pulseq SeqBlock */
+} pulseq_SeqBlock; /* Mirrors Pulseq SeqBlock */
+
+typedef pulseq_SeqBlock SeqBlock;
 
 /**
  * @brief Initializes a sequence block with default values.
