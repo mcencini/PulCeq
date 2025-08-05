@@ -5,7 +5,16 @@
 #ifndef PULSEG_SEGMENT_COMMON_H
 #define PULSEG_SEGMENT_COMMON_H
 
+#include <stddef.h>
+
+#include "../../vendor.h"
 #include "../../pulseq.h"
+
+/* --- Block ID mapping --- */
+typedef struct {
+    int* blockToUnique;      /* Maps each block to its unique ID */
+    int* blockToSegment;     /* Maps each block to its segment ID */
+} BlockMapping;
 
 /* --- TR (periodic pattern) Definition --- */
 typedef struct {
@@ -23,12 +32,11 @@ typedef struct {
     int navFlag;        /* Navigation flag (from labelset.nav) */
 } SegmentDefinition;
 
-/**
- * @brief Check if sequence contains TRID labels.
- *
- * @param seq Pulseq sequence to check
- * @return 1 if TRID labels are present, 0 otherwise
- */
-int hasTridLabels(const pulseq_SeqFile* seq);
+/* --- Segment Results --- */
+typedef struct {
+    SegmentDefinition* uniqueSegments;
+    int nUniqueSegments;
+    int* blockToSegment; /* Array mapping each block to its segment ID */
+} SegmentResults;
 
 #endif /* PULSEG_SEGMENT_COMMON_H */

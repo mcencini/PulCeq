@@ -1,179 +1,276 @@
 /**
  * @file segmenter.c
- * @brief Segment extraction and deduplication for Pulseq TRs.
+ * @brief Implementation of segment extraction.
  */
 
 #include <string.h>
 
-#include "../../pulseq/alloc.h"
+#include "../../../vendor.h"
 
 #include "segmenter.h"
 
-/* Helper function to compare segments for equality */
-static int segment_equal(const SegmentDefinition* a, const SegmentDefinition* b)
+#define MAX_SEGMENTS_PER_TR 50
+#define MIN_BLOCKS_PER_SEGMENT 1
+
+/**
+ * @brief Find segment boundaries within a TR.
+ *
+ * @param seq Pulseq sequence
+ * @param trBlocks Array of block IDs in TR
+ * @param nBlocks Number of blocks in TR
+ * @param segmentBoundaries Output array for segment boundaries
+ * @param maxBoundaries Maximum number of boundaries
+ * @return Number of segment boundaries or -1 if error
+ */
+static int findSegmentBoundaries(
+    const pulseq_SeqFile* seq,
+    const int* trBlocks,
+    int nBlocks,
+    int* segmentBoundaries,
+    int maxBoundaries
+)
+{
+    int i, j;
+    int nBoundaries = 0;
+    float* block;
+    
+    /* First boundary is always at start */
+    segmentBoundaries[nBoundaries++] = 0;
+    
+    /* Find ADC blocks - they always start a new segment */
+    for (i = 1; i < nBlocks && nBoundaries < maxBoundaries; i++) {
+        block = seq->blockLibrary[trBlocks[i]];
+        
+        /* Check if this block has ADC */
+        if (block[5] > 0) { /* adcID > 0 */
+            segmentBoundaries[nBoundaries++] = i;
+        }
+        
+        /* TODO: Add more segmentation criteria */
+    }
+    
+    /* Last boundary is always at end */
+    if (nBoundaries < maxBoundaries) {
+        segmentBoundaries[nBoundaries++] = nBlocks;
+    }
+    
+    return nBoundaries;
+}
+
+/**
+ * @brief Compare two segments for equality.
+ *
+ * @param seq Pulseq sequence
+ * @param segment1 First segment's block IDs
+ * @param nBlocks1 Number of blocks in first segment
+ * @param segment2 Second segment's block IDs
+ * @param nBlocks2 Number of blocks in second segment
+ * @return 1 if segments are equal, 0 otherwise
+ */
+static int segmentsEqual(
+    const pulseq_SeqFile* seq,
+    const int* segment1,
+    int nBlocks1,
+    const int* segment2,
+    int nBlocks2
+)
 {
     int i;
-    if (a->n_blocks != b->n_blocks) return 0;
-    if (a->nav_flag != b->nav_flag) return 0;
-    for (i = 0; i < a->n_blocks; i++) {
-        if (a->blockIDs[i] != b->blockIDs[i]) return 0;
+    
+    if (nBlocks1 != nBlocks2) {
+        return 0;
     }
+    
+    for (i = 0; i < nBlocks1; i++) {
+        if (segment1[i] != segment2[i]) {
+            return 0;
+        }
+    }
+    
     return 1;
 }
 
-/**
- * @brief Extracts and deduplicates segments from TR definitions.
- */
-SegmentResults* extractSegments(const pulseq_SeqFile* seq, const SequencePatterns* patterns)
+SegmentResults* extractSegments(
+    const pulseq_SeqFile* seq, 
+    const SequencePatterns* patterns
+)
 {
-    int i, j, k, tr, seg_start, seg_end, seg_idx, blockID, nav_flag, last_grad, adc_found, merge_count;
-    int total_blocks, max_segments, n_unique;
-    SegmentDefinition* segments;
-    int* blockToSegment;
-    int* unique_map;
-    SegmentDefinition* uniqueSegments;
+    int i, j, k, l;
+    int trId, trLength;
+    int nBoundaries;
+    int segmentStart, segmentEnd, segmentLength;
+    int segmentId;
+    int found;
+    int* segmentBoundaries;
+    int* trBlocks;
+    int* segmentBlocks;
     SegmentResults* results;
-    TRDefinition* tr_def;
-    pulseq_SeqBlock* block;
-
-    total_blocks = patterns->n_blocks;
-    max_segments = total_blocks;
-    segments = (SegmentDefinition*)ALLOC(sizeof(SegmentDefinition) * max_segments);
-    blockToSegment = (int*)ALLOC(sizeof(int) * total_blocks);
-    seg_idx = 0;
-
-    for (tr = 0; tr < patterns->n_tr_definitions; tr++) {
-        tr_def = &patterns->tr_definitions[tr];
-        seg_start = 0;
-        while (seg_start < tr_def->n_blocks) {
-            seg_end = seg_start;
-            nav_flag = -1;
-            adc_found = 0;
-            while (seg_end < tr_def->n_blocks) {
-                blockID = tr_def->blocks[seg_end];
-                block = pulseq_getBlock(seq, blockID, 1);
-                if (block->rf.type == 1 && seg_end != seg_start) {
-                    break;
-                }
-                if (block->adc.type == 1) {
-                    adc_found = 1;
-                    last_grad = (block->gx.last != 0) || (block->gy.last != 0) || (block->gz.last != 0);
-                    while (last_grad && seg_end < tr_def->n_blocks) {
-                        seg_end++;
-                        blockID = tr_def->blocks[seg_end];
-                        block = pulseq_getBlock(seq, blockID, 1);
-                        last_grad = (block->gx.last != 0) || (block->gy.last != 0) || (block->gz.last != 0);
-                    }
-                    if (nav_flag == -1) nav_flag = block->labelset.nav;
-                    else if (nav_flag != block->labelset.nav) {
-                        nav_flag = block->labelset.nav;
-                    }
-                    break;
-                }
-                seg_end++;
-            }
-            segments[seg_idx].n_blocks = seg_end - seg_start + 1;
-            segments[seg_idx].blockIDs = (int*)ALLOC(sizeof(int) * segments[seg_idx].n_blocks);
-            for (k = 0; k < segments[seg_idx].n_blocks; k++) {
-                segments[seg_idx].blockIDs[k] = tr_def->blocks[seg_start + k];
-            }
-            segments[seg_idx].nav_flag = nav_flag;
-            for (k = 0; k < segments[seg_idx].n_blocks; k++) {
-                blockToSegment[tr_def->blocks[seg_start + k]] = seg_idx;
-            }
-            seg_idx++;
-            seg_start = seg_end + 1;
-        }
+    TRDefinition* tr;
+    int maxSegments;
+    
+    if (!seq || !patterns || patterns->nTrDefinitions <= 0) {
+        return NULL;
     }
-
-    /* Merge adjacent nav segments */
-    merge_count = 0;
-    i = 1;
-    while (i < seg_idx) {
-        if (segments[i - 1].nav_flag == 1 && segments[i].nav_flag == 1) {
-            int new_n_blocks = segments[i - 1].n_blocks + segments[i].n_blocks;
-            int* new_blockIDs = (int*)ALLOC(sizeof(int) * new_n_blocks);
-            memcpy(new_blockIDs, segments[i - 1].blockIDs, sizeof(int) * segments[i - 1].n_blocks);
-            memcpy(new_blockIDs + segments[i - 1].n_blocks, segments[i].blockIDs, sizeof(int) * segments[i].n_blocks);
-            FREE(segments[i - 1].blockIDs);
-            FREE(segments[i].blockIDs);
-            segments[i - 1].blockIDs = new_blockIDs;
-            segments[i - 1].n_blocks = new_n_blocks;
-            for (j = i; j < seg_idx - 1; j++) {
-                segments[j] = segments[j + 1];
-            }
-            seg_idx--;
-            merge_count++;
-        } else {
-            i++;
-        }
-    }
-
-    /* Remove duplicate segments */
-    unique_map = (int*)ALLOC(sizeof(int) * seg_idx);
-    n_unique = 0;
-    for (i = 0; i < seg_idx; i++) {
-        int found = 0;
-        for (j = 0; j < n_unique; j++) {
-            if (segment_equal(&segments[i], &segments[unique_map[j]])) {
-                found = 1;
-                break;
-            }
-        }
-        if (!found) {
-            unique_map[n_unique++] = i;
-        }
-    }
-
-    uniqueSegments = (SegmentDefinition*)ALLOC(sizeof(SegmentDefinition) * n_unique);
-    for (i = 0; i < n_unique; i++) {
-        uniqueSegments[i].n_blocks = segments[unique_map[i]].n_blocks;
-        uniqueSegments[i].blockIDs = (int*)ALLOC(sizeof(int) * uniqueSegments[i].n_blocks);
-        for (j = 0; j < uniqueSegments[i].n_blocks; j++) {
-            uniqueSegments[i].blockIDs[j] = segments[unique_map[i]].blockIDs[j];
-        }
-        uniqueSegments[i].nav_flag = segments[unique_map[i]].nav_flag;
-    }
-
-    for (i = 0; i < total_blocks; i++) {
-        for (j = 0; j < n_unique; j++) {
-            if (segment_equal(&segments[blockToSegment[i]], &uniqueSegments[j])) {
-                blockToSegment[i] = j;
-                break;
-            }
-        }
-    }
-
-    for (i = 0; i < seg_idx; i++) {
-        if (segments[i].blockIDs) FREE(segments[i].blockIDs);
-    }
-    FREE(segments);
-    FREE(unique_map);
-
+    
+    /* Allocate result structure */
     results = (SegmentResults*)ALLOC(sizeof(SegmentResults));
-    results->uniqueSegments = uniqueSegments;
-    results->n_uniqueSegments = n_unique;
-    results->blockToSegment = blockToSegment;
+    if (!results) {
+        return NULL;
+    }
+    memset(results, 0, sizeof(SegmentResults));
+    
+    /* Allocate block to segment mapping */
+    results->blockToSegment = (int*)ALLOC(seq->numBlocks * sizeof(int));
+    if (!results->blockToSegment) {
+        FREE(results);
+        return NULL;
+    }
+    memset(results->blockToSegment, -1, seq->numBlocks * sizeof(int));
+    
+    /* Allocate temporary buffers */
+    segmentBoundaries = (int*)ALLOC(MAX_SEGMENTS_PER_TR * sizeof(int));
+    if (!segmentBoundaries) {
+        FREE(results->blockToSegment);
+        FREE(results);
+        return NULL;
+    }
+    
+    /* Initially allocate space for segments */
+    maxSegments = patterns->nTrDefinitions * MAX_SEGMENTS_PER_TR;
+    results->uniqueSegments = (SegmentDefinition*)ALLOC(maxSegments * sizeof(SegmentDefinition));
+    if (!results->uniqueSegments) {
+        FREE(segmentBoundaries);
+        FREE(results->blockToSegment);
+        FREE(results);
+        return NULL;
+    }
+    memset(results->uniqueSegments, 0, maxSegments * sizeof(SegmentDefinition));
+    results->nUniqueSegments = 0;
+    
+    /* Process each TR type */
+    for (i = 0; i < patterns->nTrDefinitions; i++) {
+        tr = &patterns->trDefinitions[i];
+        trId = tr->trId;
+        trLength = tr->nBlocks;
+        
+        /* Get blocks for this TR */
+        trBlocks = tr->blocks;
+        
+        /* Find segment boundaries within this TR */
+        nBoundaries = findSegmentBoundaries(seq, trBlocks, trLength, segmentBoundaries, MAX_SEGMENTS_PER_TR);
+        if (nBoundaries < 2) {
+            /* No segments found */
+            continue;
+        }
+        
+        /* Allocate segments array for this TR */
+        tr->nSegments = nBoundaries - 1;
+        tr->segments = (int*)ALLOC(tr->nSegments * sizeof(int));
+        if (!tr->segments) {
+            for (j = 0; j < results->nUniqueSegments; j++) {
+                FREE(results->uniqueSegments[j].blockIDs);
+            }
+            FREE(results->uniqueSegments);
+            FREE(segmentBoundaries);
+            FREE(results->blockToSegment);
+            FREE(results);
+            return NULL;
+        }
+        
+        /* Process segments */
+        for (j = 0; j < nBoundaries - 1; j++) {
+            segmentStart = segmentBoundaries[j];
+            segmentEnd = segmentBoundaries[j+1];
+            segmentLength = segmentEnd - segmentStart;
+            
+            /* Check if this segment already exists */
+            found = 0;
+            for (k = 0; k < results->nUniqueSegments; k++) {
+                if (segmentsEqual(
+                    seq, 
+                    &trBlocks[segmentStart], segmentLength,
+                    results->uniqueSegments[k].blockIDs, results->uniqueSegments[k].nBlocks
+                )) {
+                    found = 1;
+                    segmentId = k;
+                    break;
+                }
+            }
+            
+            /* If not found, create new segment */
+            if (!found) {
+                segmentId = results->nUniqueSegments;
+                results->uniqueSegments[segmentId].nBlocks = segmentLength;
+                results->uniqueSegments[segmentId].blockIDs = (int*)ALLOC(segmentLength * sizeof(int));
+                if (!results->uniqueSegments[segmentId].blockIDs) {
+                    for (k = 0; k < results->nUniqueSegments; k++) {
+                        FREE(results->uniqueSegments[k].blockIDs);
+                    }
+                    FREE(results->uniqueSegments);
+                    FREE(tr->segments);
+                    FREE(segmentBoundaries);
+                    FREE(results->blockToSegment);
+                    FREE(results);
+                    return NULL;
+                }
+                
+                /* Copy block IDs */
+                for (k = 0; k < segmentLength; k++) {
+                    results->uniqueSegments[segmentId].blockIDs[k] = trBlocks[segmentStart + k];
+                }
+                
+                results->uniqueSegments[segmentId].navFlag = 0; /* Default: not a navigator */
+                results->nUniqueSegments++;
+            }
+            
+            /* Add segment to TR */
+            tr->segments[j] = segmentId;
+        }
+    }
+    
+    /* Map each block to its segment */
+    /* Note: This is simplified and needs to be updated for actual implementation */
+    for (i = 0; i < patterns->nBlocks; i++) {
+        if (patterns->trid[i] > 0) {
+            /* Start of TR */
+            trId = patterns->trid[i];
+            tr = &patterns->trDefinitions[trId-1]; /* Adjust for 1-based indexing */
+            
+            /* Map blocks in this TR to segments */
+            for (j = 0; j < tr->nSegments; j++) {
+                segmentId = tr->segments[j];
+                segmentLength = results->uniqueSegments[segmentId].nBlocks;
+                
+                for (k = 0; k < segmentLength; k++) {
+                    if (i + k < patterns->nBlocks) {
+                        results->blockToSegment[i + k] = segmentId;
+                    }
+                }
+                
+                i += segmentLength - 1; /* Move to last block of segment */
+            }
+        }
+    }
+    
+    /* Free temporary buffers */
+    FREE(segmentBoundaries);
+    
     return results;
 }
 
-/**
- * @brief Frees memory allocated for SegmentResults.
- */
 void freeSegmentResults(SegmentResults* results)
 {
     int i;
+    
     if (!results) return;
+    
     if (results->uniqueSegments) {
-        for (i = 0; i < results->n_uniqueSegments; i++) {
-            if (results->uniqueSegments[i].blockIDs) {
-                FREE(results->uniqueSegments[i].blockIDs);
-            }
+        for (i = 0; i < results->nUniqueSegments; i++) {
+            FREE(results->uniqueSegments[i].blockIDs);
         }
         FREE(results->uniqueSegments);
     }
-    if (results->blockToSegment) {
-        FREE(results->blockToSegment);
-    }
+    
+    FREE(results->blockToSegment);
     FREE(results);
 }
