@@ -32,6 +32,85 @@
   #define FREE(ptr) free(ptr)
 #endif
 
+/** 
+  * Raster units for RF, Grad, ADC and Blocks
+  * 
+  * We use Siemens as defaults (1us, 10us, 0.1us, 10us)
+  *
+*/
+#ifndef ADC_RASTER_US
+  #define ADC_RASTER_US 0.1f
+#endif
+
+#ifndef GRAD_RASTER_US
+  #define GRAD_RASTER_US 10.0f
+#endif
+
+#ifndef RF_RASTER_US
+  #define RF_RASTER_US 1.0f
+#endif
+
+#ifndef BLOCK_RASTER_US
+  #define BLOCK_RASTER_US 10.0f
+#endif
+
+/** 
+  * Label support customization
+  * 
+  * By default all labels are supported, but vendors can disable specific labels
+  * by defining macros like LABEL_SUPPORT_SLC as 0
+  * 
+  * Example for vendor-specific header:
+  *
+  * // Only support SLC, LIN, and PAR labels
+  * #define LABEL_SUPPORT_SEG 0
+  * #define LABEL_SUPPORT_REP 0
+  * #define LABEL_SUPPORT_AVG 0
+  * #define LABEL_SUPPORT_SET 0
+  * #define LABEL_SUPPORT_ECO 0
+  * #define LABEL_SUPPORT_PHS 0
+  * #define LABEL_SUPPORT_ACQ 0
+*/
+#ifndef LABEL_SUPPORT_SLC
+    #define LABEL_SUPPORT_SLC 1
+#endif
+
+#ifndef LABEL_SUPPORT_SEG
+    #define LABEL_SUPPORT_SEG 1
+#endif
+
+#ifndef LABEL_SUPPORT_REP
+    #define LABEL_SUPPORT_REP 1
+#endif
+
+#ifndef LABEL_SUPPORT_AVG
+    #define LABEL_SUPPORT_AVG 1
+#endif
+
+#ifndef LABEL_SUPPORT_SET
+    #define LABEL_SUPPORT_SET 1
+#endif
+
+#ifndef LABEL_SUPPORT_ECO
+    #define LABEL_SUPPORT_ECO 1
+#endif
+
+#ifndef LABEL_SUPPORT_PHS
+    #define LABEL_SUPPORT_PHS 1
+#endif
+
+#ifndef LABEL_SUPPORT_LIN
+    #define LABEL_SUPPORT_LIN 1
+#endif
+
+#ifndef LABEL_SUPPORT_PAR
+    #define LABEL_SUPPORT_PAR 1
+#endif
+
+#ifndef LABEL_SUPPORT_ACQ
+    #define LABEL_SUPPORT_ACQ 1
+#endif
+
 /** Waveforms samples type and scaling
   * 
   * Used to rescale and process waveform after
@@ -49,23 +128,6 @@
 
 #ifndef WAVESCALE
   #define WAVESCALE 1.0f
-#endif
-
-/* We use Siemens as defaults */
-#ifndef ADC_RASTER_US
-  #define ADC_RASTER_US 0.1f
-#endif
-
-#ifndef GRAD_RASTER_US
-  #define GRAD_RASTER_US 10.0f
-#endif
-
-#ifndef RF_RASTER_US
-  #define RF_RASTER_US 1.0f
-#endif
-
-#ifndef BLOCK_RASTER_US
-  #define BLOCK_RASTER_US 10.0f
 #endif
 
 #endif /* VENDOR_H */

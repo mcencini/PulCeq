@@ -126,9 +126,10 @@ typedef struct {
     int labelincLibrarySize;        /**< @brief Number of label increment entries. */
     float (*labelincLibrary)[2];    /**< @brief Label increment data with columns:
                                          increment, labelstring index. */
-
-    int labelLibrarySize;           /**< @brief Number of label entries (same as adcLibrarySize). */
-    LabelEvent* labelLibrary;       /**< @brief Array of LabelEvent structs containing the actual label values for each ADC. */
+    
+    SparseLabelMap labelMap;        /**< @brief Sparse map of labels for ADC events */
+    
+    int areLabelsCompatible;        /**< @brief Flag indicating if all used labels are compatible with the current vendor configuration */
 
     int isDelayDefined[8];          /**< @brief For each type of Delay in constants.h, flags whether it was defined or not in the given SeqFile */
     int softDelayLibrarySize;       /**< @brief Number of soft delay entries. */
@@ -145,6 +146,7 @@ typedef struct {
     int isShapesLibraryParsed;      /**< @brief Flag indicating if the shapes library was parsed. */
     int shapesLibrarySize;          /**< @brief Number of shape entries. */
     ShapeArbitrary* shapesLibrary;  /**< @brief Array of arbitrary shape definitions. */
+
 } pulseq_SeqFile; /* Mirrors Pulseq SeqFile */
 
 typedef pulseq_SeqFile SeqFile;
@@ -157,6 +159,22 @@ typedef pulseq_SeqFile SeqFile;
  * @return 1 if successful, 0 if failed
  */
 int __seqFile(char* filePath, SeqFile* seq);
+
+/**
+ * @brief Get the label values for a specific ADC event
+ * 
+ * @param seq The sequence file
+ * @param adcIndex The index of the ADC event
+ * @param labelOut Pointer to a LabelEvent struct to fill with label values
+ * @return int 1 if successful, 0 if labels couldn't be retrieved
+ */
+int getLabelsByAdcIndex(SeqFile *seq, int adcIndex, LabelEvent *labelOut);
+
+/**
+ * @brief Free all resources associated with SeqFile struct.
+ * 
+ * @param[in] seq The sequence file structure to free.
+ */
 
 /**
  * @brief Destroy SeqFile struct.
@@ -212,7 +230,5 @@ void __readLibraries(SeqFile* seq, int readBlocks);
  * @param seq The SeqFile structure to be populated.
  */
 void __readSeq(SeqFile* seq);
-
-/* SeqBlock getBlock(SeqFile* seq, int blockIndex); */
 
 #endif /* SEQFILE_H */

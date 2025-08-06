@@ -313,6 +313,25 @@ typedef struct {
     int acq; /**< Spectroscopic acquisition counter */
 } LabelEvent; /* no Pulseq equivalent */
 
+/**
+ * @struct LabelMapEntry
+ * @brief Entry in the sparse label map associating an ADC event with its label values
+ */
+typedef struct {
+    int adcIndex; /**< The index of the ADC event in the adcLibrary */
+    LabelEvent labels; /**< Label values for this ADC event */
+} LabelMapEntry;
+
+/**
+ * @struct SparseLabelMap
+ * @brief A sparse map of labels for ADC events, more memory efficient than the array approach
+ */
+typedef struct {
+    int capacity; /**< Number of entries allocated */
+    int size; /**< Number of entries used */
+    LabelMapEntry* entries; /**< Array of label map entries */
+} SparseLabelMap;
+
 /** @struct FlagEvent
  * @brief  Flag event containing only flag values (no counter labels).
  * 

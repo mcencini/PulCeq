@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "seqfile.h"
 
@@ -472,9 +473,13 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
         block->adc.freqOffset = farray[5];
         block->adc.phaseOffset = farray[6];
 
-        /* Load ADC labels from labelLibrary if available */
-        if (seq->labelLibrarySize > 0 && rawBlock.adc < seq->labelLibrarySize) {
-            block->label = seq->labelLibrary[rawBlock.adc];
+        /* Load ADC labels from labelMap if available and compatible */
+        if (seq->areLabelsCompatible) {
+            /* Try to get labels from the sparse map */
+            if (!getLabelsByAdcIndex((SeqFile*)seq, rawBlock.adc, &block->label)) {
+                /* If not found in sparse map, initialize to 0 */
+                memset(&block->label, 0, sizeof(LabelEvent));
+            }
         }
 
         idx = (int)farray[7];

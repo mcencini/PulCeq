@@ -1,5 +1,11 @@
 /*
- * @file pulseq.c
+ * @file pulsint pulseq_getBlock(const pulseq_SeqFile* seq, int blockIndex, int parseExtensions, pulseq_SeqBlock* block) { 
+    return __getBlock((SeqFile*)seq, blockIndex, parseExtensions, block); 
+}
+
+int pulseq_getLabelsForAdc(const pulseq_SeqFile* seq, int adcIndex, pulseq_LabelEvent* labelOut) {
+    return getLabelsByAdcIndex((SeqFile*)seq, adcIndex, labelOut);
+}c
  * @brief Implementation of public Pulseq API.
  */
 
