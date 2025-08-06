@@ -14,54 +14,24 @@
 #include "config.h"
 #include "constants.h"
 
-/*********************************************************  local utils  *********************************************************/
-#define MAX_EXTENSIONS_PER_BLOCK 64
-
-/**
- * @struct RawBlock
- * @brief  Raw block content IDs and extension data.
- *
- * This structure holds the content IDs of a block and its extensions.
- * It is used to retrieve the raw data from the sequence file.
- */
-typedef struct {
-    int block_duration;
-    int rf;
-    int gx;
-    int gy;
-    int gz;
-    int adc;
-    int extCount;
-    int ext[MAX_EXTENSIONS_PER_BLOCK][2];  /* [type, ref] */
-} RawBlock;
-
-/**
- * @brief Get the raw block content IDs from the sequence file.
- *
- * @param seq Pointer to the SeqFile structure.
- * @param blockIndex Index of the block to retrieve.
- * @param parseExtensions Flag indicating whether to parse extensions.
- * @return RawBlock containing the block's content IDs and extension data.
- */
-RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExtensions)
+void getRawBlockContentIDs(RawBlock* block, const SeqFile* seq, const int blockIndex, const int parseExtensions)
 {
-    RawBlock block;
     int i, nextExtID, extCount;
     float* eventFloat;
     float* extData;
 
     /* Initialize */
-    block.block_duration = 0;
-    block.rf = 0;
-    block.gx = 0;
-    block.gy = 0;
-    block.gz = 0;
-    block.adc = 0;
-    block.extCount = 0;
+    block->adc = 0;
+    block->rf = 0;
+    block->gx = 0;
+    block->gy = 0;
+    block->gz = 0;
+    block->adc = 0;
+    block->extCount = 0;
 
     /* Sanity check */
     if (seq == 0 || blockIndex < 0 || blockIndex >= seq->numBlocks) {
-        return block;
+        return;
     }
 
     /* Access float data row and cast entries to int */
@@ -75,12 +45,12 @@ RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExte
     int adcID  = (int)(eventFloat[5]) - 1;
     int extID = (int)(eventFloat[6]);
 
-    block.block_duration = duration;
-    block.rf = rfID;
-    block.gx = gxID;
-    block.gy = gyID;
-    block.gz = gzID;
-    block.adc = adcID;
+    block->block_duration = duration;
+    block->rf = rfID;
+    block->gx = gxID;
+    block->gy = gyID;
+    block->gz = gzID;
+    block->adc = adcID;
 
     /* Handle extensions if present */
     if (parseExtensions && extID > 0 && seq->isExtensionsLibraryParsed) {
@@ -89,18 +59,17 @@ RawBlock getRawBlockContentIDs(const SeqFile* seq, int blockIndex, int parseExte
 
         while (nextExtID > 0 && nextExtID <= seq->extensionsLibrarySize) {
             extData = seq->extensionsLibrary[nextExtID - 1]; /* [type, ref, next_id] */
-            block.ext[extCount][0] = (int)extData[0];      /* type */
-            block.ext[extCount][1] = (int)extData[1] - 1;  /* ref */
+            block->ext[extCount][0] = (int)extData[0];      /* type */
+            block->ext[extCount][1] = (int)extData[1] - 1;  /* ref */
             nextExtID = (int)extData[2]; /* next in chain */
             extCount += 1;
         }
 
-        block.extCount = extCount;
+        block->extCount = extCount;
     }
 
-    return block;
+    return;
 }
-/*********************************************************  end local utils  *********************************************************/
 
 SeqBlock* __seqBlock(void)
 {
@@ -112,8 +81,8 @@ SeqBlock* __seqBlock(void)
     ADCEvent adc;
     TriggerEvent trigger;
     RotationEvent rotation;
-    LabelEvent labelset;
-    LabelEvent labelinc;
+    FlagEvent flag;
+    LabelEvent label;
     SoftDelayEvent delay;
     RfShimmingEvent rfShimming;
 
@@ -128,55 +97,32 @@ SeqBlock* __seqBlock(void)
     delay.type = 0;
     rfShimming.type = 0;
 
-    /* Initialize all labels (set) to 0 */
-    labelset.type = 0;
-    labelset.slc = 0;
-    labelset.seg = 0;
-    labelset.rep = 0;
-    labelset.avg = 0;
-    labelset.set = 0;
-    labelset.eco = 0;
-    labelset.phs = 0;
-    labelset.lin = 0;
-    labelset.par = 0;
-    labelset.acq = 0;
-    labelset.trid = 0;
-    labelset.nav = 0;
-    labelset.rev = 0;
-    labelset.sms = 0;
-    labelset.ref = 0;
-    labelset.ima = 0;
-    labelset.noise = 0;
-    labelset.pmc = 0;
-    labelset.norot = 0;
-    labelset.nopos = 0;  
-    labelset.noscl = 0;     
-    labelset.once = 0;     
-   
-    /* Initialize all labels (increment) to 0 */
-    labelinc.type = 0;
-    labelinc.slc = 0;
-    labelinc.seg = 0;
-    labelinc.rep = 0;
-    labelinc.avg = 0;
-    labelinc.set = 0;
-    labelinc.eco = 0;
-    labelinc.phs = 0;
-    labelinc.lin = 0;
-    labelinc.par = 0;
-    labelinc.acq = 0;
-    labelinc.trid = 0;
-    labelinc.nav = 0;
-    labelinc.rev = 0;
-    labelinc.sms = 0;
-    labelinc.ref = 0;
-    labelinc.ima = 0;
-    labelinc.noise = 0;
-    labelinc.pmc = 0;
-    labelinc.norot = 0;
-    labelinc.nopos = 0;  
-    labelinc.noscl = 0;     
-    labelinc.once = 0;   
+    /* Initialize flag values to 0 */
+    flag.type = 0;
+    flag.trid = 0;
+    flag.nav = 0;
+    flag.rev = 0;
+    flag.sms = 0;
+    flag.ref = 0;
+    flag.ima = 0;
+    flag.noise = 0;
+    flag.pmc = 0;
+    flag.norot = 0;
+    flag.nopos = 0;
+    flag.noscl = 0;
+    flag.once = 0;
+    
+    /* Initialize label values to 0 */
+    label.slc = 0;
+    label.seg = 0;
+    label.rep = 0;
+    label.avg = 0;
+    label.set = 0;
+    label.eco = 0;
+    label.phs = 0;
+    label.lin = 0;
+    label.par = 0;
+    label.acq = 0;
 
     /* Initialize the block */
     block->rf = rf;
@@ -186,8 +132,8 @@ SeqBlock* __seqBlock(void)
     block->adc = adc;
     block->trigger = trigger;
     block->rotation = rotation;
-    block->labelset = labelset;
-    block->labelinc = labelinc;
+    block->flag = flag;
+    block->label = label;
     block->delay = delay;
     block->rfShimming = rfShimming;
 
@@ -284,7 +230,8 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
     float* delay;
     int* isRealSample;
     RfShimEntry rfshim;
-    RawBlock rawBlock = getRawBlockContentIDs(seq, blockIndex, parseExtensions);
+    RawBlock rawBlock;
+    getRawBlockContentIDs(&rawBlock, seq, blockIndex, parseExtensions);
 
     /* Set the duration */
     block->duration = rawBlock.block_duration;
@@ -474,6 +421,11 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
         block->adc.freqOffset = farray[5];
         block->adc.phaseOffset = farray[6];
 
+        /* Load ADC labels from labelLibrary if available */
+        if (seq->labelLibrarySize > 0 && rawBlock.adc < seq->labelLibrarySize) {
+            block->label = seq->labelLibrary[rawBlock.adc];
+        }
+
         idx = (int)farray[7];
         if (idx > 0) {
             block->adc.phaseModulationShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
@@ -509,51 +461,27 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             case EXT_LABELSET:
                 labelID = seq->labelsetLibrary[extIdx][1];
                 labelValue = seq->labelsetLibrary[extIdx][0];
-                block->labelset.type = 1;
+                
+                /* Handle flag values - those that don't affect ADC labeling */
                 switch (labelID) {
-                    case SLC: block->labelset.slc = labelValue; break;
-                    case SEG: block->labelset.seg = labelValue; break;
-                    case REP: block->labelset.rep = labelValue; break;
-                    case AVG: block->labelset.avg = labelValue; break;
-                    case SET: block->labelset.set = labelValue; break;
-                    case ECO: block->labelset.eco = labelValue; break;
-                    case PHS: block->labelset.phs = labelValue; break;
-                    case LIN: block->labelset.lin = labelValue; break;
-                    case PAR: block->labelset.par = labelValue; break;
-                    case ACQ: block->labelset.acq = labelValue; break;
-                    case TRID:block->labelset.trid = labelValue; break;
-                    case NAV: block->labelset.nav = labelValue; break;
-                    case REV: block->labelset.rev = labelValue; break;
-                    case SMS: block->labelset.sms = labelValue; break;
-                    case REF: block->labelset.ref = labelValue; break;
-                    case IMA: block->labelset.ima = labelValue; break;
-                    case NOISE: block->labelset.noise = labelValue; break;
-                    case PMC: block->labelset.pmc = labelValue; break;
-                    case NOROT: block->labelset.norot = labelValue; break;
-                    case NOPOS: block->labelset.nopos = labelValue; break;
-                    case NOSCL: block->labelset.noscl = labelValue; break;
-                    case ONCE: block->labelset.once = labelValue; break;
+                    case TRID: block->flag.trid = labelValue; block->flag.type = 1; break;
+                    case NAV: block->flag.nav = labelValue; block->flag.type = 1; break;
+                    case REV: block->flag.rev = labelValue; block->flag.type = 1; break;
+                    case SMS: block->flag.sms = labelValue; block->flag.type = 1; break;
+                    case REF: block->flag.ref = labelValue; block->flag.type = 1; break;
+                    case IMA: block->flag.ima = labelValue; block->flag.type = 1; break;
+                    case NOISE: block->flag.noise = labelValue; block->flag.type = 1; break;
+                    case PMC: block->flag.pmc = labelValue; block->flag.type = 1; break;
+                    case NOROT: block->flag.norot = labelValue; block->flag.type = 1; break;
+                    case NOPOS: block->flag.nopos = labelValue; block->flag.type = 1; break;
+                    case NOSCL: block->flag.noscl = labelValue; block->flag.type = 1; break;
+                    case ONCE: block->flag.once = labelValue; block->flag.type = 1; break;
                     default: break;
                 }
                 break;
             case EXT_LABELINC:
-                labelID = seq->labelincLibrary[extIdx][1];
-                labelValue = seq->labelincLibrary[extIdx][0];
-                block->labelinc.type = 1;
-                switch (labelID) {
-                    case SLC: block->labelinc.slc = labelValue; break;
-                    case SEG: block->labelinc.seg = labelValue; break;
-                    case REP: block->labelinc.rep = labelValue; break;
-                    case AVG: block->labelinc.avg = labelValue; break;
-                    case SET: block->labelinc.set = labelValue; break;
-                    case ECO: block->labelinc.eco = labelValue; break;
-                    case PHS: block->labelinc.phs = labelValue; break;
-                    case LIN: block->labelinc.lin = labelValue; break;
-                    case PAR: block->labelinc.par = labelValue; break;
-                    case ACQ: block->labelinc.acq = labelValue; break;
-                    case TRID: block->labelinc.trid = labelValue; break;
-                    default: break;
-                }
+                /* Label increment values are processed when building labelLibrary,
+                   but we don't need to store them in the block itself */
                 break;
             case EXT_RF_SHIM:
                 rfshim = seq->rfShimLibrary[extIdx];

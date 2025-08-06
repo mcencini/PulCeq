@@ -1,9 +1,10 @@
 #include "minunit.h"
+#include <stdio.h>
 
 #include "pulseq.h"
 
 /* UTILS */
-#define LABELSET_FIELD(label, idx) \
+#define LABEL_FIELD(label, idx) \
     ((idx)==0 ? (label)->slc : \
     (idx)==1 ? (label)->seg : \
     (idx)==2 ? (label)->rep : \
@@ -13,32 +14,21 @@
     (idx)==6 ? (label)->phs : \
     (idx)==7 ? (label)->lin : \
     (idx)==8 ? (label)->par : \
-    (idx)==9 ? (label)->acq : \
-    (idx)==10 ? (label)->nav : \
-    (idx)==11 ? (label)->rev : \
-    (idx)==12 ? (label)->sms : \
-    (idx)==13 ? (label)->ref : \
-    (idx)==14 ? (label)->ima : \
-    (idx)==15 ? (label)->noise : \
-    (idx)==16 ? (label)->pmc : \
-    (idx)==17 ? (label)->norot : \
-    (idx)==18 ? (label)->nopos : \
-    (idx)==19 ? (label)->noscl : \
-    (idx)==20 ? (label)->once : \
-    (idx)==21 ? (label)->trid : 0)
+    (idx)==9 ? (label)->acq : 0)
 
-#define LABELINC_FIELD(label, idx) \
-    ((idx)==0 ? (label)->slc : \
-    (idx)==1 ? (label)->seg : \
-    (idx)==2 ? (label)->rep : \
-    (idx)==3 ? (label)->avg : \
-    (idx)==4 ? (label)->set : \
-    (idx)==5 ? (label)->eco : \
-    (idx)==6 ? (label)->phs : \
-    (idx)==7 ? (label)->lin : \
-    (idx)==8 ? (label)->par : \
-    (idx)==9 ? (label)->acq : \
-    (idx)==10 ? (label)->trid : 0)
+#define FLAG_FIELD(flag, idx) \
+    ((idx)==0 ? (flag)->trid : \
+    (idx)==1 ? (flag)->nav : \
+    (idx)==2 ? (flag)->rev : \
+    (idx)==3 ? (flag)->sms : \
+    (idx)==4 ? (flag)->ref : \
+    (idx)==5 ? (flag)->ima : \
+    (idx)==6 ? (flag)->noise : \
+    (idx)==7 ? (flag)->pmc : \
+    (idx)==8 ? (flag)->norot : \
+    (idx)==9 ? (flag)->nopos : \
+    (idx)==10 ? (flag)->noscl : \
+    (idx)==11 ? (flag)->once : 0)
 
 static pulseq_SeqFile* load_seq(char* filePath) {
     char cwd[1024];
@@ -52,24 +42,24 @@ static pulseq_SeqFile* load_seq(char* filePath) {
     return seq;
 }
 
-static void assert_labelset_event(const LabelEvent* label, int target_idx, int expected) {
+static void assert_label_event(const LabelEvent* label, int target_idx, int expected) {
     int i;
-    for (i = 0; i < 22; i++) {
+    for (i = 0; i < 10; i++) {
         if (i == target_idx) {
-            mu_assert(LABELSET_FIELD(label, i) == expected, "Target label value mismatch");
+            mu_assert(LABEL_FIELD(label, i) == expected, "Target label value mismatch");
         } else {
-            mu_assert(LABELSET_FIELD(label, i) == 0, "Non-target label field should be 0");
+            mu_assert(LABEL_FIELD(label, i) == 0, "Non-target label field should be 0");
         }
     }
 }
 
-static void assert_labelinc_event(const LabelEvent* label, int target_idx, int expected) {
+static void assert_flag_event(const FlagEvent* flag, int target_idx, int expected) {
     int i;
-    for (i = 0; i < 11; i++) {
+    for (i = 0; i < 12; i++) {
         if (i == target_idx) {
-            mu_assert(LABELINC_FIELD(label, i) == expected, "Target label value mismatch");
+            mu_assert(FLAG_FIELD(flag, i) == expected, "Target flag value mismatch");
         } else {
-            mu_assert(LABELINC_FIELD(label, i) == 0, "Non-target label field should be 0");
+            mu_assert(FLAG_FIELD(flag, i) == 0, "Non-target flag field should be 0");
         }
     }
 }
@@ -130,8 +120,7 @@ MU_TEST(test_rf) {
         mu_assert(block->adc.type == 0, "Block should not have ADC event");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->labelset.type == 0, "Block should not have labelset event");
-        mu_assert(block->labelinc.type == 0, "Block should not have labelinc event");
+        mu_assert(block->flag.type == 0, "Block should not have flag event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
         
         mu_assert(block->rf.magShape.numSamples > 0, "RF should have magnitude shape samples");
@@ -184,8 +173,7 @@ MU_TEST(test_adc) {
         mu_assert(block->adc.type == 1, "Block should have ADC event");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->labelset.type == 0, "Block should not have labelset event");
-        mu_assert(block->labelinc.type == 0, "Block should not have labelinc event");
+        mu_assert(block->flag.type == 0, "Block should not have flag event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
 
@@ -221,8 +209,7 @@ MU_TEST(test_grad) {
         mu_assert(block->rf.type == 0, "Block should not have RF event");
         mu_assert(block->adc.type == 0, "Block should not have ADC event");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
-        mu_assert(block->labelset.type == 0, "Block should not have labelset event");
-        mu_assert(block->labelinc.type == 0, "Block should not have labelinc event");
+        mu_assert(block->flag.type == 0, "Block should not have flag event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
     }
@@ -387,9 +374,9 @@ MU_TEST(test_grad) {
     pulseq_seqFileFree(seq);
 }
 
-MU_TEST(test_labelset) {
+MU_TEST(test_flags) {
     int i;
-    int n = 0; /* label event index */
+    int n = 0; /* flag event index */
     pulseq_SeqBlock* block;
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
@@ -399,19 +386,18 @@ MU_TEST(test_labelset) {
         mu_assert(block->duration == 128, "Block duration should be 128 block raster units");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->labelset.type == 1, "Block should have labelset event");
-        mu_assert(block->labelinc.type == 0, "Block should not have labelinc event");
+        mu_assert(block->flag.type == 1, "Block should have flag event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
 
-        assert_labelset_event(&block->labelset, n, 1);
+        assert_flag_event(&block->flag, n, 1);
         n += 1;
     }
     pulseq_seqBlockFree(block);
     pulseq_seqFileFree(seq);
 }
 
-MU_TEST(test_labelinc) {
+MU_TEST(test_labels) {
     int i;
     int n = 0; /* label event index */
     pulseq_SeqBlock* block;
@@ -423,12 +409,8 @@ MU_TEST(test_labelinc) {
         mu_assert(block->duration == 128, "Block duration should be 128 block raster units");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->labelset.type == 0, "Block should not have labelset event");
-        mu_assert(block->labelinc.type == 1, "Block should have labelinc event");
-        mu_assert(block->delay.type == 0, "Block should not have delay event");
-        mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
 
-        assert_labelinc_event(&block->labelinc, n, 1);
+        assert_label_event(&block->label, n, 1);
         n += 1;
     }
     pulseq_seqBlockFree(block);
@@ -450,8 +432,7 @@ MU_TEST(test_trigger) {
         mu_assert(block->adc.type == 0, "Block should not have ADC event");
         mu_assert(block->trigger.type == 1, "Block should have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->labelset.type == 0, "Block should not have labelset event");
-        mu_assert(block->labelinc.type == 0, "Block should not have labelinc event");
+        mu_assert(block->flag.type == 0, "Block should not have flag event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
     }
@@ -512,8 +493,7 @@ MU_TEST(test_delay) {
         mu_assert(block->adc.type == 0, "Block should not have ADC event");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->labelset.type == 0, "Block should not have labelset event");
-        mu_assert(block->labelinc.type == 0, "Block should not have labelinc event");
+        mu_assert(block->flag.type == 0, "Block should not have flag event");
         mu_assert(block->delay.type == 1, "Block should have delay event");
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
 
@@ -571,8 +551,7 @@ MU_TEST(test_pure_delay) {
     mu_assert(block->adc.type == 0, "Block 58 should not have ADC event");
     mu_assert(block->trigger.type == 0, "Block 58 should not have trigger event");
     mu_assert(block->rotation.type == 0, "Block 58 should not have rotation event");
-    mu_assert(block->labelset.type == 0, "Block 58 should not have labelset event");
-    mu_assert(block->labelinc.type == 0, "Block 58 should not have labelinc event");
+    mu_assert(block->flag.type == 0, "Block 58 should not have flag event");
     mu_assert(block->delay.type == 0, "Block 58 should not have delay event");
     mu_assert(block->rfShimming.type == 0, "Block 58 should not have RF shimming event");
 
@@ -581,20 +560,32 @@ MU_TEST(test_pure_delay) {
 }
 
 MU_TEST_SUITE(test_seqfile_suite) {
+    printf("Running test_basic...\n");
     MU_RUN_TEST(test_basic);
+    printf("Running test_definitions...\n");
     MU_RUN_TEST(test_definitions);
+    printf("Running test_rf...\n");
     MU_RUN_TEST(test_rf);
+    printf("Running test_adc...\n");
     MU_RUN_TEST(test_adc);
+    printf("Running test_grad...\n");
     MU_RUN_TEST(test_grad);
-    MU_RUN_TEST(test_labelset);
-    MU_RUN_TEST(test_labelinc);
+    printf("Running test_flags...\n");
+    MU_RUN_TEST(test_flags);
+    printf("Running test_labels...\n");
+    MU_RUN_TEST(test_labels);
+    printf("Running test_trigger...\n");
     MU_RUN_TEST(test_trigger);
+    printf("Running test_delay...\n");
     MU_RUN_TEST(test_delay);
+    printf("Running test_pure_delay...\n");
     MU_RUN_TEST(test_pure_delay);
 }
 
 int main(void) {
+    printf("Starting test suite...\n");
     MU_RUN_SUITE(test_seqfile_suite);
+    printf("Test suite completed.\n");
     MU_REPORT();
     return MU_EXIT_CODE;
 }

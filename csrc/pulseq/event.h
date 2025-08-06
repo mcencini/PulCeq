@@ -204,55 +204,55 @@ typedef struct {
     float rotQuaternion[4]; /**< @brief Gradient rotation quaternion */
 } RotationEvent; /* mirrors Pulseq RotationEvent */
 
-/** @struct LabelEvent
- * @brief  Label event.
+/** @struct LabelOrFlagEvent
+ * @brief  Label or Flag event.
  * 
- * @var LabelEvent::type
+ * @var LabelOrFlagEvent::type
  *    Whether label is NULL (0) or DEFINED (1).
- * @var LabelEvent::slc
+ * @var LabelOrFlagEvent::slc
  *    Slice counter.
- * @var LabelEvent::seg
+ * @var LabelOrFlagEvent::seg
  *    Segment counter e.g. for segmented FLASH or EPI.
- * @var LabelEvent::rep
+ * @var LabelOrFlagEvent::rep
  *    Repetition counter.
- * @var LabelEvent::avg
+ * @var LabelOrFlagEvent::avg
  *    Averaging counter.
- * @var LabelEvent::set
+ * @var LabelOrFlagEvent::set
  *    Flexible counter without firm assignment.
- * @var LabelEvent::eco
+ * @var LabelOrFlagEvent::eco
  *    Echo counter in multi-echo sequences.
- * @var LabelEvent::phs
+ * @var LabelOrFlagEvent::phs
  *    Cardiac phase counter.
- * @var LabelEvent::lin
+ * @var LabelOrFlagEvent::lin
  *    Line counter in 2D and 3D acquisitions.
- * @var LabelEvent::par
+ * @var LabelOrFlagEvent::par
  *    Partition counter; it counts phase encoding steps in the 2nd (through-slab) phase encoding direction in 3D sequences.
- * @var LabelEvent::acq
+ * @var LabelOrFlagEvent::acq
  *    Spectroscopic acquisition counter.
- * @var LabelEvent::trid
+ * @var LabelOrFlagEvent::trid
  *    Marks the beginning of a repeatable module in the sequence (e.g. TR);
  *    modules with different timing should be assigned different TRIDs.
- * @var LabelEvent::nav
+ * @var LabelOrFlagEvent::nav
  *    Navigator data flag.
- * @var LabelEvent::rev
+ * @var LabelOrFlagEvent::rev
  *    Flag indicating that the readout direction is reversed.
- * @var LabelEvent::sms
+ * @var LabelOrFlagEvent::sms
  *    Simultaneous multi-slice (SMS) acquisition.
- * @var LabelEvent::ref
+ * @var LabelOrFlagEvent::ref
  *    Parallel imaging flag indicating reference / auto-calibration data.
- * @var LabelEvent::ima
+ * @var LabelOrFlagEvent::ima
  *    Parallel imaging flag indicating imaging data within the ACS region.
- * @var LabelEvent::noise
+ * @var LabelOrFlagEvent::noise
  *    Flag for the noise adjust scan e.g for the parallel imaging acceleration.
- * @var LabelEvent::pmc
+ * @var LabelOrFlagEvent::pmc
  *    Flag for the MoCo/PMC Pulseq version marking blocks that can/should be prospectively corrected for motion.
- * @var LabelEvent::norot
+ * @var LabelOrFlagEvent::norot
  *    Instructs the interpreter to ignore the rotation of the FOV specified on the UI for the given block(s).
- * @var LabelEvent::nopos
+ * @var LabelOrFlagEvent::nopos
  *    Instructs the interpreter to ignore the the FOV offset specified on the UI for the given block(s).
- * @var LabelEvent::noslc
+ * @var LabelOrFlagEvent::noscl
  *    Instructs the interpreter to ignore the FOV scaling specified on the UI for the given block(s).
- * @var LabelEvent::once
+ * @var LabelOrFlagEvent::once
  *    A 3-state flag indicating whether the label is to be used once (0), multiple times (1), or not at all (2).
  */
 typedef struct {
@@ -279,7 +279,90 @@ typedef struct {
     int nopos;  /**< Instructs the interpreter to ignore the the FOV offset specified on the UI for the given block(s) */
     int noscl;  /**< Instructs the interpreter to ignore the the FOV scaling specified on the UI for the given block(s) */
     int once;   /**< A 3-state flag indicating whether the label is to be used once (0), multiple times (1), or not at all (2) */
+} LabelOrFlagEvent; /* no Pulseq equivalent */
+
+/** @struct LabelEvent
+ * @brief  Label event containing only counter labels (no flags).
+ * 
+ * @var LabelEvent::slc
+ *    Slice counter.
+ * @var LabelEvent::seg
+ *    Segment counter e.g. for segmented FLASH or EPI.
+ * @var LabelEvent::rep
+ *    Repetition counter.
+ * @var LabelEvent::avg
+ *    Averaging counter.
+ * @var LabelEvent::set
+ *    Flexible counter without firm assignment.
+ * @var LabelEvent::eco
+ *    Echo counter in multi-echo sequences.
+ * @var LabelEvent::phs
+ *    Cardiac phase counter.
+ * @var LabelEvent::lin
+ *    Line counter in 2D and 3D acquisitions.
+ * @var LabelEvent::par
+ *    Partition counter; it counts phase encoding steps in the 2nd (through-slab) phase encoding direction in 3D sequences.
+ * @var LabelEvent::acq
+ *    Spectroscopic acquisition counter.
+ */
+typedef struct {
+    int slc; /**< Slice counter */
+    int seg; /**< Segment counter e.g. for segmented FLASH or EPI */
+    int rep; /**< Repetition counter */
+    int avg; /**< Averaging counter */
+    int set; /**< Flexible counter without firm assignment */
+    int eco; /**< Echo counter in multi-echo sequences */
+    int phs; /**< Cardiac phase counter */
+    int lin; /**< Line counter in 2D and 3D acquisitions */
+    int par; /**< Partition counter; it counts phase encoding steps in the 2nd (through-slab) phase encoding direction in 3D sequences */
+    int acq; /**< Spectroscopic acquisition counter */
 } LabelEvent; /* no Pulseq equivalent */
+
+/** @struct FlagEvent
+ * @brief  Flag event containing only flag values (no counter labels).
+ * 
+ * @var FlagEvent::type
+ *    Whether flag is NULL (0) or DEFINED (1).
+ * @var FlagEvent::trid
+ *    Marks the beginning of a repeatable module in the sequence (e.g. TR).
+ * @var FlagEvent::nav
+ *    Navigator data flag.
+ * @var FlagEvent::rev
+ *    Flag indicating that the readout direction is reversed.
+ * @var FlagEvent::sms
+ *    Simultaneous multi-slice (SMS) acquisition.
+ * @var FlagEvent::ref
+ *    Parallel imaging flag indicating reference / auto-calibration data.
+ * @var FlagEvent::ima
+ *    Parallel imaging flag indicating imaging data within the ACS region.
+ * @var FlagEvent::noise
+ *    Flag for the noise adjust scan e.g for the parallel imaging acceleration.
+ * @var FlagEvent::pmc
+ *    Flag for the MoCo/PMC Pulseq version marking blocks.
+ * @var FlagEvent::norot
+ *    Instructs the interpreter to ignore the rotation of the FOV.
+ * @var FlagEvent::nopos
+ *    Instructs the interpreter to ignore the FOV offset.
+ * @var FlagEvent::noscl
+ *    Instructs the interpreter to ignore the FOV scaling.
+ * @var FlagEvent::once
+ *    A 3-state flag for usage frequency.
+ */
+typedef struct {
+    short type;  /**< @brief NULL or DEFINED */
+    int trid;    /**< Marks the beginning of a repeatable module in the sequence (e.g. TR); modules with different timing should be assigned different TRIDs */
+    int nav;     /**< Navigator data flag */
+    int rev;     /**< Flag indicating that the readout direction is reversed */
+    int sms;     /**< Simultaneous multi-slice (SMS) acquisition */
+    int ref;     /**< Parallel imaging flag indicating reference / auto-calibration data */
+    int ima;     /**< Parallel imaging flag indicating imaging data within the ACS region */
+    int noise;   /**< Flag for the noise adjust scan e.g for the parallel imaging acceleration */
+    int pmc;     /**< Flag for the MoCo/PMC Pulseq version marking blocks that can/should be prospectively corrected for motion */
+    int norot;   /**< Instructs the interpreter to ignore the rotation of the FOV specified on the UI for the given block(s) */
+    int nopos;   /**< Instructs the interpreter to ignore the the FOV offset specified on the UI for the given block(s) */
+    int noscl;   /**< Instructs the interpreter to ignore the the FOV scaling specified on the UI for the given block(s) */
+    int once;    /**< A 3-state flag indicating whether the label is to be used once (0), multiple times (1), or not at all (2) */
+} FlagEvent; /* no Pulseq equivalent */
 
 /** @struct SoftDelayEvent
    * @brief  Soft Delay event. 

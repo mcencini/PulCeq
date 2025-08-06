@@ -12,6 +12,36 @@
 typedef struct SeqFile SeqFile; /* Forward declaration to avoid circular dependency */
 #endif /* SEQFILE_H */
 
+#define MAX_EXTENSIONS_PER_BLOCK 64
+
+/**
+ * @struct RawBlock
+ * @brief  Raw block content IDs and extension data.
+ *
+ * This structure holds the content IDs of a block and its extensions.
+ * It is used to retrieve the raw data from the sequence file.
+ */
+typedef struct {
+    int block_duration;
+    int rf;
+    int gx;
+    int gy;
+    int gz;
+    int adc;
+    int extCount;
+    int ext[MAX_EXTENSIONS_PER_BLOCK][2];  /* [type, ref] */
+} RawBlock;
+
+/**
+ * @brief Get the raw block content IDs from the sequence file.
+ *
+ * @param[in, out] block Pointer to the block's content IDs and extension data.
+ * @param[in] seq Pointer to the SeqFile structure.
+ * @param[in] blockIndex Index of the block to retrieve.
+ * @param[in] parseExtensions Flag indicating whether to parse extensions.
+ */
+void getRawBlockContentIDs(RawBlock* block, const SeqFile* seq, const int blockIndex, const int parseExtensions);
+
 /** @struct pulseq_SeqBlock
  * @brief  Sequence block containing RF, gradient, ADC, and trigger events.
  *
@@ -49,8 +79,8 @@ typedef struct {
     ADCEvent adc;               /**< @brief ADC event */
     TriggerEvent trigger;       /**< @brief Trigger event */
     RotationEvent rotation;     /**< @brief Rotation event */
-    LabelEvent labelset;        /**< @brief Label set event */
-    LabelEvent labelinc;        /**< @brief Label increment event */
+    FlagEvent flag;             /**< @brief Flag event containing flag values */
+    LabelEvent label;           /**< @brief Label event containing the actual label values */
     SoftDelayEvent delay;       /**< @brief Soft delay event */
     RfShimmingEvent rfShimming; /**< @brief RF shimming event */
 } pulseq_SeqBlock; /* Mirrors Pulseq SeqBlock */
