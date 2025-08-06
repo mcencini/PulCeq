@@ -12,35 +12,39 @@
 #include "alloc.h"
 #include "event.h"
 
-ShapeArbitrary* decompressShape(ShapeArbitrary* encoded)
+int decompressShape(ShapeArbitrary* encoded, ShapeArbitrary* result)
 {
     int i, rep;
-    const float *packed = encoded->samples;
-    int numPacked = encoded->numSamples;
-    int numSamples = encoded->numUncompressedSamples;
+    const float *packed;
+    int numPacked, numSamples;
     int countPack = 1;
     int countUnpack = 1;
     float* unpacked;
-    ShapeArbitrary *decoded;
-
+    
+    /* Validate inputs */
+    if (!encoded || !result) {
+        return 0; /* Invalid inputs */
+    }
+    
+    packed = encoded->samples;
+    numPacked = encoded->numSamples;
+    numSamples = encoded->numUncompressedSamples;
+    
     /* Input shape is uncompressed - copy it */
     if (encoded->numSamples == encoded->numUncompressedSamples) {
-        decoded = (ShapeArbitrary*)ALLOC(sizeof(ShapeArbitrary));
-        if (!decoded) return NULL;
-        decoded->numSamples = encoded->numSamples;
-        decoded->numUncompressedSamples = encoded->numUncompressedSamples;
-        decoded->samples = (float*)ALLOC(sizeof(float) * encoded->numSamples);
-        if (!decoded->samples) {
-            FREE(decoded);
-            return NULL;
+        result->numSamples = encoded->numSamples;
+        result->numUncompressedSamples = encoded->numUncompressedSamples;
+        result->samples = (float*)ALLOC(sizeof(float) * encoded->numSamples);
+        if (!result->samples) {
+            return 0; /* Allocation failed */
         }
-        memcpy(decoded->samples, encoded->samples, sizeof(float) * encoded->numSamples);
-        return decoded;
+        memcpy(result->samples, encoded->samples, sizeof(float) * encoded->numSamples);
+        return 1; /* Success */
     }
 
     unpacked = (float*) ALLOC(sizeof(float) * numSamples);
     if (unpacked == NULL) {
-        return NULL; /* Allocation failed */
+        return 0; /* Allocation failed */
     }
 
     while (countPack < numPacked) {
@@ -53,7 +57,7 @@ ShapeArbitrary* decompressShape(ShapeArbitrary* encoded)
             if (fabsf(packed[countPack + 1] + 2 - (float)rep) > 1e-6f) {
                 /* Malformed shape compression format */
                 FREE(unpacked);
-                return NULL;
+                return 0; /* Failed */
             }
             for (i = countUnpack - 1; i <= countUnpack + rep - 2; i++) {
                 unpacked[i] = packed[countPack - 1];
@@ -72,15 +76,9 @@ ShapeArbitrary* decompressShape(ShapeArbitrary* encoded)
         unpacked[i] += unpacked[i - 1];
     }
 
-    decoded = (ShapeArbitrary*) ALLOC(sizeof(ShapeArbitrary));
-    if (decoded == NULL) {
-        FREE(unpacked);
-        return NULL;
-    }
+    result->numSamples = numSamples;
+    result->numUncompressedSamples = numSamples;
+    result->samples = unpacked;
 
-    decoded->numSamples = numSamples;
-    decoded->numUncompressedSamples = numSamples;
-    decoded->samples = unpacked;
-
-    return decoded;
+    return 1; /* Success */
 }

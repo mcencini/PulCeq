@@ -16,9 +16,10 @@
 
 void getRawBlockContentIDs(RawBlock* block, const SeqFile* seq, const int blockIndex, const int parseExtensions)
 {
-    int i, nextExtID, extCount;
+    int i, nextExtID;
     float* eventFloat;
     float* extData;
+    int extCount;
 
     /* Initialize */
     block->adc = 0;
@@ -218,8 +219,11 @@ void __seqBlockFree(SeqBlock* block)
 }
 
 
-SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
-    SeqBlock* block = __seqBlock(); /* Initializes all event types to 0 */
+int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock* block) {
+    /* Check inputs */
+    if (!seq || !block || blockIndex < 0 || blockIndex >= seq->numBlocks) {
+        return 0; /* Invalid inputs */
+    }
 
     float* farray;
     int idx;
@@ -243,11 +247,21 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
         block->rf.amplitude = farray[0];
 
         idx = (int)farray[1];
-        if (idx > 0) block->rf.magShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+        if (idx > 0) {
+            ShapeArbitrary shape;
+            if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
+                return 0; /* Failed to decompress shape */
+            }
+            block->rf.magShape = shape;
+        }
 
         idx = (int)farray[2];
         if (idx > 0) {
-            block->rf.phaseShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            ShapeArbitrary shape;
+            if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
+                return 0; /* Failed to decompress shape */
+            }
+            block->rf.phaseShape = shape;
             for (i = 0; i < block->rf.phaseShape.numSamples; i++) {
                 block->rf.phaseShape.samples[i] *= TWO_PI; /* Rescale phase shape to radians */
             }
@@ -292,7 +306,11 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
 
         idx = (int)farray[3];
         if (idx > 0) {
-            block->rf.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            ShapeArbitrary shape;
+            if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
+                return 0; /* Failed to decompress shape */
+            }
+            block->rf.timeShape = shape;
         } else {
             block->rf.timeShape.numSamples = 0; /* Set time shape to 0 samples */
             block->rf.timeShape.numUncompressedSamples = 0; /* Set time shape to 0 samples */
@@ -326,11 +344,21 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             block->gx.last = farray[3];
 
             idx = (int)farray[4];
-            if (idx > 0) block->gx.waveShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            if (idx > 0) {
+                ShapeArbitrary shape;
+                if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
+                    return 0; /* Failed to decompress shape */
+                }
+                block->gx.waveShape = shape;
+            }
 
             idx = (int)farray[5];
             if (idx > 0) {
-                block->gx.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+                ShapeArbitrary shape;
+                if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
+                    return 0; /* Failed to decompress shape */
+                }
+                block->gx.timeShape = shape;
             } else {
                 block->gx.timeShape.numSamples = 0; /* Set time shape to 0 samples */
                 block->gx.timeShape.numUncompressedSamples = 0; /* Set time shape to 0 samples */
@@ -360,11 +388,21 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             block->gy.last = farray[3];
 
             idx = (int)farray[4];
-            if (idx > 0) block->gy.waveShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            if (idx > 0) {
+                ShapeArbitrary shape;
+                if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
+                    return 0; /* Failed to decompress shape */
+                }
+                block->gy.waveShape = shape;
+            }
 
             idx = (int)farray[5];
             if (idx > 0) {
-                block->gy.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+                ShapeArbitrary shape;
+                if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
+                    return 0; /* Failed to decompress shape */
+                }
+                block->gy.timeShape = shape;
             } else {
                 block->gy.timeShape.numSamples = 0; /* Set time shape to 0 samples */
                 block->gy.timeShape.numUncompressedSamples = 0; /* Set time shape to 0 samples */
@@ -394,11 +432,21 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
             block->gz.last = farray[3];
 
             idx = (int)farray[4];
-            if (idx > 0) block->gz.waveShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            if (idx > 0) {
+                ShapeArbitrary shape;
+                if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
+                    return 0; /* Failed to decompress shape */
+                }
+                block->gz.waveShape = shape;
+            }
 
             idx = (int)farray[5];
             if (idx > 0) {
-                block->gz.timeShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+                ShapeArbitrary shape;
+                if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
+                    return 0; /* Failed to decompress shape */
+                }
+                block->gz.timeShape = shape;
             } else {
                 block->gz.timeShape.numSamples = 0; /* Set time shape to 0 samples */
                 block->gz.timeShape.numUncompressedSamples = 0; /* Set time shape to 0 samples */
@@ -428,7 +476,11 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
 
         idx = (int)farray[7];
         if (idx > 0) {
-            block->adc.phaseModulationShape = *decompressShape(&(seq->shapesLibrary[idx - 1]));
+            ShapeArbitrary shape;
+            if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
+                return 0; /* Failed to decompress shape */
+            }
+            block->adc.phaseModulationShape = shape;
         } else {
             block->adc.phaseModulationShape.numSamples = 0; /* Set phase modulation shape to 0 samples */
             block->adc.phaseModulationShape.numUncompressedSamples = 0; /* Set phase modulation shape to 0 samples */
@@ -507,5 +559,5 @@ SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions) {
         }
     }
 
-    return block;
+    return 1; /* Success */
 }

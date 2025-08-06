@@ -3,6 +3,21 @@
 
 #include "pulseq.h"
 
+/* Helper function to get a block with the new API */
+static pulseq_SeqBlock* getBlock(pulseq_SeqFile* seq, int blockIndex, int parseExtensions) {
+    static pulseq_SeqBlock block;
+    
+    /* Reset the block to avoid any contamination from previous calls */
+    memset(&block, 0, sizeof(pulseq_SeqBlock));
+    
+    /* Get the block using the new API */
+    if (pulseq_getBlock(seq, blockIndex, parseExtensions, &block)) {
+        return &block;
+    } else {
+        return NULL;
+    }
+}
+
 /* UTILS */
 #define LABEL_FIELD(label, idx) \
     ((idx)==0 ? (label)->slc : \
@@ -111,7 +126,7 @@ MU_TEST(test_rf) {
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
     for (i = 0; i < 2; i++){
-        block = pulseq_getBlock(seq, i, 1);
+        block = getBlock(seq, i, 1);
         mu_assert(block != NULL, "getBlock should return a valid block");
         mu_assert(block->rf.type == 1, "Block should have RF event");
         mu_assert(block->gx.type == 0, "Block should not have Gx event");
@@ -133,7 +148,7 @@ MU_TEST(test_rf) {
     }
 
     /* Real RF */
-    block = pulseq_getBlock(seq, 0, 1);
+    block = getBlock(seq, 0, 1);
     mu_assert(block->duration == 400, "Block 0 duration should be 400 block raster units");
     mu_assert(block->rf.phaseShape.numSamples == 0, "Block 0 RF should not have phase shape samples");
     mu_assert(fabs(block->rf.center - 2000.0) < 1e-6, "Block 0 RF should have center at 2000 us");
@@ -146,7 +161,7 @@ MU_TEST(test_rf) {
     }
 
     /* Complex RF */
-    block = pulseq_getBlock(seq, 1, 1);
+    block = getBlock(seq, 1, 1);
     mu_assert(block->duration == 1000, "Block 1 duration should be 1000 block raster units");
     mu_assert(block->rf.phaseShape.numSamples > 0, "Block 1 RF should have phase shape samples");
     mu_assert(fabs(block->rf.center - 5000.5) < 1e-6, "Block 1 RF should have center at 5000.5 us");
@@ -162,7 +177,7 @@ MU_TEST(test_adc) {
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
     for (i = 2; i < 4; i++) {
-        block = pulseq_getBlock(seq, i, 0);
+        block = getBlock(seq, i, 0);
         mu_assert(block != NULL, "getBlock should return a valid block");
         mu_assert(block->duration == 128, "Block duration should be 128 block raster units");
         mu_assert(block->duration == 128, "Block duration should be 128 block raster units");
@@ -187,11 +202,11 @@ MU_TEST(test_adc) {
     }
 
     /* phase modulated ADC */
-    block = pulseq_getBlock(seq, 2, 0);
+    block = getBlock(seq, 2, 0);
     mu_assert(block->adc.phaseModulationShape.numSamples > 0, "Block 2 ADC should have phase modulation");
 
     /* standard ADC */
-    block = pulseq_getBlock(seq, 3, 0); /* do not parse extensions here */
+    block = getBlock(seq, 3, 0); /* do not parse extensions here */
     mu_assert(block->adc.phaseModulationShape.numSamples == 0, "Block 3 ADC should not have phase modulation");
 
     pulseq_seqBlockFree(block);
@@ -204,7 +219,7 @@ MU_TEST(test_grad) {
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
     for (i = 36; i < 45; i++){
-        block = pulseq_getBlock(seq, i, 1);
+        block = getBlock(seq, i, 1);
         mu_assert(block != NULL, "getBlock should return a valid block");
         mu_assert(block->rf.type == 0, "Block should not have RF event");
         mu_assert(block->adc.type == 0, "Block should not have ADC event");
@@ -216,7 +231,7 @@ MU_TEST(test_grad) {
 
     /**** TRAPEZOIDS ****/
     /* Gx */
-    block = pulseq_getBlock(seq, 36, 1);
+    block = getBlock(seq, 36, 1);
     mu_assert(block->duration == 100, "Block 36 duration should be 100 block raster units");
     mu_assert(block->gx.type == 1, "Block 36 should have trapezoidal Gx event");
     mu_assert(block->gy.type == 0, "Block 36 should not have Gy event");
@@ -232,7 +247,7 @@ MU_TEST(test_grad) {
     mu_assert(block->gx.last == 0, "Block 36 Gx last sample should be 0");
 
     /* Gy */
-    block = pulseq_getBlock(seq, 37, 1);
+    block = getBlock(seq, 37, 1);
     mu_assert(block->duration == 100, "Block 37 duration should be 100 block raster units");
     mu_assert(block->gx.type == 0, "Block 37 should not have Gx event");
     mu_assert(block->gy.type == 1, "Block 37 should have trapezoidal Gy event");
@@ -248,7 +263,7 @@ MU_TEST(test_grad) {
     mu_assert(block->gy.last == 0, "Block 37 Gy last sample should be 0");
 
     /* Gz */
-    block = pulseq_getBlock(seq, 38, 1);
+    block = getBlock(seq, 38, 1);
     mu_assert(block->duration == 100, "Block 38 duration should be 100 block raster units");
     mu_assert(block->gx.type == 0, "Block 38 should not have Gx event");
     mu_assert(block->gy.type == 0, "Block 38 should not have Gy event");
@@ -266,7 +281,7 @@ MU_TEST(test_grad) {
 
     /**** ARBITRARY GRAD ****/
     /* Gx */
-    block = pulseq_getBlock(seq, 39, 1);
+    block = getBlock(seq, 39, 1);
     mu_assert(block->duration == 5, "Block 39 duration should be 5 block raster units");
     mu_assert(block->gx.type == 2, "Block 39 should have arbitrary Gx event");
     mu_assert(block->gy.type == 0, "Block 39 should not have Gy event");
@@ -285,7 +300,7 @@ MU_TEST(test_grad) {
     mu_assert(fabs(block->rotation.rotQuaternion[3]) < 1e-6, "Block 39 Rotation quaternion quatZ should be 0.0");
 
     /* Gy */
-    block = pulseq_getBlock(seq, 40, 1);
+    block = getBlock(seq, 40, 1);
     mu_assert(block->duration == 5, "Block 40 duration should be 5 block raster units");
     mu_assert(block->gx.type == 0, "Block 40 should not have Gx event");
     mu_assert(block->gy.type == 2, "Block 40 should have arbitrary Gy event");
@@ -304,7 +319,7 @@ MU_TEST(test_grad) {
     mu_assert(fabs(block->rotation.rotQuaternion[3]) < 1e-6, "Block 40 Rotation quaternion quatZ should be 0.0");
 
     /* Gz */
-    block = pulseq_getBlock(seq, 41, 1);
+    block = getBlock(seq, 41, 1);
     mu_assert(block->duration == 5, "Block 41 duration should be 5 block raster units");
     mu_assert(block->gx.type == 0, "Block 41 should not have Gx event");
     mu_assert(block->gy.type == 0, "Block 41 should not have Gy event");
@@ -325,7 +340,7 @@ MU_TEST(test_grad) {
 
     /**** EXTENDED TRAPEZOIDS GRAD ****/
     /* Gx */
-    block = pulseq_getBlock(seq, 42, 1);
+    block = getBlock(seq, 42, 1);
     mu_assert(block->duration == 203, "Block 42 duration should be 5 block raster units");
     mu_assert(block->gx.type == 2, "Block 42 should have arbitrary Gx event");
     mu_assert(block->gy.type == 0, "Block 42 should not have Gy event");
@@ -340,7 +355,7 @@ MU_TEST(test_grad) {
     mu_assert(fabs(block->gx.last) < 1e-6, "Block 42 Gx last sample should be 0");
 
     /* Gy */
-    block = pulseq_getBlock(seq, 43, 1);
+    block = getBlock(seq, 43, 1);
     mu_assert(block->duration == 203, "Block 43 duration should be 5 block raster units");
     mu_assert(block->gx.type == 0, "Block 43 should not have Gx event");
     mu_assert(block->gy.type == 2, "Block 43 should have arbitrary Gy event");
@@ -355,7 +370,7 @@ MU_TEST(test_grad) {
     mu_assert(fabs(block->gy.last) < 1e-6, "Block 43 Gy last sample should be 0");
 
     /* Gz */
-    block = pulseq_getBlock(seq, 44, 1);
+    block = getBlock(seq, 44, 1);
     mu_assert(block->duration == 203, "Block 44 duration should be 5 block raster units");
     mu_assert(block->gx.type == 0, "Block 44 should not have Gx event");
     mu_assert(block->gy.type == 0, "Block 44 should not have Gy event");
@@ -381,7 +396,7 @@ MU_TEST(test_flags) {
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
     for (i = 3; i < 25; i++) {
-        block = pulseq_getBlock(seq, i, 1);
+        block = getBlock(seq, i, 1);
         mu_assert(block != NULL, "getBlock should return a valid block");
         mu_assert(block->duration == 128, "Block duration should be 128 block raster units");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
@@ -404,7 +419,7 @@ MU_TEST(test_labels) {
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
     for (i = 25; i < 35; i++) {
-        block = pulseq_getBlock(seq, i, 1);
+        block = getBlock(seq, i, 1);
         mu_assert(block != NULL, "getBlock should return a valid block");
         mu_assert(block->duration == 128, "Block duration should be 128 block raster units");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
@@ -423,7 +438,7 @@ MU_TEST(test_trigger) {
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
     for (i = 45; i < 50; i++) {
-        block = pulseq_getBlock(seq, i, 1);
+        block = getBlock(seq, i, 1);
         mu_assert(block != NULL, "getBlock should return a valid block");
         mu_assert(block->rf.type == 0, "Block should not have RF event");
         mu_assert(block->gx.type == 0, "Block should not have Gx event");
@@ -437,35 +452,35 @@ MU_TEST(test_trigger) {
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
     }
 
-    block = pulseq_getBlock(seq, 45, 1);
+    block = getBlock(seq, 45, 1);
     mu_assert(block->duration == 1, "Block 45 duration should be 1 block raster units");
     mu_assert(block->trigger.duration == 10, "Block 45 trigger duration should be 10 us");
     mu_assert(block->trigger.delay == 0, "Block 45 trigger delay should be 0");
     mu_assert(block->trigger.triggerType == TRIGGER_TYPE_INPUT, "Block 45 trigger should be a cardiac trigger");
     mu_assert(block->trigger.triggerChannel == TRIGGER_CHANNEL_INPUT_PHYSIO_1, "Block 45 channel type should be physio1");
 
-    block = pulseq_getBlock(seq, 46, 1);
+    block = getBlock(seq, 46, 1);
     mu_assert(block->duration == 1, "Block 46 duration should be 1 block raster units");
     mu_assert(block->trigger.duration == 10, "Block 46 trigger duration should be 10 us");
     mu_assert(block->trigger.delay == 0, "Block 46 trigger delay should be 0");
     mu_assert(block->trigger.triggerType == TRIGGER_TYPE_INPUT, "Block 46 trigger should be a cardiac trigger");
     mu_assert(block->trigger.triggerChannel == TRIGGER_CHANNEL_INPUT_PHYSIO_2, "Block 46 channel type should be physio2");
 
-    block = pulseq_getBlock(seq, 47, 1);
+    block = getBlock(seq, 47, 1);
     mu_assert(block->duration == 400, "Block 47 duration should be 400 block raster units");
     mu_assert(block->trigger.duration == 4000, "Block 47 trigger duration should be 4000 us");
     mu_assert(block->trigger.delay == 0, "Block 47 trigger delay should be 0");
     mu_assert(block->trigger.triggerType == TRIGGER_TYPE_OUTPUT, "Block 47 trigger should be a digital output trigger");
     mu_assert(block->trigger.triggerChannel == TRIGGER_CHANNEL_OUTPUT_OSC_0, "Block 47 channel type should be osc0");
 
-    block = pulseq_getBlock(seq, 48, 1);
+    block = getBlock(seq, 48, 1);
     mu_assert(block->duration == 400, "Block 48 duration should be 400 block raster units");
     mu_assert(block->trigger.duration == 4000, "Block 48 trigger duration should be 4000 us");
     mu_assert(block->trigger.delay == 0, "Block 48 trigger delay should be 0");
     mu_assert(block->trigger.triggerType == TRIGGER_TYPE_OUTPUT, "Block 48 trigger should be a digital output trigger");
     mu_assert(block->trigger.triggerChannel == TRIGGER_CHANNEL_OUTPUT_OSC_1, "Block 48 channel type should be osc1");
 
-    block = pulseq_getBlock(seq, 49, 1);
+    block = getBlock(seq, 49, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
     mu_assert(block->duration == 400, "Block 49 duration should be 400 block raster units");
     mu_assert(block->trigger.duration == 4000, "Block 49 trigger duration should be 4000 us");
@@ -483,7 +498,7 @@ MU_TEST(test_delay) {
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
     for (i = 50; i < 58; i++) {
-        block = pulseq_getBlock(seq, i, 1);
+        block = getBlock(seq, i, 1);
         mu_assert(block != NULL, "getBlock should return a valid block");
         mu_assert(block->duration == 1, "Block duration should be 1 block raster units");
         mu_assert(block->rf.type == 0, "Block should not have RF event");
@@ -501,35 +516,35 @@ MU_TEST(test_delay) {
         mu_assert(block->delay.factor == 1, "Block delay should have factor 1");
     }
 
-    block = pulseq_getBlock(seq, 50, 1);
+    block = getBlock(seq, 50, 1);
     mu_assert(block->delay.numID == 0, "Block 50 delay should have numID 0");
     mu_assert(block->delay.hintID == HINT_TE, "Block 50 delay type should be 'TE'");
 
-    block = pulseq_getBlock(seq, 51, 1);
+    block = getBlock(seq, 51, 1);
     mu_assert(block->delay.numID == 1, "Block 51 delay should have numID 1");
     mu_assert(block->delay.hintID == HINT_TR, "Block 51 delay type should be 'TR'");
 
-    block = pulseq_getBlock(seq, 52, 1);
+    block = getBlock(seq, 52, 1);
     mu_assert(block->delay.numID == 2, "Block 52 delay should have numID 2");
     mu_assert(block->delay.hintID == HINT_TI, "Block 52 delay type should be 'TI'");
 
-    block = pulseq_getBlock(seq, 53, 1);
+    block = getBlock(seq, 53, 1);
     mu_assert(block->delay.numID == 3, "Block 53 delay should have numID 3");
     mu_assert(block->delay.hintID == HINT_ESP, "Block 53 delay type should be 'ESP'");
 
-    block = pulseq_getBlock(seq, 54, 1);
+    block = getBlock(seq, 54, 1);
     mu_assert(block->delay.numID == 4, "Block 54 delay should have numID 4");
     mu_assert(block->delay.hintID == HINT_RECTIME, "Block 54 delay type should be 'RECTIME'");
 
-    block = pulseq_getBlock(seq, 55, 1);
+    block = getBlock(seq, 55, 1);
     mu_assert(block->delay.numID == 5, "Block 55 delay should have numID 5");
     mu_assert(block->delay.hintID == HINT_T2PREP, "Block 55 delay type should be 'T2PREP'");
 
-    block = pulseq_getBlock(seq, 56, 1);
+    block = getBlock(seq, 56, 1);
     mu_assert(block->delay.numID == 6, "Block 56 delay should have numID 6");
     mu_assert(block->delay.hintID == HINT_TE2, "Block 56 delay type should be 'TE2'");
 
-    block = pulseq_getBlock(seq, 57, 1);
+    block = getBlock(seq, 57, 1);
     mu_assert(block->delay.numID == 7, "Block 57 delay should have numID 7");
     mu_assert(block->delay.hintID == HINT_TR2, "Block 57 delay type should be 'TR2'");
 
@@ -541,7 +556,7 @@ MU_TEST(test_pure_delay) {
     pulseq_SeqBlock* block;
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
-    block = pulseq_getBlock(seq, 58, 1);
+    block = getBlock(seq, 58, 1);
     mu_assert(block != NULL, "getBlock should return a valid block");
     mu_assert(block->duration == 100000, "Block 58 duration should be 100000");
     mu_assert(block->rf.type == 0, "Block 58 should not have RF event");

@@ -29,18 +29,13 @@ typedef struct {
 } ShapeArbitrary; /* mirrors Pulseq CompressedShape */
 
 /**
- * @brief Decompresses a ShapeArbitrary waveform if needed.
+ * @brief Decompress a shape from compressed format if needed.
  *
- * This function decompresses a run-length compressed waveform (Pulseq shape format).
- * If no decompression is needed (i.e., nSamples == nUncompressedSamples), it simply returns the input.
- * Otherwise, it allocates and returns a new ShapeArbitrary with the fully decompressed waveform.
- *
- * @param[in] encoded Pointer to the compressed ShapeArbitrary.
- * @return Pointer to decompressed ShapeArbitrary. 
- *         May be the same as `encoded` if no decompression was needed.
- *         If decompressed, caller is responsible for freeing both the struct and its `samples` field.
+ * @param[in] encoded The encoded shape to decompress.
+ * @param[out] result Pointer to a pre-allocated ShapeArbitrary to store the result.
+ * @return 1 if successful, 0 otherwise.
  */
-ShapeArbitrary* decompressShape(ShapeArbitrary* encoded);
+int decompressShape(ShapeArbitrary* encoded, ShapeArbitrary* result);
 
 /** @struct ShapeTrap
    * @brief  Trapzoid shape struct

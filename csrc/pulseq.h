@@ -18,6 +18,6 @@ void pulseq_readSeq(pulseq_SeqFile* seq);
 
 pulseq_SeqBlock* pulseq_seqBlock(void);
 void pulseq_seqBlockFree(pulseq_SeqBlock* block);
-pulseq_SeqBlock* pulseq_getBlock(const pulseq_SeqFile* seq, int blockIndex, int parseExtensions);
+int pulseq_getBlock(const pulseq_SeqFile* seq, int blockIndex, int parseExtensions, pulseq_SeqBlock* block);
 
 #endif /* PULSEQ_H */

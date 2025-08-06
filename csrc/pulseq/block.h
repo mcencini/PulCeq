@@ -108,8 +108,9 @@ void __seqBlockFree(SeqBlock* block);
  * @param[in] seq The SeqFile structure containing the sequence data.
  * @param[in] blockIndex The index of the block to retrieve.
  * @param[in] parseExtensions Flag indicating whether to parse extensions.
- * @return The SeqBlock corresponding to the specified index.
+ * @param[out] block Pointer to a pre-allocated SeqBlock to fill.
+ * @return 1 if successful, 0 otherwise.
  */
-SeqBlock* __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions);
+int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock* block);
 
 #endif /* BLOCK_H */
