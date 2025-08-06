@@ -9,14 +9,14 @@
 #include "pulseq/block.h"
 
 /* Public API */
-pulseq_SeqFile* pulseq_seqFile(char* filePath);
+int pulseq_seqFile(char* filePath, pulseq_SeqFile* seq);
 void pulseq_seqFileFree(pulseq_SeqFile* seq);
 void pulseq_seqFileReset(pulseq_SeqFile* seq);
 void pulseq_readDefinitions(pulseq_SeqFile* seq);
 void pulseq_readLibraries(pulseq_SeqFile* seq, int readBlocks);
 void pulseq_readSeq(pulseq_SeqFile* seq);
 
-pulseq_SeqBlock* pulseq_seqBlock(void);
+int pulseq_seqBlock(pulseq_SeqBlock* block);
 void pulseq_seqBlockFree(pulseq_SeqBlock* block);
 int pulseq_getBlock(const pulseq_SeqFile* seq, int blockIndex, int parseExtensions, pulseq_SeqBlock* block);
 

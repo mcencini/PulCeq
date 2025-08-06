@@ -72,9 +72,9 @@ void getRawBlockContentIDs(RawBlock* block, const SeqFile* seq, const int blockI
     return;
 }
 
-SeqBlock* __seqBlock(void)
+int __seqBlock(SeqBlock* block)
 {
-    SeqBlock* block = (SeqBlock*)ALLOC(sizeof(SeqBlock));
+    /* Event structures used to initialize the block */
     RFEvent rf;
     GradEvent gx;
     GradEvent gy;
@@ -86,6 +86,9 @@ SeqBlock* __seqBlock(void)
     LabelEvent label;
     SoftDelayEvent delay;
     RfShimmingEvent rfShimming;
+    
+    /* Check for null pointer */
+    if (!block) return 0;
 
     /* Initialize rf Event*/
     rf.type = 0;
@@ -138,7 +141,7 @@ SeqBlock* __seqBlock(void)
     block->delay = delay;
     block->rfShimming = rfShimming;
 
-    return block;
+    return 1;
 }
 
 void __seqBlockFree(SeqBlock* block)

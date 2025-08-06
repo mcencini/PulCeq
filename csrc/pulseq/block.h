@@ -90,8 +90,10 @@ typedef pulseq_SeqBlock SeqBlock;
 /**
  * @brief Initializes a sequence block with default values.
  *
+ * @param[out] block The pre-allocated block structure to initialize
+ * @return 1 if successful, 0 if failed
  */
-SeqBlock* __seqBlock(void);
+int __seqBlock(SeqBlock* block);
 
 /**
  * @brief Frees all resources associated with a SeqBlock.

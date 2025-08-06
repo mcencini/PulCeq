@@ -1,14 +1,23 @@
 #include "minunit.h"
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "pulseq.h"
 
+#include "../csrc/vendor.h"
+
 /* Helper function to get a block with the new API */
 static pulseq_SeqBlock* getBlock(pulseq_SeqFile* seq, int blockIndex, int parseExtensions) {
+    /* Use static variable to avoid stack issues with large structs */
     static pulseq_SeqBlock block;
     
-    /* Reset the block to avoid any contamination from previous calls */
-    memset(&block, 0, sizeof(pulseq_SeqBlock));
+    /* Initialize the block with default values */
+    if (!pulseq_seqBlock(&block)) {
+        return NULL;
+    }
     
     /* Get the block using the new API */
     if (pulseq_getBlock(seq, blockIndex, parseExtensions, &block)) {
@@ -49,10 +58,23 @@ static pulseq_SeqFile* load_seq(char* filePath) {
     char cwd[1024];
     char seq_path[1024];
     pulseq_SeqFile* seq;
+    
+    /* Allocate memory for the sequence file */
+    seq = (pulseq_SeqFile*)ALLOC(sizeof(pulseq_SeqFile));
+    if (!seq) return NULL;
+    
+    /* Create the full path to the sequence file */
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
         snprintf(seq_path, sizeof(seq_path), "%s/%s", cwd, filePath);
     }
-    seq = pulseq_seqFile(seq_path);
+    
+    /* Initialize the sequence file structure */
+    if (!pulseq_seqFile(seq_path, seq)) {
+        FREE(seq);
+        return NULL;
+    }
+    
+    /* Read the sequence data */
     pulseq_readSeq(seq);
     return seq;
 }

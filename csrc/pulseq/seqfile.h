@@ -153,9 +153,10 @@ typedef pulseq_SeqFile SeqFile;
  * @brief Initialize SeqFile struct.
  * 
  * @param[in] filePath Path on disk of sequence file (.seq).
- * @return Initializes SeqFile structure  
+ * @param[out] seq The pre-allocated SeqFile structure to initialize
+ * @return 1 if successful, 0 if failed
  */
-SeqFile* __seqFile(char* filePath);
+int __seqFile(char* filePath, SeqFile* seq);
 
 /**
  * @brief Destroy SeqFile struct.

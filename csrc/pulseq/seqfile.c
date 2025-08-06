@@ -18,7 +18,6 @@
 #include "extlib.h"
 #include "scanfile.h"
 
-/*********************************************************  local utils  *********************************************************/
 void fillLabelLibrary(SeqFile *seq);
 
 #define INIT_LIBRARY(seq, fieldPtr, sizeField, flagField) \
@@ -77,14 +76,19 @@ void seqFileInit(SeqFile* seq){
     seq->extensionLUT = NULL;
     INIT_LIBRARY(seq, shapesLibrary, shapesLibrarySize, isShapesLibraryParsed);
 }
-/****************************************************  end local utils  ****************************************************/
 
-SeqFile* __seqFile(char* filePath){
-    SeqFile *seq = (SeqFile*) ALLOC(sizeof(SeqFile));
+int __seqFile(char* filePath, SeqFile* seq){
+    /* Check for null pointer */
+    if (!seq) return 0;
+    
+    /* Initialize the sequence file */
     seqFileInit(seq);
+    
+    /* Allocate and copy the file path */
     seq->filePath = (char*) ALLOC(strlen(filePath) + 1);
     strcpy(seq->filePath, filePath);
-    return seq;
+    
+    return 1;
 }
 
 void __seqFileFree(SeqFile *seq){
