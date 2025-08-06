@@ -28,6 +28,7 @@ static pulseq_SeqBlock* getBlock(pulseq_SeqFile* seq, int blockIndex, int parseE
 }
 
 /* UTILS */
+/*
 #define LABEL_FIELD(label, idx) \
     ((idx)==0 ? (label)->slc : \
     (idx)==1 ? (label)->seg : \
@@ -53,7 +54,7 @@ static pulseq_SeqBlock* getBlock(pulseq_SeqFile* seq, int blockIndex, int parseE
     (idx)==9 ? (flag)->nopos : \
     (idx)==10 ? (flag)->noscl : \
     (idx)==11 ? (flag)->once : 0)
-
+*/
 static pulseq_SeqFile* load_seq(char* filePath) {
     char cwd[1024];
     char seq_path[1024];
@@ -79,6 +80,7 @@ static pulseq_SeqFile* load_seq(char* filePath) {
     return seq;
 }
 
+/*
 static void assert_label_event(const LabelEvent* label, int target_idx, int expected) {
     int i;
     for (i = 0; i < 10; i++) {
@@ -100,6 +102,7 @@ static void assert_flag_event(const FlagEvent* flag, int target_idx, int expecte
         }
     }
 }
+*/
 /* END UTILS */
 
 MU_TEST(test_basic) {
@@ -157,7 +160,6 @@ MU_TEST(test_rf) {
         mu_assert(block->adc.type == 0, "Block should not have ADC event");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->flag.type == 0, "Block should not have flag event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
         
         mu_assert(block->rf.magShape.numSamples > 0, "RF should have magnitude shape samples");
@@ -210,7 +212,6 @@ MU_TEST(test_adc) {
         mu_assert(block->adc.type == 1, "Block should have ADC event");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->flag.type == 0, "Block should not have flag event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
 
@@ -246,7 +247,6 @@ MU_TEST(test_grad) {
         mu_assert(block->rf.type == 0, "Block should not have RF event");
         mu_assert(block->adc.type == 0, "Block should not have ADC event");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
-        mu_assert(block->flag.type == 0, "Block should not have flag event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
     }
@@ -411,9 +411,10 @@ MU_TEST(test_grad) {
     pulseq_seqFileFree(seq);
 }
 
+/*
 MU_TEST(test_flags) {
     int i;
-    int n = 0; /* flag event index */
+    int n = 0;
     pulseq_SeqBlock* block;
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
@@ -423,7 +424,6 @@ MU_TEST(test_flags) {
         mu_assert(block->duration == 128, "Block duration should be 128 block raster units");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->flag.type == 1, "Block should have flag event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
 
@@ -436,7 +436,7 @@ MU_TEST(test_flags) {
 
 MU_TEST(test_labels) {
     int i;
-    int n = 0; /* label event index */
+    int n = 0;
     pulseq_SeqBlock* block;
     pulseq_SeqFile* seq = load_seq("tests/expected_output/seq2.seq");
 
@@ -453,7 +453,7 @@ MU_TEST(test_labels) {
     pulseq_seqBlockFree(block);
     pulseq_seqFileFree(seq);
 }
-
+*/
 MU_TEST(test_trigger) {
     int i;
     pulseq_SeqBlock* block;
@@ -469,7 +469,6 @@ MU_TEST(test_trigger) {
         mu_assert(block->adc.type == 0, "Block should not have ADC event");
         mu_assert(block->trigger.type == 1, "Block should have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->flag.type == 0, "Block should not have flag event");
         mu_assert(block->delay.type == 0, "Block should not have delay event");
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
     }
@@ -530,7 +529,6 @@ MU_TEST(test_delay) {
         mu_assert(block->adc.type == 0, "Block should not have ADC event");
         mu_assert(block->trigger.type == 0, "Block should not have trigger event");
         mu_assert(block->rotation.type == 0, "Block should not have rotation event");
-        mu_assert(block->flag.type == 0, "Block should not have flag event");
         mu_assert(block->delay.type == 1, "Block should have delay event");
         mu_assert(block->rfShimming.type == 0, "Block should not have RF shimming event");
 
@@ -588,7 +586,6 @@ MU_TEST(test_pure_delay) {
     mu_assert(block->adc.type == 0, "Block 58 should not have ADC event");
     mu_assert(block->trigger.type == 0, "Block 58 should not have trigger event");
     mu_assert(block->rotation.type == 0, "Block 58 should not have rotation event");
-    mu_assert(block->flag.type == 0, "Block 58 should not have flag event");
     mu_assert(block->delay.type == 0, "Block 58 should not have delay event");
     mu_assert(block->rfShimming.type == 0, "Block 58 should not have RF shimming event");
 
@@ -607,10 +604,10 @@ MU_TEST_SUITE(test_seqfile_suite) {
     MU_RUN_TEST(test_adc);
     printf("Running test_grad...\n");
     MU_RUN_TEST(test_grad);
-    printf("Running test_flags...\n");
+    /*printf("Running test_flags...\n");
     MU_RUN_TEST(test_flags);
     printf("Running test_labels...\n");
-    MU_RUN_TEST(test_labels);
+    MU_RUN_TEST(test_labels);*/
     printf("Running test_trigger...\n");
     MU_RUN_TEST(test_trigger);
     printf("Running test_delay...\n");

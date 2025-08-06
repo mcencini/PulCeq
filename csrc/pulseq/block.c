@@ -103,7 +103,6 @@ int __seqBlock(SeqBlock* block)
     rfShimming.type = 0;
 
     /* Initialize flag values to 0 */
-    flag.type = 0;
     flag.trid = 0;
     flag.nav = 0;
     flag.rev = 0;
@@ -524,18 +523,18 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
                 
                 /* Handle flag values - those that don't affect ADC labeling */
                 switch (labelID) {
-                    case TRID: block->flag.trid = labelValue; block->flag.type = 1; break;
-                    case NAV: block->flag.nav = labelValue; block->flag.type = 1; break;
-                    case REV: block->flag.rev = labelValue; block->flag.type = 1; break;
-                    case SMS: block->flag.sms = labelValue; block->flag.type = 1; break;
-                    case REF: block->flag.ref = labelValue; block->flag.type = 1; break;
-                    case IMA: block->flag.ima = labelValue; block->flag.type = 1; break;
-                    case NOISE: block->flag.noise = labelValue; block->flag.type = 1; break;
-                    case PMC: block->flag.pmc = labelValue; block->flag.type = 1; break;
-                    case NOROT: block->flag.norot = labelValue; block->flag.type = 1; break;
-                    case NOPOS: block->flag.nopos = labelValue; block->flag.type = 1; break;
-                    case NOSCL: block->flag.noscl = labelValue; block->flag.type = 1; break;
-                    case ONCE: block->flag.once = labelValue; block->flag.type = 1; break;
+                    case TRID: block->flag.trid = labelValue; break;
+                    case NAV: block->flag.nav = labelValue; break;
+                    case REV: block->flag.rev = labelValue; break;
+                    case SMS: block->flag.sms = labelValue; break;
+                    case REF: block->flag.ref = labelValue; break;
+                    case IMA: block->flag.ima = labelValue; break;
+                    case NOISE: block->flag.noise = labelValue; break;
+                    case PMC: block->flag.pmc = labelValue; break;
+                    case NOROT: block->flag.norot = labelValue; break;
+                    case NOPOS: block->flag.nopos = labelValue; break;
+                    case NOSCL: block->flag.noscl = labelValue; break;
+                    case ONCE: block->flag.once = labelValue; break;
                     default: break;
                 }
                 break;

@@ -363,7 +363,6 @@ typedef struct {
  *    A 3-state flag for usage frequency.
  */
 typedef struct {
-    short type;  /**< @brief NULL or DEFINED */
     int trid;    /**< Marks the beginning of a repeatable module in the sequence (e.g. TR); modules with different timing should be assigned different TRIDs */
     int nav;     /**< Navigator data flag */
     int rev;     /**< Flag indicating that the readout direction is reversed */
