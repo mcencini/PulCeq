@@ -32,4 +32,28 @@ int pulseq_getBlock(const pulseq_SeqFile* seq, int blockIndex, int parseExtensio
 
 int pulseq_getUniqueSeq(pulseq_SeqFile* uniqueSeq, const pulseq_SeqFile* seq);
 
+/**
+ * @brief Compute the maximum gradient amplitude across all gradient events in the sequence.
+ *
+ * @param[in] seq The sequence file containing the gradLibrary.
+ * @return float The maximum gradient amplitude (in T/m).
+ */
+float pulseq_computeMaxGradientAmplitude(const pulseq_SeqFile* seq);
+
+/**
+ * @brief Compute the maximum slew rate across all gradient events in the sequence.
+ *
+ * @param[in] seq The sequence file containing the gradLibrary and shapesLibrary.
+ * @return float The maximum slew rate across all gradient events (in T/m/s).
+ */
+float pulseq_computeMaxSlewRate(const pulseq_SeqFile* seq);
+
+/**
+ * @brief Compute the maximum B1 amplitude across all RF events in the sequence.
+ *
+ * @param[in] seq The sequence file containing the rfLibrary.
+ * @return float The maximum B1 amplitude (in arbitrary units).
+ */
+float pulseq_computeMaxB1Amplitude(const pulseq_SeqFile* seq);
+
 #endif /* PULSEQ_H */

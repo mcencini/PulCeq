@@ -8,7 +8,9 @@
 #include "pulseq/rotation.c"
 #include "pulseq/unique_sequence.h"
 #include "pulseq/label.h"
+#include "pulseq/safety.h"
 #include "pulseq/seqfile.h"
+
 
 int pulseq_seqFile(char* filePath, pulseq_SeqFile* seq) { 
     int result;
@@ -73,7 +75,7 @@ int pulseq_getBlock(const pulseq_SeqFile* seq, int blockIndex, int parseExtensio
 }
 
 int pulseq_getUniqueSeq(pulseq_SeqFile* uniqueSeq, const pulseq_SeqFile* seq) {
-    return getUniqueSeq(uniqueSeq, (const SeqFile*)seq);
+    return getUniqueSeq(uniqueSeq, seq);
 }
 
 int pulseq_getNumReadouts(const pulseq_SeqFile* seq, const int excludeNavigator) {
@@ -127,4 +129,16 @@ int pulseq_getNumReadouts(const pulseq_SeqFile* seq, const int excludeNavigator)
 
     /* Return the number of readouts excluding navigators */
     return seq->adcLibrarySize - numNavigatorADC;
+}
+
+float pulseq_computeMaxGradientAmplitude(const pulseq_SeqFile* seq) {
+    return computeMaxGradientAmplitude(seq);
+}
+
+float pulseq_computeMaxSlewRate(const pulseq_SeqFile* seq) {
+    return computeMaxSlewRate(seq);
+}
+
+float pulseq_computeMaxB1Amplitude(const pulseq_SeqFile* seq) {
+    return computeMaxB1Amplitude(seq);
 }
