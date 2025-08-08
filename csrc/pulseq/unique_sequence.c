@@ -9,18 +9,8 @@
 #include <math.h>
 
 #include "unique_sequence.h"
-#include "vendor.h"
+#include "alloc.h"
 #include "seqfile.h"
-
-/* Function declarations that must be visible to other modules */
-int getUniqueSeq(SeqFile* uniqueSeq, const SeqFile* seq);
-float getMaxRFAmplitude(const SeqFile* seq);
-float getMaxGradientAmplitude(const SeqFile* seq);
-float getMaxSlewRate(const SeqFile* seq);
-int countNavigationADCEvents(const SeqFile* seq);
-
-/* Internal function declarations */
-static int uniqueSequence(SeqFile* uniqueSeq, const SeqFile* seq);
 
 /* Define library size constants */
 #define RF_COLS 10
@@ -34,14 +24,15 @@ static int uniqueSequence(SeqFile* uniqueSeq, const SeqFile* seq);
  * @brief Compare function for RF events.
  */
 static int compareRFEvents(const void* a, const void* b) {
-    const float* rfA = (const float*)a;
-    const float* rfB = (const float*)b;
+    const int* indexA = (const int*)a;
+    const int* indexB = (const int*)b;
+    const float* matrixA = *(const float**)a; // Get the matrix entry for index A
+    const float* matrixB = *(const float**)b; // Get the matrix entry for index B
     
     /* Compare mag_id, phase_id, time_id, and delay */
-    if (rfA[1] != rfB[1]) return rfA[1] > rfB[1] ? 1 : -1;  /* mag_id */
-    if (rfA[2] != rfB[2]) return rfA[2] > rfB[2] ? 1 : -1;  /* phase_id */
-    if (rfA[3] != rfB[3]) return rfA[3] > rfB[3] ? 1 : -1;  /* time_id */
-    if (rfA[5] != rfB[5]) return rfA[5] > rfB[5] ? 1 : -1;  /* delay */
+    if (matrixA[0] != matrixB[0]) return matrixA[0] < matrixB[0] ? -1 : 1;  /* mag_id */
+    if (matrixA[1] != matrixB[1]) return matrixA[1] < matrixB[1] ? -1 : 1;  /* phase_id */
+    if (matrixA[2] != matrixB[2]) return matrixA[2] < matrixB[2] ? -1 : 1;  /* time_id */
     
     return 0;  /* Events are identical */
 }
@@ -50,25 +41,26 @@ static int compareRFEvents(const void* a, const void* b) {
  * @brief Compare function for gradient events.
  */
 static int compareGradEvents(const void* a, const void* b) {
-    const float* gradA = (const float*)a;
-    const float* gradB = (const float*)b;
+    const int* indexA = (const int*)a;
+    const int* indexB = (const int*)b;
+    const float* matrixA = *(const float**)a;
+    const float* matrixB = *(const float**)b;
     
     /* First check if types are different */
-    if (gradA[0] != gradB[0]) return gradA[0] > gradB[0] ? 1 : -1;  /* type */
+    if (matrixA[0] != matrixB[0]) return matrixA[0] < matrixB[0] ? -1 : 1;  /* type */
     
-    if (gradA[0] == 0) {  /* Trapezoid */
+    if (matrixA[0] == 0) {  /* Trapezoid */
         /* Compare rise, flat, fall, and delay */
-        if (gradA[2] != gradB[2]) return gradA[2] > gradB[2] ? 1 : -1;  /* rise */
-        if (gradA[3] != gradB[3]) return gradA[3] > gradB[3] ? 1 : -1;  /* flat */
-        if (gradA[4] != gradB[4]) return gradA[4] > gradB[4] ? 1 : -1;  /* fall */
-        if (gradA[6] != gradB[6]) return gradA[6] > gradB[6] ? 1 : -1;  /* delay */
+        if (matrixA[1] != matrixB[1]) return matrixA[1] < matrixB[1] ? -1 : 1;  /* rise */
+        if (matrixA[2] != matrixB[2]) return matrixA[2] < matrixB[2] ? -1 : 1;  /* flat */
+        if (matrixA[3] != matrixB[3]) return matrixA[3] < matrixB[3] ? -1 : 1;  /* fall */
+        if (matrixA[4] != matrixB[4]) return matrixA[4] < matrixB[4] ? -1 : 1;  /* delay */
     } else {  /* Arbitrary */
         /* Compare shape_id, first, last, time_id, and delay */
-        if (gradA[4] != gradB[4]) return gradA[4] > gradB[4] ? 1 : -1;  /* shape_id */
-        if (gradA[2] != gradB[2]) return gradA[2] > gradB[2] ? 1 : -1;  /* first */
-        if (gradA[3] != gradB[3]) return gradA[3] > gradB[3] ? 1 : -1;  /* last */
-        if (gradA[5] != gradB[5]) return gradA[5] > gradB[5] ? 1 : -1;  /* time_id */
-        if (gradA[6] != gradB[6]) return gradA[6] > gradB[6] ? 1 : -1;  /* delay */
+        if (matrixA[1] != matrixB[1]) return matrixA[1] < matrixB[1] ? -1 : 1;  /* first */
+        if (matrixA[2] != matrixB[2]) return matrixA[2] < matrixB[2] ? -1 : 1;  /* last */
+        if (matrixA[3] != matrixB[3]) return matrixA[3] < matrixB[3] ? -1 : 1;  /* shape_id */
+        if (matrixA[4] != matrixB[4]) return matrixA[4] < matrixB[4] ? -1 : 1;  /* delay */
     }
     
     return 0;  /* Events are identical */
@@ -78,14 +70,15 @@ static int compareGradEvents(const void* a, const void* b) {
  * @brief Compare function for ADC events.
  */
 static int compareADCEvents(const void* a, const void* b) {
-    const float* adcA = (const float*)a;
-    const float* adcB = (const float*)b;
+    const int* indexA = (const int*)a;
+    const int* indexB = (const int*)b;
+    const float* matrixA = *(const float**)a;
+    const float* matrixB = *(const float**)b;
     
     /* Compare num, dwell, delay, and phase_id */
-    if (adcA[0] != adcB[0]) return adcA[0] > adcB[0] ? 1 : -1;  /* num */
-    if (adcA[1] != adcB[1]) return adcA[1] > adcB[1] ? 1 : -1;  /* dwell */
-    if (adcA[2] != adcB[2]) return adcA[2] > adcB[2] ? 1 : -1;  /* delay */
-    if (adcA[7] != adcB[7]) return adcA[7] > adcB[7] ? 1 : -1;  /* phase_id */
+    if (matrixA[0] != matrixB[0]) return matrixA[0] < matrixB[0] ? -1 : 1;  /* num */
+    if (matrixA[1] != matrixB[1]) return matrixA[1] < matrixB[1] ? -1 : 1;  /* dwell */
+    if (matrixA[2] != matrixB[2]) return matrixA[2] < matrixB[2] ? -1 : 1;  /* delay */
     
     return 0;  /* Events are identical */
 }
@@ -96,76 +89,102 @@ static int compareADCEvents(const void* a, const void* b) {
  * @param seq Source sequence file
  * @param rfMap Output mapping from original indices to unique indices (1-based)
  * @param uniqueRfCount Output pointer to store number of unique RF events
- * @return float(*)[RF_COLS] Array of unique RF events, caller must free
+ * @param uniqueRfLibrary Output array for unique RF events
  */
-static float (*findUniqueRF(const SeqFile* seq, int* rfMap, int* uniqueRfCount))[RF_COLS] {
-    int n = seq->rfLibrarySize;
-    int i, j;
-    int *sortedIndices = NULL;
-    float (*rfMatrix)[3] = NULL;
-    float (*uniqueRfLibrary)[RF_COLS] = NULL;
-    
+static void findUniqueRF(const SeqFile* seq, int* rfMap, int* uniqueRfCount, float (*uniqueRfLibrary)[RF_COLS]) {
+    int n;
+    int i, j, uniqueIndex;
+    int *sortedIndices;
+    float **rfMatrix;
+    int *firstAppearance;
+    float temp[RF_COLS];
+    int tempIndex;
+
+    n = seq->rfLibrarySize;
     *uniqueRfCount = 0;
-    if (n == 0) return NULL;
-    
-    /* Allocate memory for sorted indices and RF comparison matrix */
+    if (n == 0) return;
+
+    /* Allocate memory for sorted indices, RF comparison matrix, and first appearance tracking */
     sortedIndices = (int*)ALLOC(n * sizeof(int));
-    rfMatrix = (float (*)[3])ALLOC(n * sizeof(float[3]));
-    if (!sortedIndices || !rfMatrix) goto cleanup_error;
-    
+    rfMatrix = (float**)ALLOC(n * sizeof(float*));
+    firstAppearance = (int*)ALLOC(n * sizeof(int)); /* Track first appearance of unique events */
+
+    if (!sortedIndices || !rfMatrix || !firstAppearance) {
+        if (sortedIndices) FREE(sortedIndices);
+        if (rfMatrix) FREE(rfMatrix);
+        if (firstAppearance) FREE(firstAppearance);
+        return;
+    }
+
     /* Extract the identifying columns for comparison */
     for (i = 0; i < n; i++) {
+        rfMatrix[i] = (float*)ALLOC(3 * sizeof(float));
+        if (!rfMatrix[i]) {
+            for (j = 0; j < i; j++) {
+                FREE(rfMatrix[j]);
+            }
+            FREE(rfMatrix);
+            FREE(sortedIndices);
+            FREE(firstAppearance);
+            return;
+        }
+
         rfMatrix[i][0] = seq->rfLibrary[i][1]; /* mag_id */
         rfMatrix[i][1] = seq->rfLibrary[i][2]; /* phase_id */
         rfMatrix[i][2] = seq->rfLibrary[i][3]; /* time_id */
         sortedIndices[i] = i;
     }
-    
-    /* Sort the indices based on the extracted values */
-    for (i = 0; i < n; i++) {
-        for (j = i + 1; j < n; j++) {
-            if (compareRFEvents(rfMatrix[sortedIndices[i]], rfMatrix[sortedIndices[j]]) > 0) {
-                int temp = sortedIndices[i];
-                sortedIndices[i] = sortedIndices[j];
-                sortedIndices[j] = temp;
-            }
-        }
-    }
-    
-    /* Count unique events and create a mapping */
+
+    /* Sort using qsort */
+    qsort(sortedIndices, n, sizeof(int), compareRFEvents);
+
+    /* Identify unique events and track their first appearance */
     *uniqueRfCount = 0;
     for (i = 0; i < n; i++) {
-        if (i == 0 || compareRFEvents(rfMatrix[sortedIndices[i]], rfMatrix[sortedIndices[i-1]]) != 0) {
+        if (i == 0 || compareRFEvents(&sortedIndices[i], &sortedIndices[i - 1]) != 0) {
+            /* Copy the entire row from the original library */
+            memcpy(uniqueRfLibrary[*uniqueRfCount], seq->rfLibrary[sortedIndices[i]], RF_COLS * sizeof(float));
+            firstAppearance[*uniqueRfCount] = sortedIndices[i]; /* Track first appearance */
             (*uniqueRfCount)++;
         }
         /* Map from original indices to unique indices (1-based) */
         rfMap[sortedIndices[i]] = *uniqueRfCount;
     }
-    
-    /* Allocate memory for the unique library */
-    uniqueRfLibrary = (float (*)[RF_COLS])ALLOC((*uniqueRfCount) * sizeof(float[RF_COLS]));
-    if (!uniqueRfLibrary) goto cleanup_error;
-    
-    /* Build the unique library */
-    *uniqueRfCount = 0;
-    for (i = 0; i < n; i++) {
-        if (i == 0 || compareRFEvents(rfMatrix[sortedIndices[i]], rfMatrix[sortedIndices[i-1]]) != 0) {
-            /* Copy the entire row from the original library */
-            memcpy(uniqueRfLibrary[*uniqueRfCount], seq->rfLibrary[sortedIndices[i]], RF_COLS * sizeof(float));
-            (*uniqueRfCount)++;
+
+    /* Sort unique events by their first appearance */
+    for (i = 0; i < *uniqueRfCount - 1; i++) {
+        for (j = i + 1; j < *uniqueRfCount; j++) {
+            if (firstAppearance[i] > firstAppearance[j]) {
+                /* Swap entries in uniqueRfLibrary */
+                memcpy(temp, uniqueRfLibrary[i], RF_COLS * sizeof(float));
+                memcpy(uniqueRfLibrary[i], uniqueRfLibrary[j], RF_COLS * sizeof(float));
+                memcpy(uniqueRfLibrary[j], temp, RF_COLS * sizeof(float));
+
+                /* Swap entries in firstAppearance */
+                tempIndex = firstAppearance[i];
+                firstAppearance[i] = firstAppearance[j];
+                firstAppearance[j] = tempIndex;
+            }
         }
     }
-    
+
+    /* Update rfMap to reflect the new order of unique events */
+    for (i = 0; i < n; i++) {
+        for (uniqueIndex = 0; uniqueIndex < *uniqueRfCount; uniqueIndex++) {
+            if (sortedIndices[i] == firstAppearance[uniqueIndex]) {
+                rfMap[sortedIndices[i]] = uniqueIndex + 1; /* 1-based indexing */
+                break;
+            }
+        }
+    }
+
     /* Free temporary memory */
+    for (i = 0; i < n; i++) {
+        FREE(rfMatrix[i]);
+    }
     FREE(rfMatrix);
     FREE(sortedIndices);
-    return uniqueRfLibrary;
-    
-cleanup_error:
-    if (rfMatrix) FREE(rfMatrix);
-    if (sortedIndices) FREE(sortedIndices);
-    if (uniqueRfLibrary) FREE(uniqueRfLibrary);
-    return NULL;
+    FREE(firstAppearance);
 }
 
 /**
@@ -174,88 +193,104 @@ cleanup_error:
  * @param seq Source sequence file
  * @param gradMap Output mapping from original indices to unique indices (1-based)
  * @param uniqueGradCount Output pointer to store number of unique gradient events
- * @return float(*)[GRAD_COLS] Array of unique gradient events, caller must free
+ * @param uniqueGradLibrary Output array for unique gradient events
  */
-static float (*findUniqueGrad(const SeqFile* seq, int* gradMap, int* uniqueGradCount))[GRAD_COLS] {
-    int n = seq->gradLibrarySize;
-    int i, j, type;
-    int *sortedIndices = NULL;
-    float (*gradMatrix)[5] = NULL;
-    float (*uniqueGradLibrary)[GRAD_COLS] = NULL;
-    
+static void findUniqueGrad(const SeqFile* seq, int* gradMap, int* uniqueGradCount, float (*uniqueGradLibrary)[GRAD_COLS]) {
+    int n;
+    int i, j, uniqueIndex;
+    int *sortedIndices;
+    float **gradMatrix;
+    int *firstAppearance;
+    float temp[GRAD_COLS];
+    int tempIndex;
+
+    n = seq->gradLibrarySize;
     *uniqueGradCount = 0;
-    if (n == 0) return NULL;
-    
-    /* Allocate memory for sorted indices and gradient comparison matrix */
+    if (n == 0) return;
+
+    /* Allocate memory for sorted indices, gradient comparison matrix, and first appearance tracking */
     sortedIndices = (int*)ALLOC(n * sizeof(int));
-    gradMatrix = (float (*)[5])ALLOC(n * sizeof(float[5]));
-    if (!sortedIndices || !gradMatrix) goto cleanup_error;
-    
+    gradMatrix = (float**)ALLOC(n * sizeof(float*));
+    firstAppearance = (int*)ALLOC(n * sizeof(int)); /* Track first appearance of unique events */
+
+    if (!sortedIndices || !gradMatrix || !firstAppearance) {
+        if (sortedIndices) FREE(sortedIndices);
+        if (gradMatrix) FREE(gradMatrix);
+        if (firstAppearance) FREE(firstAppearance);
+        return;
+    }
+
     /* Extract the identifying columns for comparison */
     for (i = 0; i < n; i++) {
-        type = (int)seq->gradLibrary[i][0];
-        gradMatrix[i][0] = (float)type;
-        
-        if (type == 0) { /* TRAP */
-            gradMatrix[i][1] = seq->gradLibrary[i][2]; /* rise */
-            gradMatrix[i][2] = seq->gradLibrary[i][3]; /* flat */
-            gradMatrix[i][3] = seq->gradLibrary[i][4]; /* fall */
-            gradMatrix[i][4] = seq->gradLibrary[i][6]; /* delay */
-        } else { /* ARB */
-            gradMatrix[i][1] = seq->gradLibrary[i][2]; /* first */
-            gradMatrix[i][2] = seq->gradLibrary[i][3]; /* last */
-            gradMatrix[i][3] = seq->gradLibrary[i][4]; /* shape_id */
-            gradMatrix[i][4] = seq->gradLibrary[i][6]; /* delay */
+        gradMatrix[i] = (float*)ALLOC(5 * sizeof(float));
+        if (!gradMatrix[i]) {
+            for (j = 0; j < i; j++) {
+                FREE(gradMatrix[j]);
+            }
+            FREE(gradMatrix);
+            FREE(sortedIndices);
+            FREE(firstAppearance);
+            return;
         }
-        
+
+        gradMatrix[i][0] = seq->gradLibrary[i][0]; /* type */
+        gradMatrix[i][1] = seq->gradLibrary[i][2]; /* first */
+        gradMatrix[i][2] = seq->gradLibrary[i][3]; /* last */
+        gradMatrix[i][3] = seq->gradLibrary[i][4]; /* shape_id */
+        gradMatrix[i][4] = seq->gradLibrary[i][6]; /* delay */
         sortedIndices[i] = i;
     }
-    
-    /* Sort the indices based on the extracted values */
-    for (i = 0; i < n; i++) {
-        for (j = i + 1; j < n; j++) {
-            if (compareGradEvents(gradMatrix[sortedIndices[i]], gradMatrix[sortedIndices[j]]) > 0) {
-                int temp = sortedIndices[i];
-                sortedIndices[i] = sortedIndices[j];
-                sortedIndices[j] = temp;
-            }
-        }
-    }
-    
-    /* Count unique events and create a mapping */
+
+    /* Sort using qsort */
+    qsort(sortedIndices, n, sizeof(int), compareGradEvents);
+
+    /* Identify unique events and track their first appearance */
     *uniqueGradCount = 0;
     for (i = 0; i < n; i++) {
-        if (i == 0 || compareGradEvents(gradMatrix[sortedIndices[i]], gradMatrix[sortedIndices[i-1]]) != 0) {
+        if (i == 0 || compareGradEvents(&sortedIndices[i], &sortedIndices[i - 1]) != 0) {
+            /* Copy the entire row from the original library */
+            memcpy(uniqueGradLibrary[*uniqueGradCount], seq->gradLibrary[sortedIndices[i]], GRAD_COLS * sizeof(float));
+            firstAppearance[*uniqueGradCount] = sortedIndices[i]; /* Track first appearance */
             (*uniqueGradCount)++;
         }
         /* Map from original indices to unique indices (1-based) */
         gradMap[sortedIndices[i]] = *uniqueGradCount;
     }
-    
-    /* Allocate memory for the unique library */
-    uniqueGradLibrary = (float (*)[GRAD_COLS])ALLOC((*uniqueGradCount) * sizeof(float[GRAD_COLS]));
-    if (!uniqueGradLibrary) goto cleanup_error;
-    
-    /* Build the unique library */
-    *uniqueGradCount = 0;
-    for (i = 0; i < n; i++) {
-        if (i == 0 || compareGradEvents(gradMatrix[sortedIndices[i]], gradMatrix[sortedIndices[i-1]]) != 0) {
-            /* Copy the entire row from the original library */
-            memcpy(uniqueGradLibrary[*uniqueGradCount], seq->gradLibrary[sortedIndices[i]], GRAD_COLS * sizeof(float));
-            (*uniqueGradCount)++;
+
+    /* Sort unique events by their first appearance */
+    for (i = 0; i < *uniqueGradCount - 1; i++) {
+        for (j = i + 1; j < *uniqueGradCount; j++) {
+            if (firstAppearance[i] > firstAppearance[j]) {
+                /* Swap entries in uniqueGradLibrary */
+                memcpy(temp, uniqueGradLibrary[i], GRAD_COLS * sizeof(float));
+                memcpy(uniqueGradLibrary[i], uniqueGradLibrary[j], GRAD_COLS * sizeof(float));
+                memcpy(uniqueGradLibrary[j], temp, GRAD_COLS * sizeof(float));
+
+                /* Swap entries in firstAppearance */
+                tempIndex = firstAppearance[i];
+                firstAppearance[i] = firstAppearance[j];
+                firstAppearance[j] = tempIndex;
+            }
         }
     }
-    
+
+    /* Update gradMap to reflect the new order of unique events */
+    for (i = 0; i < n; i++) {
+        for (uniqueIndex = 0; uniqueIndex < *uniqueGradCount; uniqueIndex++) {
+            if (sortedIndices[i] == firstAppearance[uniqueIndex]) {
+                gradMap[sortedIndices[i]] = uniqueIndex + 1; /* 1-based indexing */
+                break;
+            }
+        }
+    }
+
     /* Free temporary memory */
+    for (i = 0; i < n; i++) {
+        FREE(gradMatrix[i]);
+    }
     FREE(gradMatrix);
     FREE(sortedIndices);
-    return uniqueGradLibrary;
-    
-cleanup_error:
-    if (gradMatrix) FREE(gradMatrix);
-    if (sortedIndices) FREE(sortedIndices);
-    if (uniqueGradLibrary) FREE(uniqueGradLibrary);
-    return NULL;
+    FREE(firstAppearance);
 }
 
 /**
@@ -264,76 +299,102 @@ cleanup_error:
  * @param seq Source sequence file
  * @param adcMap Output mapping from original indices to unique indices (1-based)
  * @param uniqueAdcCount Output pointer to store number of unique ADC events
- * @return float(*)[ADC_COLS] Array of unique ADC events, caller must free
+ * @param uniqueAdcLibrary Output array for unique ADC events
  */
-static float (*findUniqueADC(const SeqFile* seq, int* adcMap, int* uniqueAdcCount))[ADC_COLS] {
-    int n = seq->adcLibrarySize;
-    int i, j;
-    int *sortedIndices = NULL;
-    float (*adcMatrix)[3] = NULL;
-    float (*uniqueAdcLibrary)[ADC_COLS] = NULL;
-    
+static void findUniqueADC(const SeqFile* seq, int* adcMap, int* uniqueAdcCount, float (*uniqueAdcLibrary)[ADC_COLS]) {
+    int n;
+    int i, j, uniqueIndex;
+    int *sortedIndices;
+    float **adcMatrix;
+    int *firstAppearance;
+    float temp[ADC_COLS];
+    int tempIndex;
+
+    n = seq->adcLibrarySize;
     *uniqueAdcCount = 0;
-    if (n == 0) return NULL;
-    
-    /* Allocate memory for sorted indices and ADC comparison matrix */
+    if (n == 0) return;
+
+    /* Allocate memory for sorted indices, ADC comparison matrix, and first appearance tracking */
     sortedIndices = (int*)ALLOC(n * sizeof(int));
-    adcMatrix = (float (*)[3])ALLOC(n * sizeof(float[3]));
-    if (!sortedIndices || !adcMatrix) goto cleanup_error;
-    
+    adcMatrix = (float**)ALLOC(n * sizeof(float*));
+    firstAppearance = (int*)ALLOC(n * sizeof(int)); /* Track first appearance of unique events */
+
+    if (!sortedIndices || !adcMatrix || !firstAppearance) {
+        if (sortedIndices) FREE(sortedIndices);
+        if (adcMatrix) FREE(adcMatrix);
+        if (firstAppearance) FREE(firstAppearance);
+        return;
+    }
+
     /* Extract the identifying columns for comparison */
     for (i = 0; i < n; i++) {
+        adcMatrix[i] = (float*)ALLOC(3 * sizeof(float));
+        if (!adcMatrix[i]) {
+            for (j = 0; j < i; j++) {
+                FREE(adcMatrix[j]);
+            }
+            FREE(adcMatrix);
+            FREE(sortedIndices);
+            FREE(firstAppearance);
+            return;
+        }
+
         adcMatrix[i][0] = seq->adcLibrary[i][0]; /* num */
         adcMatrix[i][1] = seq->adcLibrary[i][1]; /* dwell */
         adcMatrix[i][2] = seq->adcLibrary[i][2]; /* delay */
         sortedIndices[i] = i;
     }
-    
-    /* Sort the indices based on the extracted values */
-    for (i = 0; i < n; i++) {
-        for (j = i + 1; j < n; j++) {
-            if (compareADCEvents(adcMatrix[sortedIndices[i]], adcMatrix[sortedIndices[j]]) > 0) {
-                int temp = sortedIndices[i];
-                sortedIndices[i] = sortedIndices[j];
-                sortedIndices[j] = temp;
-            }
-        }
-    }
-    
-    /* Count unique events and create a mapping */
+
+    /* Sort using qsort */
+    qsort(sortedIndices, n, sizeof(int), compareADCEvents);
+
+    /* Identify unique events and track their first appearance */
     *uniqueAdcCount = 0;
     for (i = 0; i < n; i++) {
-        if (i == 0 || compareADCEvents(adcMatrix[sortedIndices[i]], adcMatrix[sortedIndices[i-1]]) != 0) {
+        if (i == 0 || compareADCEvents(&sortedIndices[i], &sortedIndices[i - 1]) != 0) {
+            /* Copy the entire row from the original library */
+            memcpy(uniqueAdcLibrary[*uniqueAdcCount], seq->adcLibrary[sortedIndices[i]], ADC_COLS * sizeof(float));
+            firstAppearance[*uniqueAdcCount] = sortedIndices[i]; /* Track first appearance */
             (*uniqueAdcCount)++;
         }
         /* Map from original indices to unique indices (1-based) */
         adcMap[sortedIndices[i]] = *uniqueAdcCount;
     }
-    
-    /* Allocate memory for the unique library */
-    uniqueAdcLibrary = (float (*)[ADC_COLS])ALLOC((*uniqueAdcCount) * sizeof(float[ADC_COLS]));
-    if (!uniqueAdcLibrary) goto cleanup_error;
-    
-    /* Build the unique library */
-    *uniqueAdcCount = 0;
-    for (i = 0; i < n; i++) {
-        if (i == 0 || compareADCEvents(adcMatrix[sortedIndices[i]], adcMatrix[sortedIndices[i-1]]) != 0) {
-            /* Copy the entire row from the original library */
-            memcpy(uniqueAdcLibrary[*uniqueAdcCount], seq->adcLibrary[sortedIndices[i]], ADC_COLS * sizeof(float));
-            (*uniqueAdcCount)++;
+
+    /* Sort unique events by their first appearance */
+    for (i = 0; i < *uniqueAdcCount - 1; i++) {
+        for (j = i + 1; j < *uniqueAdcCount; j++) {
+            if (firstAppearance[i] > firstAppearance[j]) {
+                /* Swap entries in uniqueAdcLibrary */
+                memcpy(temp, uniqueAdcLibrary[i], ADC_COLS * sizeof(float));
+                memcpy(uniqueAdcLibrary[i], uniqueAdcLibrary[j], ADC_COLS * sizeof(float));
+                memcpy(uniqueAdcLibrary[j], temp, ADC_COLS * sizeof(float));
+
+                /* Swap entries in firstAppearance */
+                tempIndex = firstAppearance[i];
+                firstAppearance[i] = firstAppearance[j];
+                firstAppearance[j] = tempIndex;
+            }
         }
     }
-    
+
+    /* Update adcMap to reflect the new order of unique events */
+    for (i = 0; i < n; i++) {
+        for (uniqueIndex = 0; uniqueIndex < *uniqueAdcCount; uniqueIndex++) {
+            if (sortedIndices[i] == firstAppearance[uniqueIndex]) {
+                adcMap[sortedIndices[i]] = uniqueIndex + 1; /* 1-based indexing */
+                break;
+            }
+        }
+    }
+
     /* Free temporary memory */
+    for (i = 0; i < n; i++) {
+        FREE(adcMatrix[i]);
+    }
     FREE(adcMatrix);
     FREE(sortedIndices);
-    return uniqueAdcLibrary;
-    
-cleanup_error:
-    if (adcMatrix) FREE(adcMatrix);
-    if (sortedIndices) FREE(sortedIndices);
-    if (uniqueAdcLibrary) FREE(uniqueAdcLibrary);
-    return NULL;
+    FREE(firstAppearance);
 }
 
 /**
@@ -344,167 +405,190 @@ cleanup_error:
  * @return int 1 if successful, 0 if failed.
  */
 int uniqueSequence(SeqFile* uniqueSeq, const SeqFile* seq) {
+    /* All declarations at top for ANSI C89 compliance */
     int i, j;
-    int *rfMap = NULL, *gradXMap = NULL, *gradYMap = NULL, *gradZMap = NULL, *adcMap = NULL;
-    int uniqueRfCount = 0, uniqueGradXCount = 0, uniqueGradYCount = 0, uniqueGradZCount = 0, uniqueAdcCount = 0;
-    float (*uniqueRfLibrary)[RF_COLS] = NULL;
-    float (*uniqueGradXLibrary)[GRAD_COLS] = NULL;
-    float (*uniqueGradYLibrary)[GRAD_COLS] = NULL;
-    float (*uniqueGradZLibrary)[GRAD_COLS] = NULL;
-    float (*uniqueAdcLibrary)[ADC_COLS] = NULL;
-    
+    int *rfMap;
+    int *gradXMap;
+    int *gradYMap;
+    int *gradZMap;
+    int *adcMap;
+    int uniqueRfCount;
+    int uniqueGradXCount;
+    int uniqueGradYCount;
+    int uniqueGradZCount;
+    int uniqueAdcCount;
+    float (*uniqueRfLibrary)[RF_COLS];
+    float (*uniqueGradXLibrary)[GRAD_COLS];
+    float (*uniqueGradYLibrary)[GRAD_COLS];
+    float (*uniqueGradZLibrary)[GRAD_COLS];
+    float (*uniqueAdcLibrary)[ADC_COLS];
+
+    /* Initialize all pointers to NULL and counts to 0 */
+    rfMap = gradXMap = gradYMap = gradZMap = adcMap = NULL;
+    uniqueRfCount = uniqueGradXCount = uniqueGradYCount = uniqueGradZCount = uniqueAdcCount = 0;
+    uniqueRfLibrary = NULL;
+    uniqueGradXLibrary = NULL;
+    uniqueGradYLibrary = NULL;
+    uniqueGradZLibrary = NULL;
+    uniqueAdcLibrary = NULL;
+
     /* Initialize the output sequence */
     __seqFileReset(uniqueSeq);
-    
-    /* Copy basic information */
-    uniqueSeq->filePath = strdup(seq->filePath);
-    uniqueSeq->versionMajor = seq->versionMajor;
-    uniqueSeq->versionMinor = seq->versionMinor;
-    uniqueSeq->versionRevision = seq->versionRevision;
-    uniqueSeq->versionCombined = seq->versionCombined;
-    uniqueSeq->isVersionParsed = seq->isVersionParsed;
-    
+
+    /* Only keep blockLibrary, rfLibrary, gradLibrary, adcLibrary, and blockIDs in output */
+    /* If blockIDs is present in struct, set to NULL. Otherwise, leave untouched. */
+
     /* Allocate temporary arrays to store the mapping between original and unique events */
     if (seq->rfLibrarySize > 0) {
         rfMap = (int*)ALLOC(seq->rfLibrarySize * sizeof(int));
-        if (!rfMap) goto cleanup_error;
+        if (!rfMap) return 0;
     }
-    
     if (seq->gradLibrarySize > 0) {
         gradXMap = (int*)ALLOC(seq->gradLibrarySize * sizeof(int));
         gradYMap = (int*)ALLOC(seq->gradLibrarySize * sizeof(int));
         gradZMap = (int*)ALLOC(seq->gradLibrarySize * sizeof(int));
-        if (!gradXMap || !gradYMap || !gradZMap) goto cleanup_error;
+        if (!gradXMap || !gradYMap || !gradZMap) {
+            if (rfMap) FREE(rfMap);
+            if (gradXMap) FREE(gradXMap);
+            if (gradYMap) FREE(gradYMap);
+            if (gradZMap) FREE(gradZMap);
+            return 0;
+        }
     }
-    
     if (seq->adcLibrarySize > 0) {
         adcMap = (int*)ALLOC(seq->adcLibrarySize * sizeof(int));
-        if (!adcMap) goto cleanup_error;
+        if (!adcMap) {
+            if (rfMap) FREE(rfMap);
+            if (gradXMap) FREE(gradXMap);
+            if (gradYMap) FREE(gradYMap);
+            if (gradZMap) FREE(gradZMap);
+            return 0;
+        }
     }
-    
+
     /* Find unique events for each library */
-    
-    /* Process RF library */
     if (seq->rfLibrarySize > 0) {
-        uniqueRfLibrary = findUniqueRF(seq, rfMap, &uniqueRfCount);
-        if (!uniqueRfLibrary) goto cleanup_error;
-        
+        uniqueRfLibrary = (float (*)[RF_COLS])ALLOC(seq->rfLibrarySize * sizeof(float[RF_COLS]));
+        if (!uniqueRfLibrary) {
+            if (rfMap) FREE(rfMap);
+            if (gradXMap) FREE(gradXMap);
+            if (gradYMap) FREE(gradYMap);
+            if (gradZMap) FREE(gradZMap);
+            if (adcMap) FREE(adcMap);
+            return 0;
+        }
+        findUniqueRF(seq, rfMap, &uniqueRfCount, uniqueRfLibrary);
         uniqueSeq->rfLibrarySize = uniqueRfCount;
         uniqueSeq->rfLibrary = uniqueRfLibrary;
-        uniqueSeq->isRfLibraryParsed = seq->isRfLibraryParsed;
+        uniqueSeq->isRfLibraryParsed = 1;
     }
-    
-    /* Process gradient libraries - we process X, Y, Z separately as they may have different unique patterns */
     if (seq->gradLibrarySize > 0) {
-        uniqueGradXLibrary = findUniqueGrad(seq, gradXMap, &uniqueGradXCount);
-        uniqueGradYLibrary = findUniqueGrad(seq, gradYMap, &uniqueGradYCount);
-        uniqueGradZLibrary = findUniqueGrad(seq, gradZMap, &uniqueGradZCount);
-        
-        if (!uniqueGradXLibrary || !uniqueGradYLibrary || !uniqueGradZLibrary) goto cleanup_error;
-        
-        /* For the unique sequence, we combine all unique gradient events */
+        uniqueGradXLibrary = (float (*)[GRAD_COLS])ALLOC(seq->gradLibrarySize * sizeof(float[GRAD_COLS]));
+        uniqueGradYLibrary = (float (*)[GRAD_COLS])ALLOC(seq->gradLibrarySize * sizeof(float[GRAD_COLS]));
+        uniqueGradZLibrary = (float (*)[GRAD_COLS])ALLOC(seq->gradLibrarySize * sizeof(float[GRAD_COLS]));
+        if (!uniqueGradXLibrary || !uniqueGradYLibrary || !uniqueGradZLibrary) {
+            if (rfMap) FREE(rfMap);
+            if (gradXMap) FREE(gradXMap);
+            if (gradYMap) FREE(gradYMap);
+            if (gradZMap) FREE(gradZMap);
+            if (adcMap) FREE(adcMap);
+            if (uniqueRfLibrary) FREE(uniqueRfLibrary);
+            if (uniqueGradXLibrary) FREE(uniqueGradXLibrary);
+            if (uniqueGradYLibrary) FREE(uniqueGradYLibrary);
+            if (uniqueGradZLibrary) FREE(uniqueGradZLibrary);
+            return 0;
+        }
+        findUniqueGrad(seq, gradXMap, &uniqueGradXCount, uniqueGradXLibrary);
+        findUniqueGrad(seq, gradYMap, &uniqueGradYCount, uniqueGradYLibrary);
+        findUniqueGrad(seq, gradZMap, &uniqueGradZCount, uniqueGradZLibrary);
         uniqueSeq->gradLibrarySize = uniqueGradXCount + uniqueGradYCount + uniqueGradZCount;
         uniqueSeq->gradLibrary = (float(*)[GRAD_COLS])ALLOC(uniqueSeq->gradLibrarySize * sizeof(float[GRAD_COLS]));
-        if (!uniqueSeq->gradLibrary) goto cleanup_error;
-        
-        /* Copy unique gradient events to the combined library */
+        if (!uniqueSeq->gradLibrary) {
+            if (rfMap) FREE(rfMap);
+            if (gradXMap) FREE(gradXMap);
+            if (gradYMap) FREE(gradYMap);
+            if (gradZMap) FREE(gradZMap);
+            if (adcMap) FREE(adcMap);
+            if (uniqueRfLibrary) FREE(uniqueRfLibrary);
+            if (uniqueGradXLibrary) FREE(uniqueGradXLibrary);
+            if (uniqueGradYLibrary) FREE(uniqueGradYLibrary);
+            if (uniqueGradZLibrary) FREE(uniqueGradZLibrary);
+            return 0;
+        }
         for (i = 0; i < uniqueGradXCount; i++) {
             memcpy(uniqueSeq->gradLibrary[i], uniqueGradXLibrary[i], GRAD_COLS * sizeof(float));
         }
-        
         for (i = 0; i < uniqueGradYCount; i++) {
             memcpy(uniqueSeq->gradLibrary[uniqueGradXCount + i], uniqueGradYLibrary[i], GRAD_COLS * sizeof(float));
         }
-        
         for (i = 0; i < uniqueGradZCount; i++) {
             memcpy(uniqueSeq->gradLibrary[uniqueGradXCount + uniqueGradYCount + i], uniqueGradZLibrary[i], GRAD_COLS * sizeof(float));
         }
-        
-        /* Update the mappings to point to the combined library */
         for (i = 0; i < seq->gradLibrarySize; i++) {
-            if (gradYMap[i] > 0) {
-                gradYMap[i] += uniqueGradXCount;  /* Y events start after X events */
-            }
-            if (gradZMap[i] > 0) {
-                gradZMap[i] += (uniqueGradXCount + uniqueGradYCount);  /* Z events start after X and Y events */
-            }
+            if (gradYMap[i] > 0) gradYMap[i] += uniqueGradXCount;
+            if (gradZMap[i] > 0) gradZMap[i] += (uniqueGradXCount + uniqueGradYCount);
         }
-        
-        uniqueSeq->isGradLibraryParsed = seq->isGradLibraryParsed;
-        
-        /* Free temporary gradient libraries */
+        uniqueSeq->isGradLibraryParsed = 1;
         FREE(uniqueGradXLibrary);
         FREE(uniqueGradYLibrary);
         FREE(uniqueGradZLibrary);
         uniqueGradXLibrary = uniqueGradYLibrary = uniqueGradZLibrary = NULL;
     }
-    
-    /* Process ADC library */
     if (seq->adcLibrarySize > 0) {
-        uniqueAdcLibrary = findUniqueADC(seq, adcMap, &uniqueAdcCount);
-        if (!uniqueAdcLibrary) goto cleanup_error;
-        
+        uniqueAdcLibrary = (float (*)[ADC_COLS])ALLOC(seq->adcLibrarySize * sizeof(float[ADC_COLS]));
+        if (!uniqueAdcLibrary) {
+            if (rfMap) FREE(rfMap);
+            if (gradXMap) FREE(gradXMap);
+            if (gradYMap) FREE(gradYMap);
+            if (gradZMap) FREE(gradZMap);
+            if (adcMap) FREE(adcMap);
+            if (uniqueRfLibrary) FREE(uniqueRfLibrary);
+            if (uniqueSeq->gradLibrary) FREE(uniqueSeq->gradLibrary);
+            return 0;
+        }
+        findUniqueADC(seq, adcMap, &uniqueAdcCount, uniqueAdcLibrary);
         uniqueSeq->adcLibrarySize = uniqueAdcCount;
         uniqueSeq->adcLibrary = uniqueAdcLibrary;
-        uniqueSeq->isAdcLibraryParsed = seq->isAdcLibraryParsed;
+        uniqueSeq->isAdcLibraryParsed = 1;
     }
-    
-    /* Copy block library */
     if (seq->numBlocks > 0) {
         uniqueSeq->numBlocks = seq->numBlocks;
         uniqueSeq->blockLibrary = (float(*)[7])ALLOC(uniqueSeq->numBlocks * sizeof(float[7]));
-        if (!uniqueSeq->blockLibrary) goto cleanup_error;
-        
-        /* Copy blocks but update the event IDs to use the unique events */
+        if (!uniqueSeq->blockLibrary) {
+            if (rfMap) FREE(rfMap);
+            if (gradXMap) FREE(gradXMap);
+            if (gradYMap) FREE(gradYMap);
+            if (gradZMap) FREE(gradZMap);
+            if (adcMap) FREE(adcMap);
+            if (uniqueRfLibrary) FREE(uniqueRfLibrary);
+            if (uniqueSeq->gradLibrary) FREE(uniqueSeq->gradLibrary);
+            if (uniqueAdcLibrary) FREE(uniqueAdcLibrary);
+            return 0;
+        }
         for (i = 0; i < seq->numBlocks; i++) {
-            uniqueSeq->blockLibrary[i][0] = seq->blockLibrary[i][0];  /* duration */
-            
-            /* Map RF event */
+            uniqueSeq->blockLibrary[i][0] = seq->blockLibrary[i][0];
             j = (int)seq->blockLibrary[i][1];
             uniqueSeq->blockLibrary[i][1] = j > 0 ? rfMap[j - 1] : 0;
-            
-            /* Map gradient events */
             j = (int)seq->blockLibrary[i][2];
             uniqueSeq->blockLibrary[i][2] = j > 0 ? gradXMap[j - 1] : 0;
-            
             j = (int)seq->blockLibrary[i][3];
             uniqueSeq->blockLibrary[i][3] = j > 0 ? gradYMap[j - 1] : 0;
-            
             j = (int)seq->blockLibrary[i][4];
             uniqueSeq->blockLibrary[i][4] = j > 0 ? gradZMap[j - 1] : 0;
-            
-            /* Map ADC event */
             j = (int)seq->blockLibrary[i][5];
             uniqueSeq->blockLibrary[i][5] = j > 0 ? adcMap[j - 1] : 0;
-            
-            /* Extension ID */
-            uniqueSeq->blockLibrary[i][6] = 0;  /* No extensions in the unique sequence */
+            uniqueSeq->blockLibrary[i][6] = 0;
         }
-        
-        uniqueSeq->isBlockLibraryParsed = seq->isBlockLibraryParsed;
+        uniqueSeq->isBlockLibraryParsed = 1;
     }
-    
-    /* Copy label limits from the original sequence */
-    memcpy(&uniqueSeq->labelLimits, &seq->labelLimits, sizeof(LabelLimits));
-    
-    /* Free temporary mapping arrays */
+    /* blockIDs mapping can be filled here if needed */
+    /* All other libraries and metadata are left NULL/0 */
     if (rfMap) FREE(rfMap);
     if (gradXMap) FREE(gradXMap);
     if (gradYMap) FREE(gradYMap);
     if (gradZMap) FREE(gradZMap);
     if (adcMap) FREE(adcMap);
-    
     return 1;
-    
-cleanup_error:
-    if (rfMap) FREE(rfMap);
-    if (gradXMap) FREE(gradXMap);
-    if (gradYMap) FREE(gradYMap);
-    if (gradZMap) FREE(gradZMap);
-    if (adcMap) FREE(adcMap);
-    
-    __seqFileFree(uniqueSeq);
-    return 0;
 }
 
 /**
@@ -535,151 +619,76 @@ static int compareBlockRows(const void* a, const void* b) {
  * @return int* Array mapping original block IDs to unique block IDs, NULL if failed.
  *         Caller is responsible for freeing this memory.
  */
-int* getUniqueBlockIDs(const SeqFile* seq, int* numUniqueBlocks) {
-    int n = seq->numBlocks;
-    int i, j;
-    float (*blockMatrix)[BLOCK_COLS] = NULL;
-    int *sortedIndices = NULL;
-    int *blockMap = NULL;
-    
+int getUniqueBlockIDs(SeqFile* uniqueSeq, const SeqFile* seq, int* numUniqueBlocks) {
+    int n;
+    int i, j, uniqueIndex;
+    int *sortedIndices;
+    float (*blockMatrix)[BLOCK_COLS];
+    int *firstAppearance;
+    float temp[BLOCK_COLS];
+    int tempIndex;
+
+    n = seq->numBlocks;
     *numUniqueBlocks = 0;
-    if (n == 0) return NULL;
-    
-    /* Allocate memory for the block matrix and indices */
+    if (n == 0) return 0;
+
+    /* Allocate memory for the block matrix, sorted indices, and first appearance tracking */
     blockMatrix = (float (*)[BLOCK_COLS])ALLOC(n * sizeof(float[BLOCK_COLS]));
     sortedIndices = (int*)ALLOC(n * sizeof(int));
-    blockMap = (int*)ALLOC(n * sizeof(int));
-    
-    if (!blockMatrix || !sortedIndices || !blockMap) goto cleanup_error;
-    
+    firstAppearance = (int*)ALLOC(n * sizeof(int));
+    uniqueSeq->blockIDs = (int*)ALLOC(n * sizeof(int)); /* Allocate blockIDs directly in uniqueSeq */
+
+    if (!blockMatrix || !sortedIndices || !firstAppearance || !uniqueSeq->blockIDs) {
+        if (blockMatrix) FREE(blockMatrix);
+        if (sortedIndices) FREE(sortedIndices);
+        if (firstAppearance) FREE(firstAppearance);
+        if (uniqueSeq->blockIDs) FREE(uniqueSeq->blockIDs);
+        return 0;
+    }
+
     /* Copy block data to the matrix */
     for (i = 0; i < n; i++) {
         memcpy(blockMatrix[i], seq->blockLibrary[i], BLOCK_COLS * sizeof(float));
         sortedIndices[i] = i;
     }
-    
-    /* Sort the indices based on the matrix values */
-    for (i = 0; i < n; i++) {
-        for (j = i + 1; j < n; j++) {
-            if (compareBlockRows(blockMatrix[sortedIndices[i]], blockMatrix[sortedIndices[j]]) > 0) {
-                int temp = sortedIndices[i];
-                sortedIndices[i] = sortedIndices[j];
-                sortedIndices[j] = temp;
-            }
-        }
-    }
-    
-    /* Find unique blocks and assign IDs (0-based) */
+
+    /* Sort using qsort */
+    qsort(sortedIndices, n, sizeof(int), compareBlockRows);
+
+    /* Identify unique blocks and track their first appearance */
     *numUniqueBlocks = 0;
     for (i = 0; i < n; i++) {
-        if (i == 0 || compareBlockRows(blockMatrix[sortedIndices[i]], blockMatrix[sortedIndices[i-1]]) != 0) {
+        if (i == 0 || compareBlockRows(blockMatrix[sortedIndices[i]], blockMatrix[sortedIndices[i - 1]]) != 0) {
+            firstAppearance[*numUniqueBlocks] = sortedIndices[i]; /* Track first appearance */
             (*numUniqueBlocks)++;
         }
-        /* Map from original indices to unique indices (0-based) */
-        blockMap[sortedIndices[i]] = (*numUniqueBlocks) - 1;
+        /* Map from original indices to unique indices (1-based) */
+        uniqueSeq->blockIDs[sortedIndices[i]] = *numUniqueBlocks;
     }
-    
-    /* Clean up temporary arrays */
+
+    /* Sort unique blocks by their first appearance */
+    for (i = 0; i < *numUniqueBlocks - 1; i++) {
+        for (j = i + 1; j < *numUniqueBlocks; j++) {
+            if (firstAppearance[i] > firstAppearance[j]) {
+                /* Swap entries in blockMatrix */
+                memcpy(temp, blockMatrix[firstAppearance[i]], BLOCK_COLS * sizeof(float));
+                memcpy(blockMatrix[firstAppearance[i]], blockMatrix[firstAppearance[j]], BLOCK_COLS * sizeof(float));
+                memcpy(blockMatrix[firstAppearance[j]], temp, BLOCK_COLS * sizeof(float));
+
+                /* Swap entries in firstAppearance */
+                tempIndex = firstAppearance[i];
+                firstAppearance[i] = firstAppearance[j];
+                firstAppearance[j] = tempIndex;
+            }
+        }
+    }
+
+    /* Free temporary arrays */
     FREE(blockMatrix);
     FREE(sortedIndices);
-    
-    return blockMap;
-    
-cleanup_error:
-    if (blockMatrix) FREE(blockMatrix);
-    if (sortedIndices) FREE(sortedIndices);
-    if (blockMap) FREE(blockMap);
-    return NULL;
-}
+    FREE(firstAppearance);
 
-/**
- * @brief Get maximum RF amplitude from a sequence file.
- * 
- * @param seq Pointer to the sequence file.
- * @return float The maximum RF amplitude found in the sequence.
- */
-float getMaxRFAmplitude(const SeqFile* seq) {
-    int i;
-    float maxRFAmp = 0.0f;
-    
-    if (!seq || !seq->rfLibrary) {
-        return 0.0f;
-    }
-    
-    for (i = 0; i < seq->rfLibrarySize; i++) {
-        /* RF amplitude is stored in the first column of the RF library */
-        if (seq->rfLibrary[i][0] > maxRFAmp) {
-            maxRFAmp = seq->rfLibrary[i][0];
-        }
-    }
-    
-    return maxRFAmp;
-}
-
-/**
- * @brief Get maximum gradient amplitude from a sequence file.
- * 
- * @param seq Pointer to the sequence file.
- * @return float The maximum gradient amplitude found in the sequence.
- */
-float getMaxGradientAmplitude(const SeqFile* seq) {
-    int i;
-    float maxGradAmp = 0.0f;
-    
-    if (!seq || !seq->gradLibrary) {
-        return 0.0f;
-    }
-    
-    for (i = 0; i < seq->gradLibrarySize; i++) {
-        /* Gradient amplitude is stored in the second column of the gradient library */
-        if (fabs(seq->gradLibrary[i][1]) > maxGradAmp) {
-            maxGradAmp = fabs(seq->gradLibrary[i][1]);
-        }
-    }
-    
-    return maxGradAmp;
-}
-
-/**
- * @brief Get maximum slew rate from a sequence file.
- * 
- * @param seq Pointer to the sequence file.
- * @return float The maximum slew rate found in the sequence.
- */
-float getMaxSlewRate(const SeqFile* seq) {
-    int i;
-    float maxSlewRate = 0.0f;
-    float slewRate;
-    
-    if (!seq || !seq->gradLibrary) {
-        return 0.0f;
-    }
-    
-    for (i = 0; i < seq->gradLibrarySize; i++) {
-        if (seq->gradLibrary[i][0] == 0.0f) {  /* Trapezoid */
-            /* Calculate slew rate as amp / rise time */
-            if (seq->gradLibrary[i][2] > 0.0f) {  /* rise time */
-                slewRate = fabs(seq->gradLibrary[i][1]) / seq->gradLibrary[i][2];
-                if (slewRate > maxSlewRate) {
-                    maxSlewRate = slewRate;
-                }
-            }
-            
-            /* Calculate slew rate as amp / fall time */
-            if (seq->gradLibrary[i][4] > 0.0f) {  /* fall time */
-                slewRate = fabs(seq->gradLibrary[i][1]) / seq->gradLibrary[i][4];
-                if (slewRate > maxSlewRate) {
-                    maxSlewRate = slewRate;
-                }
-            }
-        } else {  /* Arbitrary - more complex calculation required */
-            /* For arbitrary gradients, a proper implementation would need to
-               analyze the shape data and calculate the maximum slew rate.
-               This is left as a placeholder for now. */
-        }
-    }
-    
-    return maxSlewRate;
+    return 1;
 }
 
 /**
@@ -690,50 +699,17 @@ float getMaxSlewRate(const SeqFile* seq) {
  * @return int 1 if successful, 0 if failed.
  */
 int getUniqueSeq(SeqFile* uniqueSeq, const SeqFile* seq) {
-    /* Simply delegate to the existing uniqueSequence function */
-    return uniqueSequence(uniqueSeq, seq);
-}
+    int numUniqueBlocks;
 
-/**
- * @brief Count the number of ADC events with the navigation flag.
- * 
- * @param seq Pointer to the sequence file.
- * @return int The number of ADC events with the navigation flag.
- */
-int countNavigationADCEvents(const SeqFile* seq) {
-    int i;
-    int count = 0;
-    int adcId, extId;
-    int navFlagValue;
-    
-    if (!seq || !seq->blockLibrary) {
+    /* Generate unique sequence */
+    if (!uniqueSequence(uniqueSeq, seq)) {
         return 0;
     }
-    
-    /* Scan all blocks to find ADC events with navigation flags */
-    for (i = 0; i < seq->numBlocks; i++) {
-        adcId = (int)seq->blockLibrary[i][5];
-        extId = (int)seq->blockLibrary[i][6];
-        
-        /* Skip blocks without ADC events */
-        if (adcId <= 0) continue;
-        
-        /* Check if this block has an extension that includes a navigation flag */
-        if (extId > 0 && seq->extensionsLibrary && seq->extensionLUT) {
-            int extType = (int)seq->extensionsLibrary[extId-1][0];
-            
-            /* Check if the extension type is a navigation flag (assuming type 1 = NAV) */
-            if (extType == 1) {
-                /* Get the navigation flag value */
-                navFlagValue = (int)seq->extensionsLibrary[extId-1][1];
-                
-                /* If NAV flag is set to 1, increment count */
-                if (navFlagValue == 1) {
-                    count++;
-                }
-            }
-        }
+
+    /* Generate unique block IDs directly in uniqueSeq */
+    if (!getUniqueBlockIDs(uniqueSeq, seq, &numUniqueBlocks)) {
+        return 0;
     }
-    
-    return count;
+
+    return 1;
 }

@@ -6,8 +6,6 @@
 #include "pulseq.h"
 #include "vendor.h"
 #include "pulseq/rotation.c"
-#include "pulseq/check_sequence.h"
-#include "pulseq/ui_config.h"
 #include "pulseq/unique_sequence.h"
 #include "pulseq/label.h"
 #include "pulseq/seqfile.h"
@@ -54,34 +52,6 @@ int pulseq_getBlock(const pulseq_SeqFile* seq, int blockIndex, int parseExtensio
     return __getBlock(seq, blockIndex, parseExtensions, block); 
 }
 
-int pulseq_getLabelsForAdc(const pulseq_SeqFile* seq, int adcIndex, pulseq_LabelEvent* labelOut) {
-    return getLabelsByAdcIndex((SeqFile*)seq, adcIndex, labelOut);
-}
-
-int pulseq_checkSeqFile(const char* filePath) {
-    return checkSeqFile(filePath);
-}
-
-void pulseq_configureUI(pulseq_UIConfig* config, const char* filePath) {
-    configureUI(config, filePath);
-}
-
 int pulseq_getUniqueSeq(pulseq_SeqFile* uniqueSeq, const pulseq_SeqFile* seq) {
     return getUniqueSeq(uniqueSeq, (const SeqFile*)seq);
-}
-
-float pulseq_getMaxRFAmplitude(const pulseq_SeqFile* seq) {
-    return getMaxRFAmplitude((const SeqFile*)seq);
-}
-
-float pulseq_getMaxGradientAmplitude(const pulseq_SeqFile* seq) {
-    return getMaxGradientAmplitude((const SeqFile*)seq);
-}
-
-float pulseq_getMaxSlewRate(const pulseq_SeqFile* seq) {
-    return getMaxSlewRate((const SeqFile*)seq);
-}
-
-int pulseq_countNavigationADCEvents(const pulseq_SeqFile* seq) {
-    return countNavigationADCEvents((const SeqFile*)seq);
 }
