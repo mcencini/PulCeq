@@ -10,6 +10,7 @@
 #include "pulseq/label.h"
 #include "pulseq/safety.h"
 #include "pulseq/seqfile.h"
+#include "raster_utils.h"
 
 
 int pulseq_seqFile(char* filePath, pulseq_SeqFile* seq) { 
@@ -141,4 +142,34 @@ float pulseq_computeMaxSlewRate(const pulseq_SeqFile* seq) {
 
 float pulseq_computeMaxB1Amplitude(const pulseq_SeqFile* seq) {
     return computeMaxB1Amplitude(seq);
+}
+
+void pulseq_adjustWaveforms(pulseq_SeqFile* seq, float targetRaster) {
+    int i;
+
+    /* Adjust arbitrary waveforms */
+    for (i = 0; i < seq->shapesLibrarySize; i++) {
+        float* adjustedSamples;
+        int adjustedNumSamples;
+        adjustArbitraryWaveform(seq->shapesLibrary[i].samples, seq->shapesLibrary[i].numSamples,
+                                seq->reservedDefinitionsLibrary.gradientRasterTime, targetRaster,
+                                &adjustedSamples, &adjustedNumSamples);
+
+        /* Free original samples and replace with adjusted samples */
+        free(seq->shapesLibrary[i].samples);
+        seq->shapesLibrary[i].samples = adjustedSamples;
+        seq->shapesLibrary[i].numSamples = adjustedNumSamples;
+    }
+
+    /* Adjust trapezoid corners */
+    for (i = 0; i < seq->gradLibrarySize; i++) {
+        float corners[4] = {seq->gradLibrary[i][2], seq->gradLibrary[i][3], seq->gradLibrary[i][4], seq->gradLibrary[i][5]};
+        adjustTrapezoidCorners(corners, 4, targetRaster);
+
+        /* Update gradient library with adjusted corners */
+        seq->gradLibrary[i][2] = corners[0];
+        seq->gradLibrary[i][3] = corners[1];
+        seq->gradLibrary[i][4] = corners[2];
+        seq->gradLibrary[i][5] = corners[3];
+    }
 }

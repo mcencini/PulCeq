@@ -259,4 +259,25 @@ void __readLibraries(SeqFile* seq, int readBlocks);
  */
 void __readSeq(SeqFile* seq);
 
+/**
+ * @struct RFEvent
+ * @brief Represents an RF event in the sequence.
+ */
+typedef struct {
+    float amplitude; /**< RF amplitude */
+    float phase;     /**< RF phase */
+    float duration;  /**< RF duration */
+    float scale;     /**< Scaling factor for amplitude (default 1.0) */
+} RFEvent;
+
+/**
+ * @struct GradientEvent
+ * @brief Represents a gradient event in the sequence.
+ */
+typedef struct {
+    float amplitude; /**< Gradient amplitude */
+    float duration;  /**< Gradient duration */
+    float scale;     /**< Scaling factor for amplitude (default 1.0) */
+} GradientEvent;
+
 #endif /* SEQFILE_H */

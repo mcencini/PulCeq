@@ -56,4 +56,12 @@ float pulseq_computeMaxSlewRate(const pulseq_SeqFile* seq);
  */
 float pulseq_computeMaxB1Amplitude(const pulseq_SeqFile* seq);
 
+/**
+ * @brief Adjust waveforms and trapezoid corners to align with the target hardware raster.
+ *
+ * @param[in,out] seq The sequence file containing waveforms and gradient events.
+ * @param[in] targetRaster The target hardware raster (in microseconds).
+ */
+void pulseq_adjustWaveforms(pulseq_SeqFile* seq, float targetRaster);
+
 #endif /* PULSEQ_H */
