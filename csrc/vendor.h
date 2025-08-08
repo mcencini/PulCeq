@@ -130,4 +130,24 @@
   #define WAVESCALE 1.0f
 #endif
 
+/**
+  * Rotation format configuration
+  * 
+  * ROTATION_FORMAT_QUATERNION: Use quaternions (Siemens format)
+  * ROTATION_FORMAT_MATRIX: Use 3x3 rotation matrices (flattened to float[9])
+  * 
+  * Default is QUATERNION for Siemens compatibility
+*/
+#ifndef ROTATION_FORMAT
+  #define ROTATION_FORMAT ROTATION_FORMAT_QUATERNION
+#endif
+
+#ifndef ROTATION_FORMAT_QUATERNION
+  #define ROTATION_FORMAT_QUATERNION 0
+#endif
+
+#ifndef ROTATION_FORMAT_MATRIX
+  #define ROTATION_FORMAT_MATRIX 1
+#endif
+
 #endif /* VENDOR_H */

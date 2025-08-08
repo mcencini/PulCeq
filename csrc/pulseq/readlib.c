@@ -250,11 +250,12 @@ int initShapesLibrary(FILE* f, long offset, ShapeArbitrary** target, int* target
 
     /* Allocate sample arrays */
     for (i = 0; i < maxIndex; i++) {
+        int j;
         n = shapes[i].numSamples;
         if (n > 0) {
             shapes[i].samples = (float*) ALLOC(sizeof(float) * n);
             if (!shapes[i].samples) {
-                for (int j = 0; j < i; j++) {
+                for (j = 0; j < i; j++) {
                     if (shapes[j].samples) FREE(shapes[j].samples);
                 }
                 FREE(shapes);

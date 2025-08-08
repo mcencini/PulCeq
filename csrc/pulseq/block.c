@@ -223,11 +223,6 @@ void __seqBlockFree(SeqBlock* block)
 
 
 int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock* block) {
-    /* Check inputs */
-    if (!seq || !block || blockIndex < 0 || blockIndex >= seq->numBlocks) {
-        return 0; /* Invalid inputs */
-    }
-
     float* farray;
     int idx;
     int i, labelID, labelValue, extType, extIdx;
@@ -238,6 +233,13 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
     int* isRealSample;
     RfShimEntry rfshim;
     RawBlock rawBlock;
+    ShapeArbitrary shape;
+    
+    /* Check inputs */
+    if (!seq || !block || blockIndex < 0 || blockIndex >= seq->numBlocks) {
+        return 0; /* Invalid inputs */
+    }
+    
     getRawBlockContentIDs(&rawBlock, seq, blockIndex, parseExtensions);
 
     /* Set the duration */
@@ -251,7 +253,6 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
 
         idx = (int)farray[1];
         if (idx > 0) {
-            ShapeArbitrary shape;
             if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
                 return 0; /* Failed to decompress shape */
             }
@@ -260,7 +261,6 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
 
         idx = (int)farray[2];
         if (idx > 0) {
-            ShapeArbitrary shape;
             if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
                 return 0; /* Failed to decompress shape */
             }
@@ -309,7 +309,6 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
 
         idx = (int)farray[3];
         if (idx > 0) {
-            ShapeArbitrary shape;
             if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
                 return 0; /* Failed to decompress shape */
             }
@@ -348,7 +347,6 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
 
             idx = (int)farray[4];
             if (idx > 0) {
-                ShapeArbitrary shape;
                 if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
                     return 0; /* Failed to decompress shape */
                 }
@@ -357,7 +355,6 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
 
             idx = (int)farray[5];
             if (idx > 0) {
-                ShapeArbitrary shape;
                 if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
                     return 0; /* Failed to decompress shape */
                 }
@@ -392,7 +389,6 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
 
             idx = (int)farray[4];
             if (idx > 0) {
-                ShapeArbitrary shape;
                 if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
                     return 0; /* Failed to decompress shape */
                 }
@@ -401,7 +397,6 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
 
             idx = (int)farray[5];
             if (idx > 0) {
-                ShapeArbitrary shape;
                 if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
                     return 0; /* Failed to decompress shape */
                 }
@@ -436,7 +431,6 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
 
             idx = (int)farray[4];
             if (idx > 0) {
-                ShapeArbitrary shape;
                 if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
                     return 0; /* Failed to decompress shape */
                 }
@@ -445,7 +439,6 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
 
             idx = (int)farray[5];
             if (idx > 0) {
-                ShapeArbitrary shape;
                 if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
                     return 0; /* Failed to decompress shape */
                 }
@@ -483,7 +476,6 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
 
         idx = (int)farray[7];
         if (idx > 0) {
-            ShapeArbitrary shape;
             if (!decompressShape(&(seq->shapesLibrary[idx - 1]), &shape)) {
                 return 0; /* Failed to decompress shape */
             }
@@ -510,12 +502,27 @@ int __getBlock(const SeqFile* seq, int blockIndex, int parseExtensions, SeqBlock
                 block->trigger.triggerChannel = (int)trig[1];
                 break;
             case EXT_ROTATION:
-                rot = seq->rotationLibrary[extIdx];
-                block->rotation.type = 1;
-                block->rotation.rotQuaternion[0] = rot[0];
-                block->rotation.rotQuaternion[1] = rot[1];
-                block->rotation.rotQuaternion[2] = rot[2];
-                block->rotation.rotQuaternion[3] = rot[3];
+                {
+                    int ridx;
+                    block->rotation.type = 1;
+                    
+                    #if ROTATION_FORMAT == ROTATION_FORMAT_QUATERNION
+                    if (seq->rotationQuaternionLibrary) {
+                        rot = seq->rotationQuaternionLibrary[extIdx];
+                        block->rotation.data.rotQuaternion[0] = rot[0];
+                        block->rotation.data.rotQuaternion[1] = rot[1];
+                        block->rotation.data.rotQuaternion[2] = rot[2];
+                        block->rotation.data.rotQuaternion[3] = rot[3];
+                    }
+                    #elif ROTATION_FORMAT == ROTATION_FORMAT_MATRIX
+                    if (seq->rotationMatrixLibrary) {
+                        /* Copy the rotation matrix data */
+                        for (ridx = 0; ridx < 9; ridx++) {
+                            block->rotation.data.rotMatrix[ridx] = seq->rotationMatrixLibrary[extIdx][ridx];
+                        }
+                    }
+                    #endif
+                }
                 break;
             case EXT_LABELSET:
                 labelID = seq->labelsetLibrary[extIdx][1];

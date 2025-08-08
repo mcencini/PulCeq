@@ -63,7 +63,8 @@ void seqFileInit(SeqFile* seq){
     INIT_LIBRARY(seq, adcLibrary, adcLibrarySize, isAdcLibraryParsed);
     INIT_LIBRARY(seq, extensionsLibrary, extensionsLibrarySize, isExtensionsLibraryParsed);
     INIT_LIBRARY(seq, triggerLibrary, triggerLibrarySize, isExtensionsLibraryParsed);
-    INIT_LIBRARY(seq, rotationLibrary, rotationLibrarySize, isExtensionsLibraryParsed);
+    INIT_LIBRARY(seq, rotationQuaternionLibrary, rotationLibrarySize, isExtensionsLibraryParsed);
+    INIT_LIBRARY(seq, rotationMatrixLibrary, rotationLibrarySize, isExtensionsLibraryParsed);
     INIT_LIBRARY(seq, labelsetLibrary, labelsetLibrarySize, isExtensionsLibraryParsed);
     INIT_LIBRARY(seq, labelincLibrary, labelincLibrarySize, isExtensionsLibraryParsed);
     /* Initialize sparse label map */
@@ -120,7 +121,11 @@ void __seqFileReset(SeqFile* seq) {
     if (seq->isExtensionsLibraryParsed) {
         FREE(seq->extensionsLibrary);
         FREE(seq->triggerLibrary);
-        FREE(seq->rotationLibrary);
+        
+        /* Free both rotation libraries to be safe */
+        FREE(seq->rotationQuaternionLibrary);
+        FREE(seq->rotationMatrixLibrary);
+        
         FREE(seq->labelsetLibrary);
         FREE(seq->labelincLibrary);
         FREE(seq->labelMap.entries);
@@ -192,7 +197,12 @@ int checkLabelCompatibility(SeqFile *seq)
 {
     int i;
     int isCompatible = 1;
-    int usedLabelTypes[11] = {0}; /* Array to track which label types are used (index 0 unused) */
+    int usedLabelTypes[11]; /* Array to track which label types are used (index 0 unused) */
+    
+    /* Initialize all entries to 0 in C89-compatible way */
+    for (i = 0; i < 11; i++) {
+        usedLabelTypes[i] = 0;
+    }
 
     /* Check if sequence is valid */
     if (!seq) {

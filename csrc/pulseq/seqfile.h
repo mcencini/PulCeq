@@ -115,8 +115,10 @@ typedef struct {
                                          duration, delay, type, channel. */
 
     int rotationLibrarySize;        /**< @brief Number of rotation entries. */
-    float (*rotationLibrary)[4];    /**< @brief Rotation quaternion data with columns:
+    float (*rotationQuaternionLibrary)[4]; /**< @brief Rotation quaternion data with columns:
                                          RotQuat0, RotQuatX, RotQuatY, RotQuatZ. */
+    float (*rotationMatrixLibrary)[9];    /**< @brief Rotation matrix data as flattened 3x3 matrices
+                                         in row-major order (9 values per entry). */
 
     int isLabelDefined[22];         /**< For each type of Label in constants.h, flags whether it was defined or not in the given SeqFile */
     int labelsetLibrarySize;        /**< @brief Number of label set entries. */

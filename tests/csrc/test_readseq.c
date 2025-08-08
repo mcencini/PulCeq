@@ -316,10 +316,10 @@ MU_TEST(test_grad) {
     mu_assert(block->gx.timeShape.numSamples == 0, "Block 39 Gx should not have time shape samples");
     mu_assert(fabs(block->gx.first + 0.05) < 1e-6, "Block 39 Gx first sample should be -0.05");
     mu_assert(fabs(block->gx.last + 0.05) < 1e-6, "Block 39 Gx last sample should be -0.05");
-    mu_assert(fabs(block->rotation.rotQuaternion[0] - 1.0) < 1e-6, "Block 39 Rotation quaternion quat0 should be 1.0");
-    mu_assert(fabs(block->rotation.rotQuaternion[1]) < 1e-6, "Block 39 Rotation quaternion quatX should be 0.0");
-    mu_assert(fabs(block->rotation.rotQuaternion[2]) < 1e-6, "Block 39 Rotation quaternion quatY should be 0.0");
-    mu_assert(fabs(block->rotation.rotQuaternion[3]) < 1e-6, "Block 39 Rotation quaternion quatZ should be 0.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[0] - 1.0) < 1e-6, "Block 39 Rotation quaternion quat0 should be 1.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[1]) < 1e-6, "Block 39 Rotation quaternion quatX should be 0.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[2]) < 1e-6, "Block 39 Rotation quaternion quatY should be 0.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[3]) < 1e-6, "Block 39 Rotation quaternion quatZ should be 0.0");
 
     /* Gy */
     block = getBlock(seq, 40, 1);
@@ -335,10 +335,10 @@ MU_TEST(test_grad) {
     mu_assert(block->gy.timeShape.numSamples == 0, "Block 40 Gy should not have time shape samples");
     mu_assert(fabs(block->gy.first + 0.05) < 1e-6, "Block 40 Gy first sample should be -0.05");
     mu_assert(fabs(block->gy.last + 0.05) < 1e-6, "Block 40 Gy last sample should be -0.05");
-    mu_assert(fabs(block->rotation.rotQuaternion[0] - 1.0) < 1e-6, "Block 40 Rotation quaternion quat0 should be 1.0");
-    mu_assert(fabs(block->rotation.rotQuaternion[1]) < 1e-6, "Block 40 Rotation quaternion quatX should be 0.0");
-    mu_assert(fabs(block->rotation.rotQuaternion[2]) < 1e-6, "Block 40 Rotation quaternion quatY should be 0.0");
-    mu_assert(fabs(block->rotation.rotQuaternion[3]) < 1e-6, "Block 40 Rotation quaternion quatZ should be 0.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[0] - 1.0) < 1e-6, "Block 40 Rotation quaternion quat0 should be 1.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[1]) < 1e-6, "Block 40 Rotation quaternion quatX should be 0.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[2]) < 1e-6, "Block 40 Rotation quaternion quatY should be 0.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[3]) < 1e-6, "Block 40 Rotation quaternion quatZ should be 0.0");
 
     /* Gz */
     block = getBlock(seq, 41, 1);
@@ -354,10 +354,10 @@ MU_TEST(test_grad) {
     mu_assert(block->gz.timeShape.numSamples == 0, "Block 41 Gz should not have time shape samples");
     mu_assert(fabs(block->gz.first + 0.05) < 1e-6, "Block 41 Gz first sample should be -0.05");
     mu_assert(fabs(block->gz.last + 0.05) < 1e-6, "Block 41 Gz last sample should be -0.05");
-    mu_assert(fabs(block->rotation.rotQuaternion[0] - 1.0) < 1e-6, "Block 41 Rotation quaternion quat0 should be 1.0");
-    mu_assert(fabs(block->rotation.rotQuaternion[1]) < 1e-6, "Block 41 Rotation quaternion quatX should be 0.0");
-    mu_assert(fabs(block->rotation.rotQuaternion[2]) < 1e-6, "Block 41 Rotation quaternion quatY should be 0.0");
-    mu_assert(fabs(block->rotation.rotQuaternion[3]) < 1e-6, "Block 41 Rotation quaternion quatZ should be 0.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[0] - 1.0) < 1e-6, "Block 41 Rotation quaternion quat0 should be 1.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[1]) < 1e-6, "Block 41 Rotation quaternion quatX should be 0.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[2]) < 1e-6, "Block 41 Rotation quaternion quatY should be 0.0");
+    mu_assert(fabs(block->rotation.data.rotQuaternion[3]) < 1e-6, "Block 41 Rotation quaternion quatZ should be 0.0");
     /**** END ARBITRARY GRAD ****/
 
     /**** EXTENDED TRAPEZOIDS GRAD ****/

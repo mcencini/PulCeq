@@ -49,7 +49,7 @@ void readExtensionsLibrary(SeqFile* seq, FILE* f)
     }
 
     if (seq->offsets.rotations >= 0){
-        ret = initStandardLibrary(f, &((seq->offsets).rotations), 1, (void**)&seq->rotationLibrary, &seq->rotationLibrarySize, rotScale.size);
+        ret = initStandardLibrary(f, &((seq->offsets).rotations), 1, (void**)&seq->rotationQuaternionLibrary, &seq->rotationLibrarySize, rotScale.size);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize rotations library\n");
             return;
@@ -104,19 +104,25 @@ void readExtensionsLibrary(SeqFile* seq, FILE* f)
     }
 
     if (seq->offsets.rotations >= 0){
-        ret = readStandardLibrary(f, seq->offsets.rotations, seq->rotationLibrary, seq->rotationLibrarySize, rotScale.size, rotScale, -1);
+        ret = readStandardLibrary(f, seq->offsets.rotations, seq->rotationQuaternionLibrary, seq->rotationLibrarySize, rotScale.size, rotScale, -1);
         if (ret != 0) {
             fprintf(stderr, "Error: Failed to initialize rotations library\n");
             return;
         }
-        float quatNorm;
-        for(int n = 1; n < seq->rotationLibrarySize; n++){
-            quatNorm = sqrtf(powf(seq->rotationLibrary[n][0], 2) + powf(seq->rotationLibrary[n][1], 2) + powf(seq->rotationLibrary[n][2], 2) + powf(seq->rotationLibrary[n][3], 2));
-            seq->rotationLibrary[n][0] = seq->rotationLibrary[n][0] / quatNorm; /* manually unroll - with so few entries, more readable than loop */
-            seq->rotationLibrary[n][1] = seq->rotationLibrary[n][1] / quatNorm;
-            seq->rotationLibrary[n][2] = seq->rotationLibrary[n][2] / quatNorm;
-            seq->rotationLibrary[n][3] = seq->rotationLibrary[n][3] / quatNorm;
+        {
+            float quatNorm;
+            int n;
+            for(n = 1; n < seq->rotationLibrarySize; n++){
+                quatNorm = sqrtf(powf(seq->rotationQuaternionLibrary[n][0], 2) + powf(seq->rotationQuaternionLibrary[n][1], 2) + 
+                            powf(seq->rotationQuaternionLibrary[n][2], 2) + powf(seq->rotationQuaternionLibrary[n][3], 2));
+                seq->rotationQuaternionLibrary[n][0] = seq->rotationQuaternionLibrary[n][0] / quatNorm; /* manually unroll - with so few entries, more readable than loop */
+                seq->rotationQuaternionLibrary[n][1] = seq->rotationQuaternionLibrary[n][1] / quatNorm;
+                seq->rotationQuaternionLibrary[n][2] = seq->rotationQuaternionLibrary[n][2] / quatNorm;
+                seq->rotationQuaternionLibrary[n][3] = seq->rotationQuaternionLibrary[n][3] / quatNorm;
+            }
         }
+        
+        /* If using matrix format, we'll convert the quaternions to matrices in pulseq_seqFile */
     }
 
     if (seq->offsets.labelset >= 0){

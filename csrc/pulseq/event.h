@@ -186,18 +186,29 @@ typedef struct {
     int triggerChannel; /**< @brief Channel of trigger (system dependent). 0: undefined / unused */
 } TriggerEvent; /* mirrors Pulseq TriggerEvent */
 
+/**
+ * @brief Convert quaternion to rotation matrix
+ * 
+ * @param[in] q Quaternion array [w, x, y, z]
+ * @param[out] m Rotation matrix (3x3, flattened in C order as float[9])
+ */
+void quaternionToMatrix(const float q[4], float m[9]);
+
 /** @struct RotationEvent
    * @brief  Rotation event. 
    *
    *  @var RotationEvent::type
    *    Whether rotation is NULL (0) or DEFINED (1).
-   *  @var RotationEvent::rotQuaternion
-   *    Gradient rotation quaternion.
+   *  @var RotationEvent::data
+   *    Union containing either quaternion or matrix representation.
    */
 typedef struct {
-    short type;             /**< @brief NULL or DEFINED */
-    float rotQuaternion[4]; /**< @brief Gradient rotation quaternion */
-} RotationEvent; /* mirrors Pulseq RotationEvent */
+    short type; /**< @brief NULL or DEFINED */
+    union {
+        float rotQuaternion[4]; /**< @brief Gradient rotation quaternion [w, x, y, z] */
+        float rotMatrix[9];     /**< @brief Gradient rotation matrix (3x3, row-major) */
+    } data;
+} RotationEvent; /* extends Pulseq RotationEvent */
 
 /** @struct LabelOrFlagEvent
  * @brief  Label or Flag event.
