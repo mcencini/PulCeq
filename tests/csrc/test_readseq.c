@@ -76,7 +76,7 @@ static pulseq_SeqFile* load_seq(char* filePath) {
     }
     
     /* Read the sequence data */
-    pulseq_readSeq(seq);
+    pulseq_readSeq(seq, 0);
     return seq;
 }
 

@@ -97,26 +97,30 @@ static int compareADCEvents(const void* a, const void* b) {
  */
 static void findUniqueRF(const SeqFile* seq, int* rfMap, int* uniqueRfCount, float (*uniqueRfLibrary)[RF_COLS]) {
     int n;
-    int i, j, uniqueIndex;
-    int *sortedIndices;
-    float **rfMatrix;
-    int *firstAppearance;
-    float temp[RF_COLS];
-    int tempIndex;
+    int i, uniqueIndex;
+    float *rfMaxAmp;
 
     n = seq->rfLibrarySize;
     *uniqueRfCount = 0;
     if (n == 0) return;
 
+    rfMaxAmp = (float*)ALLOC(n * sizeof(float));
+    if (!rfMaxAmp) return;
+
+    for (i = 0; i < n; i++) {
+        rfMaxAmp[i] = 0.0f;
+    }
+
     /* Allocate memory for sorted indices, RF comparison matrix, and first appearance tracking */
-    sortedIndices = (int*)ALLOC(n * sizeof(int));
-    rfMatrix = (float**)ALLOC(n * sizeof(float*));
-    firstAppearance = (int*)ALLOC(n * sizeof(int)); /* Track first appearance of unique events */
+    int *sortedIndices = (int*)ALLOC(n * sizeof(int));
+    float **rfMatrix = (float**)ALLOC(n * sizeof(float*));
+    int *firstAppearance = (int*)ALLOC(n * sizeof(int)); /* Track first appearance of unique events */
 
     if (!sortedIndices || !rfMatrix || !firstAppearance) {
         if (sortedIndices) FREE(sortedIndices);
         if (rfMatrix) FREE(rfMatrix);
         if (firstAppearance) FREE(firstAppearance);
+        FREE(rfMaxAmp);
         return;
     }
 
@@ -124,12 +128,13 @@ static void findUniqueRF(const SeqFile* seq, int* rfMap, int* uniqueRfCount, flo
     for (i = 0; i < n; i++) {
         rfMatrix[i] = (float*)ALLOC(3 * sizeof(float));
         if (!rfMatrix[i]) {
-            for (j = 0; j < i; j++) {
+            for (int j = 0; j < i; j++) {
                 FREE(rfMatrix[j]);
             }
             FREE(rfMatrix);
             FREE(sortedIndices);
             FREE(firstAppearance);
+            FREE(rfMaxAmp);
             return;
         }
 
@@ -157,15 +162,16 @@ static void findUniqueRF(const SeqFile* seq, int* rfMap, int* uniqueRfCount, flo
 
     /* Sort unique events by their first appearance */
     for (i = 0; i < *uniqueRfCount - 1; i++) {
-        for (j = i + 1; j < *uniqueRfCount; j++) {
+        for (int j = i + 1; j < *uniqueRfCount; j++) {
             if (firstAppearance[i] > firstAppearance[j]) {
                 /* Swap entries in uniqueRfLibrary */
+                float temp[RF_COLS];
                 memcpy(temp, uniqueRfLibrary[i], RF_COLS * sizeof(float));
                 memcpy(uniqueRfLibrary[i], uniqueRfLibrary[j], RF_COLS * sizeof(float));
                 memcpy(uniqueRfLibrary[j], temp, RF_COLS * sizeof(float));
 
                 /* Swap entries in firstAppearance */
-                tempIndex = firstAppearance[i];
+                int tempIndex = firstAppearance[i];
                 firstAppearance[i] = firstAppearance[j];
                 firstAppearance[j] = tempIndex;
             }
@@ -182,6 +188,17 @@ static void findUniqueRF(const SeqFile* seq, int* rfMap, int* uniqueRfCount, flo
         }
     }
 
+    for (i = 0; i < n; i++) {
+        uniqueIndex = rfMap[i] - 1;
+        if (seq->rfLibrary[i][0] > rfMaxAmp[uniqueIndex]) {
+            rfMaxAmp[uniqueIndex] = seq->rfLibrary[i][0];
+        }
+    }
+
+    for (i = 0; i < *uniqueRfCount; i++) {
+        uniqueRfLibrary[i][0] = rfMaxAmp[i];
+    }
+
     /* Free temporary memory */
     for (i = 0; i < n; i++) {
         FREE(rfMatrix[i]);
@@ -189,6 +206,7 @@ static void findUniqueRF(const SeqFile* seq, int* rfMap, int* uniqueRfCount, flo
     FREE(rfMatrix);
     FREE(sortedIndices);
     FREE(firstAppearance);
+    FREE(rfMaxAmp);
 }
 
 /**
@@ -201,26 +219,30 @@ static void findUniqueRF(const SeqFile* seq, int* rfMap, int* uniqueRfCount, flo
  */
 static void findUniqueGrad(const SeqFile* seq, int* gradMap, int* uniqueGradCount, float (*uniqueGradLibrary)[GRAD_COLS]) {
     int n;
-    int i, j, uniqueIndex;
-    int *sortedIndices;
-    float **gradMatrix;
-    int *firstAppearance;
-    float temp[GRAD_COLS];
-    int tempIndex;
+    int i, uniqueIndex;
+    float *gradMaxAmp;
 
     n = seq->gradLibrarySize;
     *uniqueGradCount = 0;
     if (n == 0) return;
 
+    gradMaxAmp = (float*)ALLOC(n * sizeof(float));
+    if (!gradMaxAmp) return;
+
+    for (i = 0; i < n; i++) {
+        gradMaxAmp[i] = 0.0f;
+    }
+
     /* Allocate memory for sorted indices, gradient comparison matrix, and first appearance tracking */
-    sortedIndices = (int*)ALLOC(n * sizeof(int));
-    gradMatrix = (float**)ALLOC(n * sizeof(float*));
-    firstAppearance = (int*)ALLOC(n * sizeof(int)); /* Track first appearance of unique events */
+    int *sortedIndices = (int*)ALLOC(n * sizeof(int));
+    float **gradMatrix = (float**)ALLOC(n * sizeof(float*));
+    int *firstAppearance = (int*)ALLOC(n * sizeof(int)); /* Track first appearance of unique events */
 
     if (!sortedIndices || !gradMatrix || !firstAppearance) {
         if (sortedIndices) FREE(sortedIndices);
         if (gradMatrix) FREE(gradMatrix);
         if (firstAppearance) FREE(firstAppearance);
+        FREE(gradMaxAmp);
         return;
     }
 
@@ -228,12 +250,13 @@ static void findUniqueGrad(const SeqFile* seq, int* gradMap, int* uniqueGradCoun
     for (i = 0; i < n; i++) {
         gradMatrix[i] = (float*)ALLOC(5 * sizeof(float));
         if (!gradMatrix[i]) {
-            for (j = 0; j < i; j++) {
+            for (int j = 0; j < i; j++) {
                 FREE(gradMatrix[j]);
             }
             FREE(gradMatrix);
             FREE(sortedIndices);
             FREE(firstAppearance);
+            FREE(gradMaxAmp);
             return;
         }
 
@@ -263,15 +286,16 @@ static void findUniqueGrad(const SeqFile* seq, int* gradMap, int* uniqueGradCoun
 
     /* Sort unique events by their first appearance */
     for (i = 0; i < *uniqueGradCount - 1; i++) {
-        for (j = i + 1; j < *uniqueGradCount; j++) {
+        for (int j = i + 1; j < *uniqueGradCount; j++) {
             if (firstAppearance[i] > firstAppearance[j]) {
                 /* Swap entries in uniqueGradLibrary */
+                float temp[GRAD_COLS];
                 memcpy(temp, uniqueGradLibrary[i], GRAD_COLS * sizeof(float));
                 memcpy(uniqueGradLibrary[i], uniqueGradLibrary[j], GRAD_COLS * sizeof(float));
                 memcpy(uniqueGradLibrary[j], temp, GRAD_COLS * sizeof(float));
 
                 /* Swap entries in firstAppearance */
-                tempIndex = firstAppearance[i];
+                int tempIndex = firstAppearance[i];
                 firstAppearance[i] = firstAppearance[j];
                 firstAppearance[j] = tempIndex;
             }
@@ -288,6 +312,17 @@ static void findUniqueGrad(const SeqFile* seq, int* gradMap, int* uniqueGradCoun
         }
     }
 
+    for (i = 0; i < n; i++) {
+        uniqueIndex = gradMap[i] - 1;
+        if (seq->gradLibrary[i][0] > gradMaxAmp[uniqueIndex]) {
+            gradMaxAmp[uniqueIndex] = seq->gradLibrary[i][0];
+        }
+    }
+
+    for (i = 0; i < *uniqueGradCount; i++) {
+        uniqueGradLibrary[i][0] = gradMaxAmp[i];
+    }
+
     /* Free temporary memory */
     for (i = 0; i < n; i++) {
         FREE(gradMatrix[i]);
@@ -295,6 +330,7 @@ static void findUniqueGrad(const SeqFile* seq, int* gradMap, int* uniqueGradCoun
     FREE(gradMatrix);
     FREE(sortedIndices);
     FREE(firstAppearance);
+    FREE(gradMaxAmp);
 }
 
 /**

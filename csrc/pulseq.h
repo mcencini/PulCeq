@@ -24,7 +24,7 @@ void pulseq_seqFileFree(pulseq_SeqFile* seq);
 void pulseq_seqFileReset(pulseq_SeqFile* seq);
 void pulseq_readDefinitions(pulseq_SeqFile* seq);
 void pulseq_readLibraries(pulseq_SeqFile* seq, int readBlocks);
-void pulseq_readSeq(pulseq_SeqFile* seq);
+void pulseq_readSeq(pulseq_SeqFile* seq, int forceDecompression);
 
 int pulseq_seqBlock(pulseq_SeqBlock* block);
 void pulseq_seqBlockFree(pulseq_SeqBlock* block);

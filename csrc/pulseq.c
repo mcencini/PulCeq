@@ -44,7 +44,27 @@ void pulseq_seqFileFree(pulseq_SeqFile* seq) { __seqFileFree(seq); }
 void pulseq_seqFileReset(pulseq_SeqFile* seq) { __seqFileReset(seq); }
 void pulseq_readDefinitions(pulseq_SeqFile* seq) { __readDefinitions(seq); }
 void pulseq_readLibraries(pulseq_SeqFile* seq, int readBlocks) { __readLibraries(seq, readBlocks); }
-void pulseq_readSeq(pulseq_SeqFile* seq) { __readSeq(seq); }
+void pulseq_readSeq(pulseq_SeqFile* seq, int forceDecompression) {
+    int i; /* Declare variables at the top for ANSI C89 compliance */
+    ShapeArbitrary decompressedShape;
+
+    /* Always read blockLibrary */
+    __readLibraries(seq, 1);
+
+    /* If forceDecompression is enabled, decompress shapesLibrary */
+    if (forceDecompression) {
+        for (i = 0; i < seq->shapesLibrarySize; i++) {
+            if (decompressShape(&seq->shapesLibrary[i], &decompressedShape)) {
+                /* Free the original shape's memory */
+                if (seq->shapesLibrary[i].samples) {
+                    FREE(seq->shapesLibrary[i].samples);
+                }
+                /* Replace with the decompressed shape */
+                seq->shapesLibrary[i] = decompressedShape;
+            }
+        }
+    }
+}
 
 int pulseq_seqBlock(pulseq_SeqBlock* block) { return __seqBlock(block); }
 void pulseq_seqBlockFree(pulseq_SeqBlock* block) { __seqBlockFree(block); }
