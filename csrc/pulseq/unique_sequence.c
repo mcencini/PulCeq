@@ -11,6 +11,7 @@
 #include "unique_sequence.h"
 #include "alloc.h"
 #include "seqfile.h"
+#include "pulseq/event.h" /* Include ShapeArbitrary type definition */
 
 /* Define library size constants */
 #define RF_COLS 10
@@ -33,6 +34,7 @@ static int compareRFEvents(const void* a, const void* b) {
     if (matrixA[0] != matrixB[0]) return matrixA[0] < matrixB[0] ? -1 : 1;  /* mag_id */
     if (matrixA[1] != matrixB[1]) return matrixA[1] < matrixB[1] ? -1 : 1;  /* phase_id */
     if (matrixA[2] != matrixB[2]) return matrixA[2] < matrixB[2] ? -1 : 1;  /* time_id */
+    if (matrixA[5] != matrixB[5]) return matrixA[5] < matrixB[5] ? -1 : 1;  /* delay */
     
     return 0;  /* Events are identical */
 }
@@ -45,10 +47,10 @@ static int compareGradEvents(const void* a, const void* b) {
     const int* indexB = (const int*)b;
     const float* matrixA = *(const float**)a;
     const float* matrixB = *(const float**)b;
-    
-    /* First check if types are different */
+
+    /* Compare type first as a defining characteristic */
     if (matrixA[0] != matrixB[0]) return matrixA[0] < matrixB[0] ? -1 : 1;  /* type */
-    
+
     if (matrixA[0] == 0) {  /* Trapezoid */
         /* Compare rise, flat, fall, and delay */
         if (matrixA[1] != matrixB[1]) return matrixA[1] < matrixB[1] ? -1 : 1;  /* rise */
@@ -56,13 +58,14 @@ static int compareGradEvents(const void* a, const void* b) {
         if (matrixA[3] != matrixB[3]) return matrixA[3] < matrixB[3] ? -1 : 1;  /* fall */
         if (matrixA[4] != matrixB[4]) return matrixA[4] < matrixB[4] ? -1 : 1;  /* delay */
     } else {  /* Arbitrary */
-        /* Compare shape_id, first, last, time_id, and delay */
+        /* Compare first, last, shape_id, time_id, and delay */
         if (matrixA[1] != matrixB[1]) return matrixA[1] < matrixB[1] ? -1 : 1;  /* first */
         if (matrixA[2] != matrixB[2]) return matrixA[2] < matrixB[2] ? -1 : 1;  /* last */
         if (matrixA[3] != matrixB[3]) return matrixA[3] < matrixB[3] ? -1 : 1;  /* shape_id */
-        if (matrixA[4] != matrixB[4]) return matrixA[4] < matrixB[4] ? -1 : 1;  /* delay */
+        if (matrixA[4] != matrixB[4]) return matrixA[4] < matrixB[4] ? -1 : 1;  /* time_id */
+        if (matrixA[5] != matrixB[5]) return matrixA[5] < matrixB[5] ? -1 : 1;  /* delay */
     }
-    
+
     return 0;  /* Events are identical */
 }
 
@@ -79,7 +82,8 @@ static int compareADCEvents(const void* a, const void* b) {
     if (matrixA[0] != matrixB[0]) return matrixA[0] < matrixB[0] ? -1 : 1;  /* num */
     if (matrixA[1] != matrixB[1]) return matrixA[1] < matrixB[1] ? -1 : 1;  /* dwell */
     if (matrixA[2] != matrixB[2]) return matrixA[2] < matrixB[2] ? -1 : 1;  /* delay */
-    
+    if (matrixA[7] != matrixB[7]) return matrixA[7] < matrixB[7] ? -1 : 1;  /* phase_id */
+
     return 0;  /* Events are identical */
 }
 
@@ -405,189 +409,115 @@ static void findUniqueADC(const SeqFile* seq, int* adcMap, int* uniqueAdcCount, 
  * @return int 1 if successful, 0 if failed.
  */
 int uniqueSequence(SeqFile* uniqueSeq, const SeqFile* seq) {
-    /* All declarations at top for ANSI C89 compliance */
-    int i, j;
-    int *rfMap;
-    int *gradXMap;
-    int *gradYMap;
-    int *gradZMap;
-    int *adcMap;
-    int uniqueRfCount;
-    int uniqueGradXCount;
-    int uniqueGradYCount;
-    int uniqueGradZCount;
-    int uniqueAdcCount;
+    int i;
+    int uniqueRfCount, uniqueGradCount, uniqueAdcCount;
+    int *rfMap, *gradMap, *adcMap;
     float (*uniqueRfLibrary)[RF_COLS];
-    float (*uniqueGradXLibrary)[GRAD_COLS];
-    float (*uniqueGradYLibrary)[GRAD_COLS];
-    float (*uniqueGradZLibrary)[GRAD_COLS];
+    float (*uniqueGradLibrary)[GRAD_COLS];
     float (*uniqueAdcLibrary)[ADC_COLS];
 
-    /* Initialize all pointers to NULL and counts to 0 */
-    rfMap = gradXMap = gradYMap = gradZMap = adcMap = NULL;
-    uniqueRfCount = uniqueGradXCount = uniqueGradYCount = uniqueGradZCount = uniqueAdcCount = 0;
-    uniqueRfLibrary = NULL;
-    uniqueGradXLibrary = NULL;
-    uniqueGradYLibrary = NULL;
-    uniqueGradZLibrary = NULL;
-    uniqueAdcLibrary = NULL;
-
-    /* Initialize the output sequence */
+    /* Initialize uniqueSeq */
     __seqFileReset(uniqueSeq);
 
-    /* Only keep blockLibrary, rfLibrary, gradLibrary, adcLibrary, and blockIDs in output */
-    /* If blockIDs is present in struct, set to NULL. Otherwise, leave untouched. */
+    /* Allocate memory for mapping arrays */
+    rfMap = (int*)ALLOC(seq->rfLibrarySize * sizeof(int));
+    gradMap = (int*)ALLOC(seq->gradLibrarySize * sizeof(int));
+    adcMap = (int*)ALLOC(seq->adcLibrarySize * sizeof(int));
 
-    /* Allocate temporary arrays to store the mapping between original and unique events */
-    if (seq->rfLibrarySize > 0) {
-        rfMap = (int*)ALLOC(seq->rfLibrarySize * sizeof(int));
-        if (!rfMap) return 0;
-    }
-    if (seq->gradLibrarySize > 0) {
-        gradXMap = (int*)ALLOC(seq->gradLibrarySize * sizeof(int));
-        gradYMap = (int*)ALLOC(seq->gradLibrarySize * sizeof(int));
-        gradZMap = (int*)ALLOC(seq->gradLibrarySize * sizeof(int));
-        if (!gradXMap || !gradYMap || !gradZMap) {
-            if (rfMap) FREE(rfMap);
-            if (gradXMap) FREE(gradXMap);
-            if (gradYMap) FREE(gradYMap);
-            if (gradZMap) FREE(gradZMap);
-            return 0;
-        }
-    }
-    if (seq->adcLibrarySize > 0) {
-        adcMap = (int*)ALLOC(seq->adcLibrarySize * sizeof(int));
-        if (!adcMap) {
-            if (rfMap) FREE(rfMap);
-            if (gradXMap) FREE(gradXMap);
-            if (gradYMap) FREE(gradYMap);
-            if (gradZMap) FREE(gradZMap);
-            return 0;
-        }
+    if (!rfMap || !gradMap || !adcMap) {
+        if (rfMap) FREE(rfMap);
+        if (gradMap) FREE(gradMap);
+        if (adcMap) FREE(adcMap);
+        return 0;
     }
 
-    /* Find unique events for each library */
-    if (seq->rfLibrarySize > 0) {
-        uniqueRfLibrary = (float (*)[RF_COLS])ALLOC(seq->rfLibrarySize * sizeof(float[RF_COLS]));
-        if (!uniqueRfLibrary) {
-            if (rfMap) FREE(rfMap);
-            if (gradXMap) FREE(gradXMap);
-            if (gradYMap) FREE(gradYMap);
-            if (gradZMap) FREE(gradZMap);
-            if (adcMap) FREE(adcMap);
-            return 0;
-        }
-        findUniqueRF(seq, rfMap, &uniqueRfCount, uniqueRfLibrary);
-        uniqueSeq->rfLibrarySize = uniqueRfCount;
-        uniqueSeq->rfLibrary = uniqueRfLibrary;
-        uniqueSeq->isRfLibraryParsed = 1;
+    /* Deduplicate RF events */
+    uniqueRfLibrary = (float (*)[RF_COLS])ALLOC(seq->rfLibrarySize * sizeof(float[RF_COLS]));
+    if (!uniqueRfLibrary) {
+        FREE(rfMap);
+        FREE(gradMap);
+        FREE(adcMap);
+        return 0;
     }
-    if (seq->gradLibrarySize > 0) {
-        uniqueGradXLibrary = (float (*)[GRAD_COLS])ALLOC(seq->gradLibrarySize * sizeof(float[GRAD_COLS]));
-        uniqueGradYLibrary = (float (*)[GRAD_COLS])ALLOC(seq->gradLibrarySize * sizeof(float[GRAD_COLS]));
-        uniqueGradZLibrary = (float (*)[GRAD_COLS])ALLOC(seq->gradLibrarySize * sizeof(float[GRAD_COLS]));
-        if (!uniqueGradXLibrary || !uniqueGradYLibrary || !uniqueGradZLibrary) {
-            if (rfMap) FREE(rfMap);
-            if (gradXMap) FREE(gradXMap);
-            if (gradYMap) FREE(gradYMap);
-            if (gradZMap) FREE(gradZMap);
-            if (adcMap) FREE(adcMap);
-            if (uniqueRfLibrary) FREE(uniqueRfLibrary);
-            if (uniqueGradXLibrary) FREE(uniqueGradXLibrary);
-            if (uniqueGradYLibrary) FREE(uniqueGradYLibrary);
-            if (uniqueGradZLibrary) FREE(uniqueGradZLibrary);
-            return 0;
-        }
-        findUniqueGrad(seq, gradXMap, &uniqueGradXCount, uniqueGradXLibrary);
-        findUniqueGrad(seq, gradYMap, &uniqueGradYCount, uniqueGradYLibrary);
-        findUniqueGrad(seq, gradZMap, &uniqueGradZCount, uniqueGradZLibrary);
-        uniqueSeq->gradLibrarySize = uniqueGradXCount + uniqueGradYCount + uniqueGradZCount;
-        uniqueSeq->gradLibrary = (float(*)[GRAD_COLS])ALLOC(uniqueSeq->gradLibrarySize * sizeof(float[GRAD_COLS]));
-        if (!uniqueSeq->gradLibrary) {
-            if (rfMap) FREE(rfMap);
-            if (gradXMap) FREE(gradXMap);
-            if (gradYMap) FREE(gradYMap);
-            if (gradZMap) FREE(gradZMap);
-            if (adcMap) FREE(adcMap);
-            if (uniqueRfLibrary) FREE(uniqueRfLibrary);
-            if (uniqueGradXLibrary) FREE(uniqueGradXLibrary);
-            if (uniqueGradYLibrary) FREE(uniqueGradYLibrary);
-            if (uniqueGradZLibrary) FREE(uniqueGradZLibrary);
-            return 0;
-        }
-        for (i = 0; i < uniqueGradXCount; i++) {
-            memcpy(uniqueSeq->gradLibrary[i], uniqueGradXLibrary[i], GRAD_COLS * sizeof(float));
-        }
-        for (i = 0; i < uniqueGradYCount; i++) {
-            memcpy(uniqueSeq->gradLibrary[uniqueGradXCount + i], uniqueGradYLibrary[i], GRAD_COLS * sizeof(float));
-        }
-        for (i = 0; i < uniqueGradZCount; i++) {
-            memcpy(uniqueSeq->gradLibrary[uniqueGradXCount + uniqueGradYCount + i], uniqueGradZLibrary[i], GRAD_COLS * sizeof(float));
-        }
-        for (i = 0; i < seq->gradLibrarySize; i++) {
-            if (gradYMap[i] > 0) gradYMap[i] += uniqueGradXCount;
-            if (gradZMap[i] > 0) gradZMap[i] += (uniqueGradXCount + uniqueGradYCount);
-        }
-        uniqueSeq->isGradLibraryParsed = 1;
-        FREE(uniqueGradXLibrary);
-        FREE(uniqueGradYLibrary);
-        FREE(uniqueGradZLibrary);
-        uniqueGradXLibrary = uniqueGradYLibrary = uniqueGradZLibrary = NULL;
+    findUniqueRF(seq, rfMap, &uniqueRfCount, uniqueRfLibrary);
+    uniqueSeq->rfLibrary = uniqueRfLibrary;
+    uniqueSeq->rfLibrarySize = uniqueRfCount;
+    uniqueSeq->isRfLibraryParsed = 1;
+
+    /* Deduplicate gradient events */
+    uniqueGradLibrary = (float (*)[GRAD_COLS])ALLOC(seq->gradLibrarySize * sizeof(float[GRAD_COLS]));
+    if (!uniqueGradLibrary) {
+        FREE(rfMap);
+        FREE(gradMap);
+        FREE(adcMap);
+        FREE(uniqueRfLibrary);
+        return 0;
     }
-    if (seq->adcLibrarySize > 0) {
-        uniqueAdcLibrary = (float (*)[ADC_COLS])ALLOC(seq->adcLibrarySize * sizeof(float[ADC_COLS]));
-        if (!uniqueAdcLibrary) {
-            if (rfMap) FREE(rfMap);
-            if (gradXMap) FREE(gradXMap);
-            if (gradYMap) FREE(gradYMap);
-            if (gradZMap) FREE(gradZMap);
-            if (adcMap) FREE(adcMap);
-            if (uniqueRfLibrary) FREE(uniqueRfLibrary);
-            if (uniqueSeq->gradLibrary) FREE(uniqueSeq->gradLibrary);
-            return 0;
-        }
-        findUniqueADC(seq, adcMap, &uniqueAdcCount, uniqueAdcLibrary);
-        uniqueSeq->adcLibrarySize = uniqueAdcCount;
-        uniqueSeq->adcLibrary = uniqueAdcLibrary;
-        uniqueSeq->isAdcLibraryParsed = 1;
+    findUniqueGrad(seq, gradMap, &uniqueGradCount, uniqueGradLibrary);
+    uniqueSeq->gradLibrary = uniqueGradLibrary;
+    uniqueSeq->gradLibrarySize = uniqueGradCount;
+    uniqueSeq->isGradLibraryParsed = 1;
+
+    /* Deduplicate ADC events */
+    uniqueAdcLibrary = (float (*)[ADC_COLS])ALLOC(seq->adcLibrarySize * sizeof(float[ADC_COLS]));
+    if (!uniqueAdcLibrary) {
+        FREE(rfMap);
+        FREE(gradMap);
+        FREE(adcMap);
+        FREE(uniqueRfLibrary);
+        FREE(uniqueGradLibrary);
+        return 0;
     }
-    if (seq->numBlocks > 0) {
-        uniqueSeq->numBlocks = seq->numBlocks;
-        uniqueSeq->blockLibrary = (float(*)[7])ALLOC(uniqueSeq->numBlocks * sizeof(float[7]));
-        if (!uniqueSeq->blockLibrary) {
-            if (rfMap) FREE(rfMap);
-            if (gradXMap) FREE(gradXMap);
-            if (gradYMap) FREE(gradYMap);
-            if (gradZMap) FREE(gradZMap);
-            if (adcMap) FREE(adcMap);
-            if (uniqueRfLibrary) FREE(uniqueRfLibrary);
-            if (uniqueSeq->gradLibrary) FREE(uniqueSeq->gradLibrary);
-            if (uniqueAdcLibrary) FREE(uniqueAdcLibrary);
-            return 0;
-        }
-        for (i = 0; i < seq->numBlocks; i++) {
-            uniqueSeq->blockLibrary[i][0] = seq->blockLibrary[i][0];
-            j = (int)seq->blockLibrary[i][1];
-            uniqueSeq->blockLibrary[i][1] = j > 0 ? rfMap[j - 1] : 0;
-            j = (int)seq->blockLibrary[i][2];
-            uniqueSeq->blockLibrary[i][2] = j > 0 ? gradXMap[j - 1] : 0;
-            j = (int)seq->blockLibrary[i][3];
-            uniqueSeq->blockLibrary[i][3] = j > 0 ? gradYMap[j - 1] : 0;
-            j = (int)seq->blockLibrary[i][4];
-            uniqueSeq->blockLibrary[i][4] = j > 0 ? gradZMap[j - 1] : 0;
-            j = (int)seq->blockLibrary[i][5];
-            uniqueSeq->blockLibrary[i][5] = j > 0 ? adcMap[j - 1] : 0;
-            uniqueSeq->blockLibrary[i][6] = 0;
-        }
-        uniqueSeq->isBlockLibraryParsed = 1;
+    findUniqueADC(seq, adcMap, &uniqueAdcCount, uniqueAdcLibrary);
+    uniqueSeq->adcLibrary = uniqueAdcLibrary;
+    uniqueSeq->adcLibrarySize = uniqueAdcCount;
+    uniqueSeq->isAdcLibraryParsed = 1;
+
+    /* Copy shape library */
+    uniqueSeq->shapesLibrarySize = seq->shapesLibrarySize;
+    uniqueSeq->shapesLibrary = (ShapeArbitrary*)ALLOC(seq->shapesLibrarySize * sizeof(ShapeArbitrary));
+    if (!uniqueSeq->shapesLibrary) {
+        FREE(rfMap);
+        FREE(gradMap);
+        FREE(adcMap);
+        FREE(uniqueRfLibrary);
+        FREE(uniqueGradLibrary);
+        FREE(uniqueAdcLibrary);
+        return 0;
     }
-    /* blockIDs mapping can be filled here if needed */
-    /* All other libraries and metadata are left NULL/0 */
-    if (rfMap) FREE(rfMap);
-    if (gradXMap) FREE(gradXMap);
-    if (gradYMap) FREE(gradYMap);
-    if (gradZMap) FREE(gradZMap);
-    if (adcMap) FREE(adcMap);
+    for (i = 0; i < seq->shapesLibrarySize; i++) {
+        uniqueSeq->shapesLibrary[i] = seq->shapesLibrary[i];
+    }
+
+    /* Rebuild block library */
+    uniqueSeq->numBlocks = seq->numBlocks;
+    uniqueSeq->blockLibrary = (float(*)[BLOCK_COLS])ALLOC(seq->numBlocks * sizeof(float[BLOCK_COLS]));
+    if (!uniqueSeq->blockLibrary) {
+        FREE(rfMap);
+        FREE(gradMap);
+        FREE(adcMap);
+        FREE(uniqueRfLibrary);
+        FREE(uniqueGradLibrary);
+        FREE(uniqueAdcLibrary);
+        FREE(uniqueSeq->shapesLibrary);
+        return 0;
+    }
+    for (i = 0; i < seq->numBlocks; i++) {
+        uniqueSeq->blockLibrary[i][0] = seq->blockLibrary[i][0]; /* Copy duration */
+        uniqueSeq->blockLibrary[i][1] = rfMap[(int)seq->blockLibrary[i][1] - 1];
+        uniqueSeq->blockLibrary[i][2] = gradMap[(int)seq->blockLibrary[i][2] - 1];
+        uniqueSeq->blockLibrary[i][3] = gradMap[(int)seq->blockLibrary[i][3] - 1];
+        uniqueSeq->blockLibrary[i][4] = gradMap[(int)seq->blockLibrary[i][4] - 1];
+        uniqueSeq->blockLibrary[i][5] = adcMap[(int)seq->blockLibrary[i][5] - 1];
+        uniqueSeq->blockLibrary[i][6] = 0; /* Set extension ID to 0 */
+    }
+    uniqueSeq->isBlockLibraryParsed = 1;
+
+    /* Free temporary arrays */
+    FREE(rfMap);
+    FREE(gradMap);
+    FREE(adcMap);
+
     return 1;
 }
 
