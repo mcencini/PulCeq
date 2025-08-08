@@ -152,15 +152,51 @@ void __seqFileReset(SeqFile* seq) {
     seqFileInit(seq);
 }
 
-void __readDefinitions(SeqFile* seq)
-{
-    FILE* f = fopen(seq->filePath, "r");
-    
-    if (!f) return;
-    readDefinitionsLibrary(seq, f);    
-    fclose(f);
-    
-    return;
+void __readDefinitions(SeqFile* seq) {
+    int i;
+    char* key;
+    char* value;
+    float temp[3];
+
+    /* Parse definitionsLibrary */
+    for (i = 0; i < seq->numDefinitions; i++) {
+        key = seq->definitionsLibrary[i].name;
+        value = seq->definitionsLibrary[i].value[0];
+
+        /* Parse required reserved definitions */
+        if (strcmp(key, "GradientRasterTime") == 0) {
+            seq->reservedDefinitionsLibrary.gradientRasterTime = atof(value) * 1e6; /* Convert to us */
+        } else if (strcmp(key, "RadiofrequencyRasterTime") == 0) {
+            seq->reservedDefinitionsLibrary.radiofrequencyRasterTime = atof(value) * 1e6; /* Convert to us */
+        } else if (strcmp(key, "AdcRasterTime") == 0) {
+            seq->reservedDefinitionsLibrary.adcRasterTime = atof(value) * 1e6; /* Convert to us */
+        } else if (strcmp(key, "BlockDurationRaster") == 0) {
+            seq->reservedDefinitionsLibrary.blockDurationRaster = atof(value) * 1e6; /* Convert to us */
+        }
+
+        /* Parse optional reserved definitions */
+        else if (strcmp(key, "Name") == 0) {
+            strncpy(seq->reservedDefinitionsLibrary.name, value, sizeof(seq->reservedDefinitionsLibrary.name) - 1);
+            seq->reservedDefinitionsLibrary.name[sizeof(seq->reservedDefinitionsLibrary.name) - 1] = '\0';
+        } else if (strcmp(key, "FOV") == 0) {
+            if (sscanf(value, "%f %f %f", &temp[0], &temp[1], &temp[2]) == 3) {
+                seq->reservedDefinitionsLibrary.fov[0] = temp[0] * 100.0f; /* Convert to cm */
+                seq->reservedDefinitionsLibrary.fov[1] = temp[1] * 100.0f; /* Convert to cm */
+                seq->reservedDefinitionsLibrary.fov[2] = temp[2] * 100.0f; /* Convert to cm */
+            }
+        } else if (strcmp(key, "TotalDuration") == 0) {
+            seq->reservedDefinitionsLibrary.totalDuration = atof(value); /* Already in seconds */
+        }
+    }
+
+    /* Check for missing required definitions */
+    if (seq->reservedDefinitionsLibrary.gradientRasterTime == 0.0f ||
+        seq->reservedDefinitionsLibrary.radiofrequencyRasterTime == 0.0f ||
+        seq->reservedDefinitionsLibrary.adcRasterTime == 0.0f ||
+        seq->reservedDefinitionsLibrary.blockDurationRaster == 0.0f) {
+        fprintf(stderr, "Error: Missing required reserved definitions.\n");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void __readLibraries(SeqFile* seq, int readBlocks)

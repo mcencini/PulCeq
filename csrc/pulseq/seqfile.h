@@ -60,6 +60,27 @@ typedef struct {
 
 
 /**
+ * @struct ReservedDefinitions
+ * @brief Reserved custom definitions for sequence description.
+ * 
+ * This structure is used to parse and store reserved definitions from the sequence file,
+ * which are not part of the standard libraries but may be used by specific sequences or
+ * vendors for custom processing.
+ * 
+ * @note Values are stored as float, and must be casted to the correct datatype according to interpreter needs.
+ */
+typedef struct {
+    float gradientRasterTime;    /**< GradientRasterTime in us */
+    float radiofrequencyRasterTime; /**< RadiofrequencyRasterTime in us */
+    float adcRasterTime;         /**< AdcRasterTime in us */
+    float blockDurationRaster;   /**< BlockDurationRaster in us */
+    char name[256];              /**< Name (optional) */
+    float fov[3];                /**< FOV in cm (optional) */
+    float totalDuration;         /**< TotalDuration in seconds (optional) */
+} ReservedDefinitions;
+
+
+/**
  * @struct pulseq_SeqFile
  * @brief Represents a parsed sequence file containing various libraries and metadata.
  * 
@@ -84,6 +105,7 @@ typedef struct {
     int isDefinitionsLibraryParsed; /**< @brief Flag indicating if the definitions library was parsed successfully. */
     int numDefinitions;             /**< @brief Number of definitions parsed. */
     Definition* definitionsLibrary; /**< @brief Array of parsed definitions. */
+    ReservedDefinitions reservedDefinitionsLibrary; /**< Parsed reserved definitions */
 
     int isBlockLibraryParsed;       /**< @brief Flag indicating if the block library was parsed. */
     int numBlocks;                  /**< @brief Number of block entries. */
