@@ -58,6 +58,7 @@ void seqFileInit(SeqFile* seq){
 
     INIT_LIBRARY(seq, definitionsLibrary, numDefinitions, isDefinitionsLibraryParsed);
     INIT_LIBRARY(seq, blockLibrary, numBlocks, isBlockLibraryParsed);
+    seq->blockIDs = NULL; /* Initialize blockIDs to NULL */
     INIT_LIBRARY(seq, rfLibrary, rfLibrarySize, isRfLibraryParsed);
     INIT_LIBRARY(seq, gradLibrary, gradLibrarySize, isGradLibraryParsed);
     INIT_LIBRARY(seq, adcLibrary, adcLibrarySize, isAdcLibraryParsed);
@@ -114,7 +115,11 @@ void __seqFileReset(SeqFile* seq) {
         }
         FREE(seq->definitionsLibrary);
     }
-    if (seq->isBlockLibraryParsed)      FREE(seq->blockLibrary);
+    if (seq->isBlockLibraryParsed) {
+        FREE(seq->blockLibrary);
+        FREE(seq->blockIDs);
+        seq->blockIDs = NULL;
+    }
     if (seq->isRfLibraryParsed)         FREE(seq->rfLibrary);
     if (seq->isGradLibraryParsed)       FREE(seq->gradLibrary);
     if (seq->isAdcLibraryParsed)        FREE(seq->adcLibrary);

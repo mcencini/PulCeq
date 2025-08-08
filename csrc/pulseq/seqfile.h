@@ -8,6 +8,7 @@
 
 #include "constants.h"
 #include "event.h"
+#include "label.h"
 
 /**
  * @struct SectionOffset
@@ -88,6 +89,7 @@ typedef struct {
     int numBlocks;                  /**< @brief Number of block entries. */
     float (*blockLibrary)[7];       /**< @brief Block library data with columns:
                                          duration, rf, gx, gy, gz, adc, ext. */
+    int* blockIDs;                  /**< @brief Mapping from original blocks to unique blocks. NULL by default. */
 
     int isRfLibraryParsed;          /**< @brief Flag indicating if the RF library was parsed. */
     int rfLibrarySize;              /**< @brief Number of RF entries. */
@@ -130,6 +132,8 @@ typedef struct {
                                          increment, labelstring index. */
     
     SparseLabelMap labelMap;        /**< @brief Sparse map of labels for ADC events */
+  
+    LabelLimits labelLimits;        /**< @brief Min and max values for each label type in the sequence */
     
     int areLabelsCompatible;        /**< @brief Flag indicating if all used labels are compatible with the current vendor configuration */
 
