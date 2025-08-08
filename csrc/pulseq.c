@@ -55,3 +55,56 @@ int pulseq_getBlock(const pulseq_SeqFile* seq, int blockIndex, int parseExtensio
 int pulseq_getUniqueSeq(pulseq_SeqFile* uniqueSeq, const pulseq_SeqFile* seq) {
     return getUniqueSeq(uniqueSeq, (const SeqFile*)seq);
 }
+
+int pulseq_getNumReadouts(const pulseq_SeqFile* seq, const int excludeNavigator) {
+    int numNavigatorADC;
+    int i, adcID;
+    float* blockRow;
+    int extID;
+    float* extData;
+    int extType;
+    int labelID;
+    float* labelData;
+
+    /* If excludeNavigator is 0, simply return adcLibrarySize */
+    if (!excludeNavigator) {
+        return seq->adcLibrarySize;
+    }
+
+    /* Check if NAV label is present in the sequence */
+    if (!seq->areLabelsCompatible) {
+        return seq->adcLibrarySize;
+    }
+
+    /* Initialize numNavigatorADC */
+    numNavigatorADC = 0;
+
+    /* Loop over blockLibrary */
+    for (i = 0; i < seq->numBlocks; i++) {
+        blockRow = seq->blockLibrary[i];
+        adcID = (int)blockRow[5] - 1; /* ADC ID column */
+
+        if (adcID >= 0) {
+            extID = (int)blockRow[6]; /* Extension ID column */
+
+            /* Parse extensions to check for NAV label */
+            while (extID > 0 && extID <= seq->extensionsLibrarySize) {
+                extData = seq->extensionsLibrary[extID - 1]; /* [type, ref, next_id] */
+                extType = (int)extData[0];
+                labelID = (int)extData[1] - 1; /* Label ID */
+                extID = (int)extData[2]; /* Next extension ID */
+
+                if (extType == EXT_LABELSET && labelID >= 0 && labelID < seq->labelsetLibrarySize) {
+                    labelData = seq->labelsetLibrary[labelID];
+                    if ((int)labelData[0] != 0) { /* NAV flag */
+                        numNavigatorADC++;
+                        break; /* Stop checking further extensions for this block */
+                    }
+                }
+            }
+        }
+    }
+
+    /* Return the number of readouts excluding navigators */
+    return seq->adcLibrarySize - numNavigatorADC;
+}
